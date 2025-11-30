@@ -3,11 +3,6 @@
 # ==============================================================================
 # 04-niri-setup.sh - Niri Desktop, Dotfiles & User Configuration
 # ==============================================================================
-# Logic Priority:
-# 1. Try installing via yay (AUR Source)
-# 2. If failed, copy local binary from bin/awww
-# 3. If missing, fallback to swaybg and patch config
-# ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -71,8 +66,6 @@ log "Step 1/9: Installing Niri and core components..."
 pacman -S --noconfirm --needed niri xwayland-satellite xdg-desktop-portal-gnome fuzzel kitty firefox libnotify mako polkit-gnome > /dev/null 2>&1
 success "Niri core packages installed."
 
-# [FIX] Deleted Step 1.5 (Pre-install) to ensure AUR build is attempted first.
-
 # ------------------------------------------------------------------------------
 # 2. File Manager (Nautilus) Setup
 # ------------------------------------------------------------------------------
@@ -96,12 +89,30 @@ if [ -f "$DESKTOP_FILE" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# 3. Software Store
+# 3. Software Store & Flatpak (With Timezone Detection)
 # ------------------------------------------------------------------------------
 log "Step 3/9: Configuring Software Center..."
 pacman -S --noconfirm --needed flatpak gnome-software > /dev/null 2>&1
+
+# 1. Add Flathub repo first (Official)
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-success "Flatpak configured."
+
+# 2. Smart Mirror Configuration based on Timezone
+log "-> Checking System Timezone..."
+
+# Get timezone from symlink (Standard Arch method)
+CURRENT_TZ=$(readlink -f /etc/localtime)
+
+if [[ "$CURRENT_TZ" == *"Shanghai"* ]]; then
+    log "-> Detected Timezone: ${H_GREEN}Asia/Shanghai${NC}"
+    log "-> Switching Flathub to USTC Mirror for faster speed..."
+    flatpak remote-modify flathub --url=https://mirrors.ustc.edu.cn/flathub
+    success "Flatpak configured (USTC Mirror)."
+else
+    log "-> Detected Timezone: ${H_YELLOW}$CURRENT_TZ${NC} (Not Shanghai)"
+    log "-> Keeping Official Flathub source."
+    success "Flatpak configured (Official Source)."
+fi
 
 # ------------------------------------------------------------------------------
 # [TRICK] NOPASSWD for yay
@@ -129,8 +140,8 @@ if [ -f "$LIST_FILE" ]; then
         for pkg in "${PACKAGE_ARRAY[@]}"; do
             if [ "$pkg" == "imagemagic" ]; then pkg="imagemagick"; fi
             
-            # [FIX] Removed the logic that skips awww. 
-            # Now awww-git WILL be added to GIT_LIST and attempted by yay.
+            # Logic: Try to install everything via yay (AUR or Chaotic)
+            # awww-git is allowed here
             
             if [[ "$pkg" == *"-git" ]]; then
                 GIT_LIST+=("$pkg")
@@ -175,7 +186,7 @@ if [ -f "$LIST_FILE" ]; then
             done
         fi
         
-        # --- Recovery Phase (Local Bin Fallback) ---
+        # --- Recovery Phase ---
         log "Running Recovery Checks..."
         
         # Waybar Recovery
@@ -185,11 +196,9 @@ if [ -f "$LIST_FILE" ]; then
             pacman -S --noconfirm --needed waybar > /dev/null 2>&1 && success "Waybar recovered."
         fi
 
-        # Awww Recovery 
-        # [LOGIC] Only enters here if yay failed to install awww in Phase 2
+        # Awww Recovery (Local Binary Fallback)
         if ! command -v awww &> /dev/null; then
             warn "Awww binary not found (AUR install failed)."
-            
             LOCAL_BIN_AWWW="$PARENT_DIR/bin/awww"
             LOCAL_BIN_DAEMON="$PARENT_DIR/bin/awww-daemon"
             
@@ -199,9 +208,6 @@ if [ -f "$LIST_FILE" ]; then
                 cp "$LOCAL_BIN_DAEMON" /usr/local/bin/awww-daemon
                 chmod +x /usr/local/bin/awww /usr/local/bin/awww-daemon
                 success "Awww recovered using local binaries."
-                
-                # Remove awww-git from the FAILED_PACKAGES list to avoid false alarm in report
-                # (Simple workaround: Since it works now, user doesn't strictly need to know the compile failed)
             else
                 warn "Local binaries missing. Will try Swaybg later."
             fi
@@ -252,7 +258,6 @@ if [ -d "$TEMP_DIR/dotfiles" ]; then
     success "Dotfiles applied."
     
     # --- [ULTIMATE FALLBACK] Check Awww status ---
-    # Only if AUR failed AND Local Bin failed
     if ! command -v awww &> /dev/null; then
         warn "Awww failed all install methods. Switching to swaybg..."
         pacman -S --noconfirm --needed swaybg > /dev/null 2>&1
