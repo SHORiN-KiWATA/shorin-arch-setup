@@ -33,6 +33,8 @@ echo "----------------------------------------------------"
 MODULES=(
     "01-base.sh"
     "02-musthave.sh"
+    "03-user.sh"
+    "04-niri-setup.sh"
 )
 
 for module in "${MODULES[@]}"; do
