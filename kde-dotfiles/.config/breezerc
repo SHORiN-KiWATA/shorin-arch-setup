@@ -1,0 +1,6 @@
+[Common]
+OutlineIntensity=OutlineOff
+RoundedCorners=false
+
+[Style]
+MenuOpacity=80
