@@ -3,9 +3,6 @@ steam
 mpv
 linuxqq-appimage
 wechat-appimage
-gnome-font-viewer
-gnome-clocks
-gnome-calendar
 fragments
 typora-free
 btop
