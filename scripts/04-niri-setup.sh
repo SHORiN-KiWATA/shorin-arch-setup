@@ -179,9 +179,6 @@ if [ "$IS_CN_ENV" = true ]; then
     # 调用通用函数来选择镜像
     select_flathub_mirror
     
-    export GOPROXY=https://goproxy.cn,direct
-    if ! grep -q "GOPROXY" /etc/environment; then echo "GOPROXY=https://goproxy.cn,direct" >> /etc/environment; fi
-    exe runuser -u "$TARGET_USER" -- git config --global url."https://gitclone.com/github.com/".insteadOf "https://github.com/"
     success "Optimizations Enabled."
 else
     log "Using Global Sources."
