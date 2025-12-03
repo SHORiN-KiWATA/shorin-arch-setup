@@ -104,6 +104,8 @@ if snapper list-configs | grep -q "^root "; then
         success "Root snapshot created."
     else
         error "Failed to create Root snapshot."
+        warn "Cannot proceed without a safety snapshot. Aborting."
+        exit 1
     fi
 fi
 
@@ -114,6 +116,8 @@ if snapper list-configs | grep -q "^home "; then
         success "Home snapshot created."
     else
         error "Failed to create Home snapshot."
+        # This is less critical than root, but should still be a failure.
+        exit 1
     fi
 fi
 

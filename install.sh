@@ -16,6 +16,14 @@ else
     exit 1
 fi
 
+# --- Global Cleanup on Exit ---
+cleanup() {
+    # This function is called on EXIT.
+    # Add any other temporary files here if needed.
+    rm -f "/tmp/shorin_install_user"
+}
+trap cleanup EXIT
+
 # --- Global Trap (Restore Cursor on Exit) ---
 cleanup_on_exit() {
     tput cnorm
@@ -39,6 +47,7 @@ cat << "EOF"
 /____/_/ /_/\____/_/ |_/___/_/ |_/   
 EOF
 }
+
 banner2() {
 cat << "EOF"
   ██████  ██   ██  ██████  ██████  ██ ███    ██ 

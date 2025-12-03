@@ -1,3 +1,5 @@
+firefox
+xwayland-satellite-git
 awww-git
 breeze
 breeze-gtk
@@ -15,7 +17,7 @@ clipse-gui
 satty-git
 swww
 waypaper-git
-waybar-cava-git
+waybar
 ttf-jetbrains-mono-nerd
 grim
 slurp

@@ -44,6 +44,3 @@
             ```
             sudo pacman -Sy git && git clone https://gitclone.com/github.com/SHORiN-KiWATA/shorin-arch-setup.git && cd shorin-arch-setup && sudo CN_MIRROR=1 bash install.sh
             ```
-
-
-
