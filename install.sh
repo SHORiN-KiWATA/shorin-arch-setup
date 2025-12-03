@@ -15,6 +15,14 @@ else
     exit 1
 fi
 
+# --- Global Cleanup on Exit ---
+cleanup() {
+    # This function is called on EXIT.
+    # Add any other temporary files here if needed.
+    rm -f "/tmp/shorin_install_user"
+}
+trap cleanup EXIT
+
 # --- Environment Propagation ---
 export DEBUG=${DEBUG:-0}
 export CN_MIRROR=${CN_MIRROR:-0}

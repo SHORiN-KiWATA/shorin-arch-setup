@@ -112,7 +112,11 @@ if [ -f "$DESKTOP_FILE" ]; then
     HAS_NVIDIA=$(lspci | grep -E -i "nvidia" | wc -l)
     ENV_VARS="env GTK_IM_MODULE=fcitx"
     if [ "$GPU_COUNT" -gt 1 ] && [ "$HAS_NVIDIA" -gt 0 ]; then ENV_VARS="env GSK_RENDERER=gl GTK_IM_MODULE=fcitx"; fi
-    exe sed -i "s/^Exec=/Exec=$ENV_VARS /" "$DESKTOP_FILE"
+    
+    # Check if the line is already modified to prevent duplicate entries
+    if ! grep -q "^Exec=$ENV_VARS" "$DESKTOP_FILE"; then
+        exe sed -i "s|^Exec=|Exec=$ENV_VARS |" "$DESKTOP_FILE"
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -122,11 +126,24 @@ section "Step 3/9" "Network Optimization"
 exe pacman -Syu --noconfirm --needed flatpak gnome-software
 exe flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
+CURRENT_TZ=$(readlink -f /etc/localtime)
 IS_CN_ENV=false
 if [ "$CN_MIRROR" == "1" ] || [ "$DEBUG" == "1" ]; then
+
+if [[ "$CURRENT_TZ" == *"Shanghai"* ]]; then
     IS_CN_ENV=true
     if [ "$DEBUG" == "1" ]; then warn "DEBUG MODE ACTIVE"; fi
     
+    info_kv "Region" "China (Timezone)"
+elif [ "$CN_MIRROR" == "1" ]; then
+    IS_CN_ENV=true
+    info_kv "Region" "China (Manual Env)"
+elif [ "$DEBUG" == "1" ]; then
+    IS_CN_ENV=true
+    warn "DEBUG MODE: Forcing China Environment"
+fi
+
+if [ "$IS_CN_ENV" = true ]; then
     log "Enabling China Optimizations..."
     
     # --- [NEW] Flathub Mirror Menu ---
@@ -200,6 +217,11 @@ if [ -f "$LIST_FILE" ]; then
             [ "$pkg" == "imagemagic" ] && pkg="imagemagick"
             if [[ "$pkg" == *"-git" ]]; then GIT_LIST+=("$pkg"); else BATCH_LIST+="$pkg "; fi
         done
+
+        # 根据中文环境标志，重排安装列表
+        if [ "$IS_CN_ENV" = true ]; then
+            log "CN environment detected. Prioritizing local packages."
+        done
         
         # Batch
         if [ -n "$BATCH_LIST" ]; then
@@ -225,6 +247,24 @@ if [ -f "$LIST_FILE" ]; then
             for git_pkg in "${GIT_LIST[@]}"; do
                 if ! exe runuser -u "$TARGET_USER" -- env GOPROXY=$GOPROXY yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$git_pkg"; then
                     warn "Retrying $git_pkg..."
+                # --- 新逻辑：CN 环境本地优先 ---
+                if [ "$IS_CN_ENV" = true ]; then
+                    log "Attempting local install for '$git_pkg'..."
+                    if install_local_fallback "$git_pkg"; then
+                        success "Installed $git_pkg from local cache."
+                        continue # 安装成功，跳过网络安装
+                    else
+                        log "Local package not found. Proceeding with network install..."
+                    fi
+                fi
+
+                # --- 标准网络安装流程 (作为回退或默认) ---
+                # 尝试 1: 正常网络安装
+                if exe runuser -u "$TARGET_USER" -- env GOPROXY=$GOPROXY yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$git_pkg"; then
+                    success "Installed $git_pkg"
+                else
+                    # 尝试 2: 切换镜像后重试
+                    warn "Network install failed for $git_pkg. Retrying with mirror toggle..."
                     if runuser -u "$TARGET_USER" -- git config --global --get url."https://gitclone.com/github.com/".insteadOf > /dev/null; then
                         runuser -u "$TARGET_USER" -- git config --global --unset url."https://gitclone.com/github.com/".insteadOf
                     else
@@ -234,6 +274,22 @@ if [ -f "$LIST_FILE" ]; then
                         warn "Checking local cache..."
                         if install_local_fallback "$git_pkg"; then :; else
                             error "Failed: $git_pkg"
+
+                    if exe runuser -u "$TARGET_USER" -- env GOPROXY=$GOPROXY yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$git_pkg"; then
+                        success "Installed $git_pkg (on retry)."
+                    else
+                        # 尝试 3: 如果不是CN环境，最后尝试本地回退
+                        if [ "$IS_CN_ENV" = false ]; then
+                            warn "Final attempt: Checking local cache for $git_pkg..."
+                            if install_local_fallback "$git_pkg"; then
+                                success "Installed $git_pkg from local cache (fallback)."
+                            else
+                                error "Failed to install '$git_pkg' after all attempts."
+                                FAILED_PACKAGES+=("$git_pkg")
+                            fi
+                        else
+                            # CN环境下，本地安装已在最开始尝试过
+                            error "Failed to install '$git_pkg' after all attempts."
                             FAILED_PACKAGES+=("$git_pkg")
                         fi
                     else
