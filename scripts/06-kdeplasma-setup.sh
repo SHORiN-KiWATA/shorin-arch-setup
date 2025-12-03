@@ -154,6 +154,7 @@ if [ -f "$LIST_FILE" ]; then
         if [ ${#GIT_LIST[@]} -gt 0 ]; then
             log "Git Install..."
             for git_pkg in "${GIT_LIST[@]}"; do
+                # [FIX] CN Env tries local fallback first (using fixed function)
                 if [ "$IS_CN_ENV" = true ]; then
                     log "Attempting local install for '$git_pkg'..."
                     if install_local_fallback "$git_pkg"; then
@@ -162,6 +163,7 @@ if [ -f "$LIST_FILE" ]; then
                     fi
                 fi
 
+                # Network Install
                 if exe runuser -u "$TARGET_USER" -- env GOPROXY=$GOPROXY yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$git_pkg"; then
                     success "Installed $git_pkg"
                 else
@@ -175,6 +177,7 @@ if [ -f "$LIST_FILE" ]; then
                     if exe runuser -u "$TARGET_USER" -- env GOPROXY=$GOPROXY yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$git_pkg"; then
                         success "Installed $git_pkg (on retry)."
                     else
+                        # Final fallback check for non-CN env
                         if [ "$IS_CN_ENV" = false ]; then
                             warn "Final attempt: Checking local cache for $git_pkg..."
                             if install_local_fallback "$git_pkg"; then

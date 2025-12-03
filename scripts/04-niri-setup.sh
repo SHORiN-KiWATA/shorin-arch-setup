@@ -13,30 +13,48 @@ CN_MIRROR=${CN_MIRROR:-0}
 
 check_root
 
-# --- Helper: Local Fallback ---
+# --- Helper: Local Fallback (FIXED) ---
 install_local_fallback() {
     local pkg_name="$1"
     local search_dir="$PARENT_DIR/compiled/$pkg_name"
     if [ ! -d "$search_dir" ]; then return 1; fi
-    local pkg_file=$(find "$search_dir" -maxdepth 1 -name "*.pkg.tar.zst" | head -n 1)
-    if [ -f "$pkg_file" ]; then
-        warn "Using local fallback for '$pkg_name'..."
 
-        # [FIX] First, install dependencies from the local package's metadata
-        log "Resolving dependencies for local package..."
-        # Extract dependency list from the .PKGINFO file inside the tarball
-        local deps=$(tar -xOf "$pkg_file" .PKGINFO | grep -E '^depend' | cut -d '=' -f 2 | xargs)
+    # [FIX] 使用 mapfile 读取所有匹配的包文件到数组，而不是只取第一个
+    mapfile -t pkg_files < <(find "$search_dir" -maxdepth 1 -name "*.pkg.tar.zst")
+
+    if [ ${#pkg_files[@]} -gt 0 ]; then
+        warn "Using local fallback for '$pkg_name' (Found ${#pkg_files[@]} files)..."
+
+        # [FIX] 1. 遍历所有找到的包，收集所有依赖
+        log "Resolving dependencies for local packages..."
+        local all_deps=""
         
-        if [ -n "$deps" ]; then
-            log "Dependencies found: $deps"
-            if ! exe runuser -u "$TARGET_USER" -- yay -S --noconfirm --needed --asdeps $deps; then
+        for pkg_file in "${pkg_files[@]}"; do
+            # 从每个包的 .PKGINFO 中提取依赖
+            local deps=$(tar -xOf "$pkg_file" .PKGINFO | grep -E '^depend' | cut -d '=' -f 2 | xargs)
+            if [ -n "$deps" ]; then
+                all_deps="$all_deps $deps"
+            fi
+        done
+        
+        # [FIX] 2. 统一安装依赖
+        if [ -n "$all_deps" ]; then
+            # 简单的去重处理 (虽然 yay 也能处理重复，但这样日志更好看)
+            local unique_deps=$(echo "$all_deps" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+            log "Dependencies found: $unique_deps"
+            
+            # 安装依赖
+            if ! exe runuser -u "$TARGET_USER" -- yay -S --noconfirm --needed --asdeps $unique_deps; then
                 error "Failed to install dependencies for local package '$pkg_name'."
                 return 1
             fi
         fi
 
-        log "Dependencies met. Installing local package..."
-        if exe runuser -u "$TARGET_USER" -- yay -U --noconfirm "$pkg_file"; then
+        log "Dependencies met. Installing all local packages..."
+        
+        # [FIX] 3. 一次性安装目录下所有的包文件
+        # "${pkg_files[@]}" 会正确展开为多个参数传递给 yay
+        if exe runuser -u "$TARGET_USER" -- yay -U --noconfirm "${pkg_files[@]}"; then
             success "Installed from local."; return 0
         else
             error "Local install failed."; return 1
