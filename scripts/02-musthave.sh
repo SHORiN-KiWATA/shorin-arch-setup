@@ -106,7 +106,7 @@ fi
 # ------------------------------------------------------------------------------
 section "Step 4/8" "Input Method (Fcitx5)"
 
-exe pacman -Syu --noconfirm --needed fcitx5-im fcitx5-rime rime-ice-pinyin-git fcitx5-mozc
+exe pacman -Syu --noconfirm --needed fcitx5-im fcitx5-rime rime-ice-pinyin-git
 
 log "Configuring Rime defaults..."
 TARGET_DIR="/etc/skel/.local/share/fcitx5/rime"
