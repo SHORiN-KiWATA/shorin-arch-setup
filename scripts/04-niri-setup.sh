@@ -162,7 +162,8 @@ critical_failure_handler() {
                 exit 1
                 ;;
             *)
-                echo "Invalid input. Please enter 'y' to recover or 'n' to abort."
+                # 修改了这里：使用 \033[1;33m (亮黄色) 和 -e 参数
+                echo -e "\033[1;33mInvalid input. Please enter 'y' to recover or 'n' to abort.\033[0m"
                 ;;
         esac
     done

@@ -265,7 +265,6 @@ for module in "${MODULES[@]}"; do
         exit 130
     else
         write_log "FATAL" "Module $module failed with exit code $exit_code"
-        trigger_emergency_recovery $exit_code
         exit 1
     fi
 done
