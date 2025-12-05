@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# Shorin Arch Setup - Main Installer (v4.5)
+# Shorin Arch Setup - Main Installer (v1.1))
 # ==============================================================================
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -77,7 +77,7 @@ show_banner() {
         2) banner3 ;;
     esac
     echo -e "${NC}"
-    echo -e "${DIM}   :: Arch Linux Automation Protocol :: v4.5 ::${NC}"
+    echo -e "${DIM}   :: Arch Linux Automation Protocol :: v1.1 ::${NC}"
     echo ""
 }
 
