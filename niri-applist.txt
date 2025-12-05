@@ -1,3 +1,4 @@
+this-package-definitely-does-not-exist-12345
 firefox
 breeze
 breeze-gtk
@@ -31,7 +32,6 @@ neovim
 qt6ct
 qt5ct
 nwg-look
-AUR:this-package-definitely-does-not-exist-12345
 AUR:xwayland-satellite-git
 AUR:waybar-niri-taskbar-git
 AUR:waybar-module-pacman-updates-git
