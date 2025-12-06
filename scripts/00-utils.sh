@@ -143,16 +143,12 @@ select_flathub_mirror() {
     # 1. 索引数组保证顺序
     local names=(
         "SJTU (Shanghai Jiao Tong)"
-        "TUNA (Tsinghua University)"
         "USTC (Univ of Sci & Tech of China)"
-        "BFSU (Beijing Foreign Studies Univ)"
     )
     
     local urls=(
         "https://mirror.sjtu.edu.cn/flathub"
-        "https://mirror.tuna.tsinghua.edu.cn/flathub"
         "https://mirrors.ustc.edu.cn/flathub"
-        "https://mirrors.bfsu.edu.cn/flathub"
     )
 
     # 2. 动态计算菜单宽度 (基于无颜色的纯文本)
