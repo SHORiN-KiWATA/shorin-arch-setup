@@ -229,7 +229,7 @@ if [ -f "$LIST_FILE" ]; then
         # -------------------------------------------------------------
         echo ""
         echo -e "   ${H_YELLOW}>>> Default installation will start in 60 seconds.${NC}"
-        echo -e "   ${H_CYAN}>>> Press [ANY KEY] to customize package selection...${NC}"
+        echo -e "   ${H_CYAN}>>> Press [!!ANY KEY!!] to [!!customize!!] package selection...${NC}"
         
         # read -t 120: Wait 120s
         # -n 1: Return after 1 char
