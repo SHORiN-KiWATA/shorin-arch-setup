@@ -1,22 +1,30 @@
-# --- System Packages (Yay/Pacman) ---
-steam
-mpv
-fragments
-btop
-gnome-disk-utility
-dosfstools
-ntfs-3g
-exfatprogs
-f2fs-tools
-udftools
-xfsprogs
-baobab
-#==========AUR Packages===================
-AUR:linuxqq-appimage
-AUR:wechat-appimage
+# --- Gaming & Media ---
+steam                                    # Gaming Platform (Valve)
+mpv                                      # Minimalist High Performance Video Player
+fragments                                # BitTorrent Client (GNOME style)
+com.obsproject.Studio                    # OBS Studio (Streaming & Recording)
+
+# --- System Utilities ---
+btop                                     # Resource Monitor (TUI)
+gnome-disk-utility                       # Disk Management Utility (Disks)
+baobab                                   # Disk Usage Analyzer
+it.mijorus.gearlever                     # AppImage Manager (Integrates AppImages)
+
+# --- Filesystem Support ---
+dosfstools                               # Tools for FAT12/16/32 filesystems
+ntfs-3g                                  # NTFS filesystem driver
+exfatprogs                               # exFAT filesystem utilities
+f2fs-tools                               # Tools for Flash-Friendly File System
+udftools                                 # Tools for UDF filesystems (DVD/Optical)
+xfsprogs                                 # Tools for XFS filesystems
+
+# --- AUR Packages (Social) ---
+AUR:linuxqq-appimage                     # Tencent QQ (AppImage)
+AUR:wechat-appimage                      # WeChat (AppImage)
+
 # --- Flatpak Packages (Prefix with flatpak:) ---
-flatpak:io.github.fabrialberio.pinapp
-flatpak:it.mijorus.gearlever
-flatpak:com.obsproject.Studio
-flatpak:com.github.wwmm.easyeffects
-flatpak:io.github.ilya_zlobintsev.LACT
+flatpak:io.github.fabrialberio.pinapp    # PinApp (Unofficial Pinterest Client)
+flatpak:it.mijorus.gearlever             # Gear Lever (AppImage Manager)
+flatpak:com.obsproject.Studio            # OBS Studio (Streaming/Recording)
+flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire (Equalizer)
+flatpak:io.github.ilya_zlobintsev.LACT   # AMD GPU Control Tool (Overclocking/Fan)

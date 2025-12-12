@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 99-apps.sh - Common Applications (Batch Yay + Individual Flatpak + No Retry)
+# 99-apps.sh - Common Applications (FZF Menu + Batch Yay + Flatpak)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,6 +9,12 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
+
+# Ensure FZF is installed
+if ! command -v fzf &> /dev/null; then
+    log "Installing dependency: fzf..."
+    pacman -S --noconfirm fzf >/dev/null 2>&1
+fi
 
 trap 'echo -e "\n   ${H_YELLOW}>>> Operation cancelled by user (Ctrl+C). Skipping...${NC}"' INT
 
@@ -29,60 +35,157 @@ HOME_DIR="/home/$TARGET_USER"
 info_kv "Target" "$TARGET_USER"
 
 # ------------------------------------------------------------------------------
-# 1. List Selection & Confirmation
+# 1. List Selection (FZF with Countdown)
 # ------------------------------------------------------------------------------
 if [ "$DESKTOP_ENV" == "kde" ]; then
     LIST_FILENAME="kde-common-applist.txt"
 else
     LIST_FILENAME="common-applist.txt"
 fi
-
-echo ""
-echo -e "   Selected List: ${BOLD}$LIST_FILENAME${NC} (Based on $DESKTOP_ENV)"
-echo -e "   Format: ${DIM}lines starting with 'flatpak:' use Flatpak, others use Yay.${NC}"
-echo -e "   ${H_YELLOW}Tip: Press Ctrl+C to cancel current operation.${NC}"
-echo ""
-
-read -t 60 -p "$(echo -e "   ${H_CYAN}Install these applications? [Y/n] (Default Y in 60s): ${NC}")" choice
-if [ $? -ne 0 ]; then echo ""; fi
-
-choice=${choice:-Y}
-
-if [[ ! "$choice" =~ ^[Yy]$ ]]; then
-    log "Skipping application installation."
-    trap - INT
-    exit 0
-fi
-
-# ------------------------------------------------------------------------------
-# 2. Parse App List
-# ------------------------------------------------------------------------------
-log "Parsing application list..."
-
 LIST_FILE="$PARENT_DIR/$LIST_FILENAME"
+
 YAY_APPS=()
 FLATPAK_APPS=()
 FAILED_PACKAGES=()
 
-if [ -f "$LIST_FILE" ]; then
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        line=$(echo "$line" | tr -d '\r' | xargs)
-        [[ -z "$line" || "$line" =~ ^# ]] && continue
-        
-        if [[ "$line" == flatpak:* ]]; then
-            app_id="${line#flatpak:}"
-            FLATPAK_APPS+=("$app_id")
-        else
-            YAY_APPS+=("$line")
-        fi
-    done < "$LIST_FILE"
-    
-    info_kv "Total Found" "Yay: ${#YAY_APPS[@]}" "Flatpak: ${#FLATPAK_APPS[@]}"
-else
+if [ ! -f "$LIST_FILE" ]; then
     warn "File $LIST_FILENAME not found. Skipping."
     trap - INT
     exit 0
 fi
+
+# ---------------------------------------------------------
+# 1.1 Pre-process List & Countdown
+# ---------------------------------------------------------
+
+# Generate a clean list for FZF logic
+# Logic:
+# 1. Split line by '#'
+# 2. Left part: Check prefix (flatpak:/AUR:) -> Determine Type -> Strip Prefix -> Clean Name
+# 3. Right part: Clean Description
+# 4. Output: "CleanName <TAB> # [Type] Description"
+mapfile -t PARSED_LIST < <(grep -vE "^\s*#|^\s*$" "$LIST_FILE" | awk -F'#' '{
+    # $1 is package part, $2 is description part
+    pkg_part = $1
+    desc_part = $2
+    
+    # Trim whitespace
+    gsub(/[ \t]+$/, "", pkg_part)
+    gsub(/^[ \t]+/, "", pkg_part)
+    if (desc_part != "") {
+        gsub(/^[ \t]+|[ \t]+$/, "", desc_part)
+    }
+
+    # Identify Type & Strip Prefix
+    if (pkg_part ~ /^flatpak:/) {
+        sub(/^flatpak:/, "", pkg_part)
+        type_tag = "[Flatpak]"
+    } else if (pkg_part ~ /^AUR:/) {
+        sub(/^AUR:/, "", pkg_part)
+        type_tag = "[AUR]"
+    } else {
+        type_tag = "[Repo]"
+    }
+
+    # Format output for FZF
+    # If description exists, append it; otherwise just show type
+    if (desc_part != "") {
+        printf "%s\t# %s %s\n", pkg_part, type_tag, desc_part
+    } else {
+        printf "%s\t# %s\n", pkg_part, type_tag
+    }
+}')
+
+if [ ${#PARSED_LIST[@]} -eq 0 ]; then
+    warn "App list is empty. Skipping."
+    trap - INT
+    exit 0
+fi
+
+echo ""
+echo -e "   Selected List: ${BOLD}$LIST_FILENAME${NC}"
+echo -e "   ${H_YELLOW}>>> Default installation will start in 120 seconds.${NC}"
+echo -e "   ${H_CYAN}>>> Press [ANY KEY] to customize selection...${NC}"
+
+if read -t 120 -n 1 -s -r; then
+    USER_INTERVENTION=true
+else
+    USER_INTERVENTION=false
+fi
+
+# ---------------------------------------------------------
+# 1.2 Selection Logic
+# ---------------------------------------------------------
+SELECTED_RAW=""
+
+if [ "$USER_INTERVENTION" = true ]; then
+    # --- Interactive FZF ---
+    clear
+    echo -e "\n  Loading application list..."
+    
+    # Using printf to feed array safely into fzf
+    # Note: PARSED_LIST already contains Tabs from awk, so we don't need extra sed here
+    SELECTED_RAW=$(printf "%s\n" "${PARSED_LIST[@]}" | \
+        fzf --multi \
+            --layout=reverse \
+            --border \
+            --margin=1,2 \
+            --prompt="Search App > " \
+            --pointer=">>" \
+            --marker="* " \
+            --delimiter=$'\t' \
+            --with-nth=1 \
+            --bind 'load:select-all' \
+            --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
+            --info=inline \
+            --header="[TAB] TOGGLE | [ENTER] INSTALL | [CTRL-D] DE-ALL | [CTRL-A] SE-ALL" \
+            --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
+            --preview-window=right:45%:wrap:border-left \
+            --color=dark \
+            --color=fg+:white,bg+:black \
+            --color=hl:blue,hl+:blue:bold \
+            --color=header:yellow:bold \
+            --color=info:magenta \
+            --color=prompt:cyan,pointer:cyan:bold,marker:green:bold \
+            --color=spinner:yellow)
+    
+    clear
+    
+    if [ -z "$SELECTED_RAW" ]; then
+        log "Skipping application installation (User cancelled)."
+        trap - INT
+        exit 0
+    fi
+else
+    # --- Auto Confirm (Timeout) ---
+    log "Timeout reached (120s). Auto-confirming ALL applications."
+    SELECTED_RAW=$(printf "%s\n" "${PARSED_LIST[@]}")
+fi
+
+# ------------------------------------------------------------------------------
+# 2. Categorize Selection
+# ------------------------------------------------------------------------------
+log "Processing selection..."
+
+# Loop through the raw FZF output (format: "Name <TAB> # [Type] Description")
+while IFS= read -r line; do
+    # Extract Name (Before TAB)
+    pkg_name=$(echo "$line" | cut -f1 -d$'\t' | xargs)
+    # Extract Type info (From description part, used to identify flatpak)
+    # The description part looks like: "# [Flatpak] Some description"
+    pkg_meta=$(echo "$line" | cut -f2 -d$'\t')
+    
+    [[ -z "$pkg_name" ]] && continue
+
+    if [[ "$pkg_meta" == *"[Flatpak]"* ]]; then
+        FLATPAK_APPS+=("$pkg_name")
+    else
+        # Both [Repo] and [AUR] go to Yay
+        YAY_APPS+=("$pkg_name")
+    fi
+done <<< "$SELECTED_RAW"
+
+info_kv "Scheduled" "Yay/AUR: ${#YAY_APPS[@]}" "Flatpak: ${#FLATPAK_APPS[@]}"
 
 # ------------------------------------------------------------------------------
 # 3. Install Applications
@@ -190,15 +293,6 @@ if [ -f "$NATIVE_DESKTOP" ]; then
     else
         log "Native Steam already patched."
     fi
-fi
-
-# Method 2: Flatpak Steam
-# Re-check installed flatpaks to see if Steam is present
-if flatpak list | grep -q "com.valvesoftware.Steam"; then
-    log "Checking Flatpak Steam..."
-    exe flatpak override --env=LANG=zh_CN.UTF-8 com.valvesoftware.Steam
-    success "Applied Flatpak Steam override."
-    STEAM_desktop_modified=true
 fi
 
 if [ "$STEAM_desktop_modified" = false ]; then
