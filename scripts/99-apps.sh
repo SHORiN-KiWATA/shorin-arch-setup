@@ -104,10 +104,10 @@ fi
 
 echo ""
 echo -e "   Selected List: ${BOLD}$LIST_FILENAME${NC}"
-echo -e "   ${H_YELLOW}>>> Default installation will start in 120 seconds.${NC}"
-echo -e "   ${H_CYAN}>>> Press [ANY KEY] to customize selection...${NC}"
+echo -e "   ${H_YELLOW}>>> Default installation will start in 60 seconds.${NC}"
+echo -e "   ${H_CYAN}>>> Press [!!!ANY KEY!!!] to [!!!customize!!!] selection...${NC}"
 
-if read -t 120 -n 1 -s -r; then
+if read -t 60 -n 1 -s -r; then
     USER_INTERVENTION=true
 else
     USER_INTERVENTION=false
