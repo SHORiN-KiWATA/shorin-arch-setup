@@ -1,8 +1,6 @@
 # --- System Packages (Yay/Pacman) ---
 steam
 mpv
-linuxqq-appimage
-wechat-appimage
 fragments
 btop
 gnome-disk-utility
@@ -13,7 +11,9 @@ f2fs-tools
 udftools
 xfsprogs
 baobab
-
+#==========AUR Packages===================
+AUR:linuxqq-appimage
+AUR:wechat-appimage
 # --- Flatpak Packages (Prefix with flatpak:) ---
 flatpak:io.github.fabrialberio.pinapp
 flatpak:it.mijorus.gearlever
