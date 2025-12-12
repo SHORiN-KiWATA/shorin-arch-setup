@@ -247,7 +247,7 @@ if [ -f "$LIST_FILE" ]; then
             --bind 'load:select-all' \
             --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
             --info=inline \
-            --header="  [ TAB ] TOGGLE   |   [ ENTER ] CONFIRM   |   [ CTRL-D ] DESELECT ALL  " \
+            --header=" [ TAB ] TOGGLE | [ ENTER ] CONFIRM | [ CTRL-D ] DESELECT ALL | [CTRL-A] SELEDCT ALL" \
             --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
             --preview-window=right:50%:wrap:border-left \
             --color=dark \
