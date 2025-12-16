@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 04-niri-setup.sh - Niri Desktop (Visual Enhanced & Interactive Rollback)
+# 04-niri-setup.sh - Niri Desktop (Final Optimized)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,105 +10,119 @@ source "$SCRIPT_DIR/00-utils.sh"
 
 DEBUG=${DEBUG:-0}
 CN_MIRROR=${CN_MIRROR:-0}
-
-# 定义回滚脚本位置
 UNDO_SCRIPT="$SCRIPT_DIR/niri-undochange.sh"
+
+# --- [CONFIGURATION] ---
+# LazyVim 硬性依赖列表
+LAZYVIM_DEPS=("neovim" "ripgrep" "fd" "ttf-jetbrains-mono-nerd" "git")
 
 check_root
 
-# Ensure whiptail is installed for TUI
-if ! command -v whiptail &> /dev/null; then
-    log "Installing dependency: whiptail (libnewt)..."
-    pacman -S --noconfirm libnewt >/dev/null 2>&1
-fi
+# --- [HELPER FUNCTIONS] ---
 
-section "Phase 4" "Niri Desktop Environment"
-
-# ==============================================================================
-# [NEW] STEP 0: Safety Checkpoint & Critical Error Handler
-# ==============================================================================
-
-# 1. Create Checkpoint
-create_checkpoint() {
-    local marker="Before Niri Setup"
-    
-    if snapper -c root list | grep -q "$marker"; then
-        log "Checkpoint '$marker' already exists. Ready to proceed."
-    else
-        log "Creating safety checkpoint: '$marker'..."
-        snapper -c root create -d "$marker"
-        if snapper -c home list &>/dev/null; then
-            snapper -c home create -d "$marker"
-        fi
-        success "Checkpoint created."
-    fi
+# 1. 简化的用户执行封装
+as_user() {
+    runuser -u "$TARGET_USER" -- "$@"
 }
 
-create_checkpoint
-
-# 2. Critical Failure Handler (The "Big Red Box" Interactive Logic)
+# 2. Critical Failure Handler (The "Big Red Box" - Safe Alignment)
 critical_failure_handler() {
     local failed_reason="$1"
-    
-    # Disable trap to prevent loops during input
     trap - ERR
 
     echo ""
     echo -e "\033[0;31m################################################################\033[0m"
     echo -e "\033[0;31m#                                                              #\033[0m"
     echo -e "\033[0;31m#   CRITICAL INSTALLATION FAILURE DETECTED                     #\033[0m"
-    echo -e "\033[0;31m#   Reason: $failed_reason                                     #\033[0m"
-    echo -e "\033[0;31m#   Status: System might be in an inconsistent state.          #\033[0m"
+    echo -e "\033[0;31m#                                                              #\033[0m"
+    echo -e "\033[0;31m#   Reason: $failed_reason\033[0m"
     echo -e "\033[0;31m#                                                              #\033[0m"
     echo -e "\033[0;31m#   OPTIONS:                                                   #\033[0m"
-    echo -e "\033[0;31m#   1. Restore snapshot (Undo changes)                         #\033[0m"
-    echo -e "\033[0;31m#   2. Fix the issue manually and re-run: sudo bash install.sh #\033[0m"
+    echo -e "\033[0;31m#   1. Restore snapshot (Recommended safety rollback)          #\033[0m"
+    echo -e "\033[0;31m#   2. Fix manually and re-run: sudo bash install.sh           #\033[0m"
     echo -e "\033[0;31m#                                                              #\033[0m"
     echo -e "\033[0;31m################################################################\033[0m"
     echo ""
 
     while true; do
-        # No default option (-p prompt only)
         read -p "Execute System Recovery (Restore Snapshot)? [y/n]: " -r choice
         case "$choice" in 
-            [yY][eE][sS]|[yY]) 
+            [yY]*) 
                 if [ -f "$UNDO_SCRIPT" ]; then
-                    warn "Executing recovery script: $UNDO_SCRIPT"
+                    warn "Executing recovery script..."
                     bash "$UNDO_SCRIPT"
-                    exit 1 # The undo script handles reboot, but just in case
+                    exit 1
                 else
-                    error "Recovery script not found at: $UNDO_SCRIPT"
-                    error "You are on your own. Good luck."
+                    error "Recovery script missing! You are on your own."
                     exit 1
                 fi
                 ;;
-            [nN][oO]|[nN])
+            [nN]*) 
                 warn "User chose NOT to recover."
-                warn "You can fix the error and re-run 'sudo bash install.sh'."
+                warn "Please fix the issue manually before re-running."
                 error "Installation aborted."
-                exit 1
+                exit 1 
                 ;;
-            *)
-                echo -e "\033[1;33mInvalid input. Please enter 'y' to recover or 'n' to abort/retry manually.\033[0m"
-                ;;
+            *) echo "Invalid input. Please enter 'y' or 'n'." ;;
         esac
     done
 }
 
-# 3. Enable Trap for Unexpected Errors
-trap 'critical_failure_handler "Script Error at Line $LINENO"' ERR
+# 3. 通用包安装验证函数
+ensure_package_installed() {
+    local pkg="$1"
+    local context="$2" # e.g., "Repo" or "AUR"
 
+    if pacman -Q "$pkg" &>/dev/null; then
+        return 0
+    fi
+
+    warn "Package '$pkg' missing or failed. Retrying ($context)..."
+    as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None "$pkg" || true
+
+    if ! pacman -Q "$pkg" &>/dev/null; then
+        critical_failure_handler "Failed to install '$pkg' ($context)."
+    fi
+}
+
+# Ensure whiptail
+if ! command -v whiptail &> /dev/null; then
+    log "Installing dependency: whiptail..."
+    pacman -S --noconfirm libnewt >/dev/null 2>&1
+fi
+
+section "Phase 4" "Niri Desktop Environment"
+
+# ==============================================================================
+# STEP 0: Safety Checkpoint
+# ==============================================================================
+
+create_checkpoint() {
+    local marker="Before Niri Setup"
+    if snapper -c root list | grep -q "$marker"; then
+        log "Checkpoint '$marker' already exists."
+    else
+        log "Creating safety checkpoint..."
+        snapper -c root create -d "$marker"
+        snapper -c home list &>/dev/null && snapper -c home create -d "$marker"
+        success "Checkpoint created."
+    fi
+}
+create_checkpoint
+
+# Enable Trap
+trap 'critical_failure_handler "Script Error at Line $LINENO"' ERR
 
 # ==============================================================================
 # STEP 1: Identify User & DM Check
 # ==============================================================================
 log "Identifying user..."
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-if [ -n "$DETECTED_USER" ]; then TARGET_USER="$DETECTED_USER"; else read -p "Target user: " TARGET_USER; fi
+TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
 HOME_DIR="/home/$TARGET_USER"
 info_kv "Target" "$TARGET_USER"
 
-log "Checking Display Managers..."
+# DM Check
 KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd")
 SKIP_AUTOLOGIN=false
 DM_FOUND=""
@@ -117,49 +131,45 @@ for dm in "${KNOWN_DMS[@]}"; do
 done
 
 if [ -n "$DM_FOUND" ]; then
-    info_kv "Conflict" "${H_RED}$DM_FOUND${NC}" "Package detected"
-    warn "TTY auto-login will be DISABLED."
+    info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
     SKIP_AUTOLOGIN=true
 else
-    info_kv "DM Check" "None"
-    # Using || true to ensure read timeout doesn't trigger TRAP ERR
-    read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y in 20s): ${NC}")" choice || true
-    if [ $? -ne 0 ]; then echo ""; fi
-    choice=${choice:-Y}
-    if [[ ! "$choice" =~ ^[Yy]$ ]]; then SKIP_AUTOLOGIN=true; else SKIP_AUTOLOGIN=false; fi
+    read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
+    [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
 fi
 
 # ==============================================================================
-# STEP 2: Core Components
+# STEP 2: Core Components (The ONLY -Syu)
 # ==============================================================================
 section "Step 1/9" "Core Components"
+# Optimization: This is the ONLY time we refresh the database and update system
 PKGS="niri xdg-desktop-portal-gnome fuzzel kitty firefox libnotify mako polkit-gnome"
 exe pacman -Syu --noconfirm --needed $PKGS
 
 log "Configuring Firefox Policies..."
-FIREFOX_POLICY_DIR="/etc/firefox/policies"
-exe mkdir -p "$FIREFOX_POLICY_DIR"
-cat <<EOT > "$FIREFOX_POLICY_DIR/policies.json"
-{
-  "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } }
-}
-EOT
-exe chmod 755 "$FIREFOX_POLICY_DIR"
-exe chmod 644 "$FIREFOX_POLICY_DIR/policies.json"
-success "Firefox policy applied."
+POL_DIR="/etc/firefox/policies"
+exe mkdir -p "$POL_DIR"
+echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' > "$POL_DIR/policies.json"
+exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
 
 # ==============================================================================
 # STEP 3: File Manager
 # ==============================================================================
 section "Step 2/9" "File Manager"
-exe pacman -Syu --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
-if [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then exe ln -sf /usr/bin/kitty /usr/bin/gnome-terminal; fi
+# Optimization: No -y or -u
+exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
+
+if [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then 
+    exe ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
+fi
+
+# Nautilus Nvidia/Input Fix
 DESKTOP_FILE="/usr/share/applications/org.gnome.Nautilus.desktop"
 if [ -f "$DESKTOP_FILE" ]; then
     GPU_COUNT=$(lspci | grep -E -i "vga|3d" | wc -l)
     HAS_NVIDIA=$(lspci | grep -E -i "nvidia" | wc -l)
     ENV_VARS="env GTK_IM_MODULE=fcitx"
-    if [ "$GPU_COUNT" -gt 1 ] && [ "$HAS_NVIDIA" -gt 0 ]; then ENV_VARS="env GSK_RENDERER=gl GTK_IM_MODULE=fcitx"; fi
+    [ "$GPU_COUNT" -gt 1 ] && [ "$HAS_NVIDIA" -gt 0 ] && ENV_VARS="env GSK_RENDERER=gl GTK_IM_MODULE=fcitx"
     
     if ! grep -q "^Exec=$ENV_VARS" "$DESKTOP_FILE"; then
         exe sed -i "s|^Exec=|Exec=$ENV_VARS |" "$DESKTOP_FILE"
@@ -170,361 +180,215 @@ fi
 # STEP 4: Network Optimization
 # ==============================================================================
 section "Step 3/9" "Network Optimization"
-exe pacman -Syu --noconfirm --needed flatpak gnome-software
+exe pacman -S --noconfirm --needed flatpak gnome-software
 exe flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 CURRENT_TZ=$(readlink -f /etc/localtime)
 IS_CN_ENV=false
-
-if [[ "$CURRENT_TZ" == *"Shanghai"* ]]; then
+if [[ "$CURRENT_TZ" == *"Shanghai"* ]] || [ "$CN_MIRROR" == "1" ] || [ "$DEBUG" == "1" ]; then
     IS_CN_ENV=true
-    info_kv "Region" "China (Timezone)"
-elif [ "$CN_MIRROR" == "1" ]; then
-    IS_CN_ENV=true
-    info_kv "Region" "China (Manual Env)"
-elif [ "$DEBUG" == "1" ]; then
-    IS_CN_ENV=true
-    warn "DEBUG MODE: Forcing China Environment"
+    info_kv "Region" "China Optimization Active"
 fi
 
 if [ "$IS_CN_ENV" = true ]; then
-    log "Enabling China Optimizations..."
     select_flathub_mirror
-    success "Optimizations Enabled."
 else
     log "Using Global Sources."
 fi
 
-log "Configuring temporary sudo access..."
 SUDO_TEMP_FILE="/etc/sudoers.d/99_shorin_installer_temp"
 echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDO_TEMP_FILE"
 chmod 440 "$SUDO_TEMP_FILE"
 
 # ==============================================================================
-# STEP 5: Dependencies
+# STEP 5: Dependencies (Updated)
 # ==============================================================================
 section "Step 4/9" "Dependencies"
 LIST_FILE="$PARENT_DIR/niri-applist.txt"
 
-# 0. Ensure FZF is installed
-if ! command -v fzf &> /dev/null; then
-    log "Installing dependency: fzf..."
-    pacman -S --noconfirm fzf >/dev/null 2>&1
-fi
-
-# Verification Function
-verify_installation() {
-    local pkg="$1"
-    if pacman -Q "$pkg" &>/dev/null; then return 0; else return 1; fi
-}
+# Ensure tools
+command -v fzf &> /dev/null || pacman -S --noconfirm fzf >/dev/null 2>&1
 
 if [ -f "$LIST_FILE" ]; then
-    # Pre-load CLEAN default list
     mapfile -t DEFAULT_LIST < <(grep -vE "^\s*#|^\s*$" "$LIST_FILE" | sed 's/#.*//; s/AUR://g' | xargs -n1)
 
     if [ ${#DEFAULT_LIST[@]} -eq 0 ]; then
         warn "App list is empty. Skipping."
         PACKAGE_ARRAY=()
     else
-        echo ""
-        echo -e "   ${H_YELLOW}>>> Default installation will start in 60 seconds.${NC}"
-        echo -e "   ${H_RED}${BOLD}>>> WARNING: AUR packages may fail due to unstable github connection!${NC}"
-        echo -e "   ${H_CYAN}>>> Press ANY KEY to customize package selection...${NC}"
-
-        
+        echo -e "\n   ${H_YELLOW}>>> Default installation in 60s. Press ANY KEY to customize...${NC}"
         if read -t 60 -n 1 -s -r; then
-            USER_INTERVENTION=true
-        else
-            USER_INTERVENTION=false
-        fi
-        
-        if [ "$USER_INTERVENTION" = true ]; then
+            # FZF Selection Logic
             clear
-            echo -e "\n  Loading package list..."
-
-            SELECTED_LINES=$(grep -vE "^\s*#|^\s*$" "$LIST_FILE" | \
-                sed -E 's/[[:space:]]+#/\t#/' | \
-                fzf --multi \
-                    --layout=reverse \
-                    --border \
-                    --margin=1,2 \
-                    --prompt="Search Pkg > " \
-                    --pointer=">>" \
-                    --marker="* " \
-                    --delimiter=$'\t' \
-                    --with-nth=1 \
-                    --bind 'load:select-all' \
-                    --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
-                    --info=inline \
-                    --header="[TAB] TOGGLE | [ENTER] INSTALL | [CTRL-D] DE-ALL | [CTRL-A] SE-ALL" \
-                    --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
-                    --preview-window=right:50%:wrap:border-left \
-                    --color=dark \
-                    --color=fg+:white,bg+:black \
-                    --color=hl:blue,hl+:blue:bold \
-                    --color=header:yellow:bold \
-                    --color=info:magenta \
-                    --color=prompt:cyan,pointer:cyan:bold,marker:green:bold \
-                    --color=spinner:yellow)
+            log "Loading package list..."
+            SELECTED_LINES=$(grep -vE "^\s*#|^\s*$" "$LIST_FILE" | sed -E 's/[[:space:]]+#/\t#/' | \
+                fzf --multi --layout=reverse --border --prompt="Search > " --delimiter=$'\t' --with-nth=1 --preview "echo {} | cut -f2 -d$'\t'")
             
             clear
-
-            if [ -z "$SELECTED_LINES" ]; then
-                warn "User cancelled selection. Installing NOTHING."
-                PACKAGE_ARRAY=()
-            else
-                PACKAGE_ARRAY=()
+            PACKAGE_ARRAY=()
+            if [ -n "$SELECTED_LINES" ]; then
                 while IFS= read -r line; do
-                    raw_pkg=$(echo "$line" | cut -f1 -d$'\t' | xargs)
-                    clean_pkg="${raw_pkg#AUR:}"
+                    clean_pkg=$(echo "$line" | cut -f1 -d$'\t' | xargs)
+                    clean_pkg="${clean_pkg#AUR:}"
                     [ -n "$clean_pkg" ] && PACKAGE_ARRAY+=("$clean_pkg")
                 done <<< "$SELECTED_LINES"
             fi
-            
         else
-            echo "" 
-            log "Timeout reached. Auto-confirming ALL packages."
+            log "Auto-confirming ALL packages."
             PACKAGE_ARRAY=("${DEFAULT_LIST[@]}")
         fi
     fi
 
-    # --------------------------------------------------------------------------
-    # [NEW] Pre-Installation Filter: Handle Pseudo-packages (LazyVim)
-    # --------------------------------------------------------------------------
+    # --- Pre-Installation Filter (LazyVim Interceptor) ---
     INSTALL_LAZYVIM=false
     FINAL_ARRAY=()
-
     if [ ${#PACKAGE_ARRAY[@]} -gt 0 ]; then
         for pkg in "${PACKAGE_ARRAY[@]}"; do
-            # 转换为小写比较
-            lower_pkg=$(echo "$pkg" | tr '[:upper:]' '[:lower:]')
-            
-            if [ "$lower_pkg" == "lazyvim" ]; then
+            if [ "${pkg,,}" == "lazyvim" ]; then # ${var,,} converts to lowercase
                 INSTALL_LAZYVIM=true
-                # 自动注入 LazyVim 的硬性依赖
-                FINAL_ARRAY+=("neovim" "ripgrep" "fd" "ttf-jetbrains-mono-nerd" "git")
-                info_kv "Config" "LazyVim detected" "Dependencies injected"
+                FINAL_ARRAY+=("${LAZYVIM_DEPS[@]}")
+                info_kv "Config" "LazyVim detected" "Setup deferred to post-dotfiles"
             else
                 FINAL_ARRAY+=("$pkg")
             fi
         done
-        # 更新 PACKAGE_ARRAY 为过滤后的真实包名列表
         PACKAGE_ARRAY=("${FINAL_ARRAY[@]}")
     fi
 
-    # === INSTALLATION PHASE ===
+    # --- Installation Loop ---
     if [ ${#PACKAGE_ARRAY[@]} -gt 0 ]; then
         BATCH_LIST=()
         AUR_LIST=()
-
         info_kv "Target" "${#PACKAGE_ARRAY[@]} packages scheduled."
 
         for pkg in "${PACKAGE_ARRAY[@]}"; do
             [ "$pkg" == "imagemagic" ] && pkg="imagemagick"
-            if [[ "$pkg" == "AUR:"* ]]; then
-                clean_pkg="${pkg#AUR:}"
-                AUR_LIST+=("$clean_pkg")
-            else
-                BATCH_LIST+=("$pkg")
-            fi
+            [[ "$pkg" == "AUR:"* ]] && AUR_LIST+=("${pkg#AUR:}") || BATCH_LIST+=("$pkg")
         done
 
-        # 1. Repo Packages (Batch)
+        # 1. Batch Install Repo Packages
         if [ ${#BATCH_LIST[@]} -gt 0 ]; then
-            log "Phase 1: Installing Repository Packages..."
-            # 使用 || true 防止 yay 返回非零退出码中断脚本
-            exe runuser -u "$TARGET_USER" -- yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "${BATCH_LIST[@]}" || true
+            log "Phase 1: Batch Installing Repo Packages..."
+            # Using || true to prevent exit on minor errors, handled by verification
+            as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None "${BATCH_LIST[@]}" || true
             
-            # Verify
+            # Verify Each
             for pkg in "${BATCH_LIST[@]}"; do
-                if ! verify_installation "$pkg"; then
-                    warn "Verification failed for '$pkg'. Retrying..."
-                    exe runuser -u "$TARGET_USER" -- yay -Syu --noconfirm --needed "$pkg" || true
-                    if ! verify_installation "$pkg"; then
-                         critical_failure_handler "Failed to install '$pkg' (Repo)."
-                    fi
-                fi
+                ensure_package_installed "$pkg" "Repo"
             done
         fi
 
-        # 2. AUR Packages (Sequential)
+        # 2. Sequential AUR Install
         if [ ${#AUR_LIST[@]} -gt 0 ]; then
             log "Phase 2: Installing AUR Packages..."
-            for aur_pkg in "${AUR_LIST[@]}"; do
-                log "Processing '$aur_pkg'..."
-                runuser -u "$TARGET_USER" -- yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "$aur_pkg" || true
-                
-                if ! verify_installation "$aur_pkg"; then
-                    warn "Retrying '$aur_pkg'..."
-                    runuser -u "$TARGET_USER" -- yay -Syu --noconfirm --needed "$aur_pkg" || true
-                    if ! verify_installation "$aur_pkg"; then
-                         critical_failure_handler "Failed to install '$aur_pkg' (AUR)."
-                    fi
-                fi
+            for pkg in "${AUR_LIST[@]}"; do
+                ensure_package_installed "$pkg" "AUR"
             done
         fi
         
-        # Waybar Check
+        # Waybar fallback
         if ! command -v waybar &> /dev/null; then
             warn "Waybar missing. Installing stock..."
-            exe pacman -Syu --noconfirm --needed waybar
+            exe pacman -S --noconfirm --needed waybar
         fi
-
-        # --------------------------------------------------------------------------
-        # [NEW] Post-Installation Configuration: LazyVim
-        # --------------------------------------------------------------------------
-        if [ "$INSTALL_LAZYVIM" = true ]; then
-            section "Config" "Setting up LazyVim"
-            NVIM_CONFIG_DIR="$HOME_DIR/.config/nvim"
-            
-            # 1. 备份旧配置
-            if [ -d "$NVIM_CONFIG_DIR" ]; then
-                BACKUP_NVIM="$HOME_DIR/.config/nvim.bak.$(date +%s)"
-                warn "Existing Neovim config detected. Backing up to $BACKUP_NVIM..."
-                mv "$NVIM_CONFIG_DIR" "$BACKUP_NVIM"
-            fi
-
-            # 2. 克隆 LazyVim Starter
-            log "Cloning LazyVim starter template..."
-            if runuser -u "$TARGET_USER" -- git clone https://github.com/LazyVim/starter "$NVIM_CONFIG_DIR"; then
-                # 移除 .git 目录
-                rm -rf "$NVIM_CONFIG_DIR/.git"
-                success "LazyVim installed successfully."
-            else
-                error "Failed to clone LazyVim."
-            fi
-        fi
-
+        
+        # Note: LazyVim configuration is deliberately skipped here to avoid 
+        # backup conflicts with the Dotfiles step. It runs in Step 6.
     else
-        warn "No packages selected/found."
+        warn "No packages selected."
     fi
 else
     warn "niri-applist.txt not found."
 fi
 
 # ==============================================================================
-# STEP 6: Dotfiles (Modified Logic)
+# STEP 6: Dotfiles & LazyVim
 # ==============================================================================
 section "Step 5/9" "Deploying Dotfiles"
 
 REPO_GITHUB="https://github.com/SHORiN-KiWATA/ShorinArchExperience-ArchlinuxGuide.git"
 REPO_GITEE="https://gitee.com/shorinkiwata/ShorinArchExperience-ArchlinuxGuide.git"
 TEMP_DIR="/tmp/shorin-repo"
-
-# 1. Clean previous temp
 rm -rf "$TEMP_DIR"
-log "Cloning configuration repository..."
 
-# 2. Clone Repository
-if runuser -u "$TARGET_USER" -- git clone "$REPO_GITHUB" "$TEMP_DIR"; then
-    success "Cloned successfully (Source: GitHub)."
-else
-    warn "GitHub clone failed. Attempting fallback to Gitee..."
+log "Cloning configuration..."
+if ! as_user git clone "$REPO_GITHUB" "$TEMP_DIR"; then
+    warn "GitHub failed. Trying Gitee..."
     rm -rf "$TEMP_DIR"
-    
-    if runuser -u "$TARGET_USER" -- git clone "$REPO_GITEE" "$TEMP_DIR"; then
-        success "Cloned successfully (Source: Gitee)."
-    else
-        error "Clone failed from both GitHub and Gitee."
-        critical_failure_handler "Failed to clone dotfiles from GitHub and Gitee."
+    if ! as_user git clone "$REPO_GITEE" "$TEMP_DIR"; then
+        critical_failure_handler "Failed to clone dotfiles from any source."
     fi
 fi
 
 if [ -d "$TEMP_DIR/dotfiles" ]; then
-    # ==============================================================================
-    # 2. FILTER: Remove Excluded Folders (IN TEMP DIR)
-    # ==============================================================================
-    
-    # [MODIFIED] Only exclude files if user is NOT shorin
+    # Filter Exclusions
     if [ "$TARGET_USER" != "shorin" ]; then
         EXCLUDE_FILE="$PARENT_DIR/exclude-dotfiles.txt"
-        
         if [ -f "$EXCLUDE_FILE" ]; then
-            log "Processing exclusion list (cleaning temp source)..."
-            
-            # Clean carriage returns and ignore comments
-            mapfile -t EXCLUDES < <(grep -vE "^\s*#|^\s*$" "$EXCLUDE_FILE" | tr -d '\r')
-            
-            for item in "${EXCLUDES[@]}"; do
-                item=$(echo "$item" | xargs) # Trim spaces
-                [ -z "$item" ] && continue
-                
-                # Target is inside .config/
-                RM_PATH="$TEMP_DIR/dotfiles/.config/$item"
-                
-                if [ -e "$RM_PATH" ]; then
-                    log "Excluding (Removing from source): .config/$item"
-                    rm -rf "$RM_PATH"
-                fi
-            done
-        else
-            log "No exclusion file found ($EXCLUDE_FILE), skipping exclusion filter."
+            log "Processing exclusions..."
+            while IFS= read -r item; do
+                item=$(echo "$item" | tr -d '\r' | xargs)
+                [ -n "$item" ] && [[ ! "$item" =~ ^# ]] && rm -rf "$TEMP_DIR/dotfiles/.config/$item"
+            done < "$EXCLUDE_FILE"
         fi
-    else
-        log "User is shorin. Skipping exclusion filter."
     fi
 
-    # ==============================================================================
-    # 3. APPLY: Backup & Move/Copy
-    # ==============================================================================
-    BACKUP_NAME="config_backup_$(date +%s).tar.gz"
-    log "Backing up existing .config..."
-    exe runuser -u "$TARGET_USER" -- tar -czf "$HOME_DIR/$BACKUP_NAME" -C "$HOME_DIR" .config
-    
-    log "Applying dotfiles to $HOME_DIR..."
-    # Copy all files (exclusions are already gone from source if applied)
-    exe runuser -u "$TARGET_USER" -- cp -rf "$TEMP_DIR/dotfiles/." "$HOME_DIR/"
+    # Backup & Apply
+    log "Backing up & Applying..."
+    as_user tar -czf "$HOME_DIR/config_backup_$(date +%s).tar.gz" -C "$HOME_DIR" .config
+    as_user cp -rf "$TEMP_DIR/dotfiles/." "$HOME_DIR/"
 
-    # ==============================================================================
-    # 4. POST-PROCESS: User-Specific Cleanup (AFTER Copy)
-    # ==============================================================================
-    
-    # Check if user is shorin
+    # Post-Process
     if [ "$TARGET_USER" != "shorin" ]; then
-        log "Non-shorin user detected: Cleaning specific configs..."
-        
-        # 4.1 Clear content of output.kdl (Empty the file)
-        OUTPUT_KDL="$HOME_DIR/.config/niri/output.kdl"
-        if [ -f "$OUTPUT_KDL" ]; then
-            log "Clearing monitor configuration content..."
-            runuser -u "$TARGET_USER" -- truncate -s 0 "$OUTPUT_KDL"
-        fi
-
-        # 4.2 Remove bookmarks
+        as_user truncate -s 0 "$HOME_DIR/.config/niri/output.kdl" 2>/dev/null
         rm -f "$HOME_DIR/.config/gtk-3.0/bookmarks"
     fi
 
-    # ==============================================================================
-    # 5. Fix Permissions & Symlinks
-    # ==============================================================================
-    log "Fixing GTK 4.0 symlinks..."
-    GTK4_CONF="$HOME_DIR/.config/gtk-4.0"
-    THEME_SRC="$HOME_DIR/.themes/adw-gtk3-dark/gtk-4.0"
-
-    exe runuser -u "$TARGET_USER" -- rm -rfv "$GTK4_CONF/gtk.css" "$GTK4_CONF/gtk-dark.css"
-    exe runuser -u "$TARGET_USER" -- ln -sf "$THEME_SRC/gtk-dark.css" "$GTK4_CONF/gtk-dark.css"
-    exe runuser -u "$TARGET_USER" -- ln -sf "$THEME_SRC/gtk.css" "$GTK4_CONF/gtk.css"
+    # Fix Symlinks & Permissions
+    GTK4="$HOME_DIR/.config/gtk-4.0"
+    THEME="$HOME_DIR/.themes/adw-gtk3-dark/gtk-4.0"
+    as_user rm -f "$GTK4/gtk.css" "$GTK4/gtk-dark.css"
+    as_user ln -sf "$THEME/gtk-dark.css" "$GTK4/gtk-dark.css"
+    as_user ln -sf "$THEME/gtk.css" "$GTK4/gtk.css"
 
     if command -v flatpak &>/dev/null; then
-        log "Applying Flatpak GTK theme overrides..."
-        exe runuser -u "$TARGET_USER" -- flatpak override --user --filesystem="$HOME_DIR/.themes"
-        exe runuser -u "$TARGET_USER" -- flatpak override --user --filesystem=xdg-config/gtk-4.0
-        exe runuser -u "$TARGET_USER" -- flatpak override --user --env=GTK_THEME=adw-gtk3-dark
+        as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
+        as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
+        as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
     fi
-
     success "Dotfiles Applied."
 else
     warn "Dotfiles missing in temp directory."
+fi
+
+# --- Post-Dotfiles Configuration: LazyVim ---
+if [ "$INSTALL_LAZYVIM" = true ]; then
+    section "Config" "Applying LazyVim Overrides"
+    NVIM_CFG="$HOME_DIR/.config/nvim"
+    
+    # Check if dotfiles or existing install put something here
+    if [ -d "$NVIM_CFG" ]; then
+        BACKUP_PATH="$HOME_DIR/.config/nvim.old.dotfiles.$(date +%s)"
+        warn "Collision detected. Moving existing nvim config to $BACKUP_PATH"
+        mv "$NVIM_CFG" "$BACKUP_PATH"
+    fi
+    
+    log "Cloning LazyVim starter..."
+    if as_user git clone https://github.com/LazyVim/starter "$NVIM_CFG"; then
+        rm -rf "$NVIM_CFG/.git"
+        success "LazyVim installed (Override)."
+    else
+        error "Failed to clone LazyVim."
+    fi
 fi
 
 # ==============================================================================
 # STEP 7: Wallpapers
 # ==============================================================================
 section "Step 6/9" "Wallpapers"
-WALL_DEST="$HOME_DIR/Pictures/Wallpapers"
 if [ -d "$TEMP_DIR/wallpapers" ]; then
-    exe runuser -u "$TARGET_USER" -- mkdir -p "$WALL_DEST"
-    exe runuser -u "$TARGET_USER" -- cp -rf "$TEMP_DIR/wallpapers/." "$WALL_DEST/"
+    as_user mkdir -p "$HOME_DIR/Pictures/Wallpapers"
+    as_user cp -rf "$TEMP_DIR/wallpapers/." "$HOME_DIR/Pictures/Wallpapers/"
     success "Installed."
 fi
 rm -rf "$TEMP_DIR"
@@ -533,81 +397,49 @@ rm -rf "$TEMP_DIR"
 # STEP 8: Hardware Tools
 # ==============================================================================
 section "Step 7/9" "Hardware"
-
-# 1. DDCutil configuration
-if pacman -Q ddcutil-service &>/dev/null || pacman -Q ddcutil &>/dev/null; then
-    log "Detected ddcutil/ddcutil-service. Configuring i2c group..."
+if pacman -Q ddcutil &>/dev/null; then
     gpasswd -a "$TARGET_USER" i2c
-    
-    if ! lsmod | grep -q i2c_dev; then
-        echo "i2c-dev" > /etc/modules-load.d/i2c-dev.conf
-    fi
+    lsmod | grep -q i2c_dev || echo "i2c-dev" > /etc/modules-load.d/i2c-dev.conf
 fi
-
-# 2. SwayOSD configuration
 if pacman -Q swayosd &>/dev/null; then
-    log "Detected swayosd. Enabling backend service..."
-    systemctl enable --now swayosd-libinput-backend.service > /dev/null 2>&1
+    systemctl enable --now swayosd-libinput-backend.service >/dev/null 2>&1
 fi
-
 success "Tools configured."
 
 # ==============================================================================
-# STEP 9: Cleanup
+# STEP 9: Cleanup & Auto-Login
 # ==============================================================================
-section "Step 9/9" "Cleanup"
+section "Final" "Cleanup & Boot"
 rm -f "$SUDO_TEMP_FILE"
-success "Done."
 
-# ==============================================================================
-# STEP 10: Auto-Login
-# ==============================================================================
-section "Final" "Boot Config"
-USER_SYSTEMD_DIR="$HOME_DIR/.config/systemd/user"
-WANTS_DIR="$USER_SYSTEMD_DIR/default.target.wants"
-LINK_PATH="$WANTS_DIR/niri-autostart.service"
-SERVICE_FILE="$USER_SYSTEMD_DIR/niri-autostart.service"
+SVC_DIR="$HOME_DIR/.config/systemd/user"
+SVC_FILE="$SVC_DIR/niri-autostart.service"
+LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
 if [ "$SKIP_AUTOLOGIN" = true ]; then
     log "Auto-login skipped."
-    if [ -f "$LINK_PATH" ] || [ -f "$SERVICE_FILE" ]; then
-        warn "Cleaning old auto-login..."
-        exe rm -f "$LINK_PATH"
-        exe rm -f "$SERVICE_FILE"
-    fi
+    as_user rm -f "$LINK" "$SVC_FILE"
 else
     log "Configuring TTY Auto-login..."
-    GETTY_DIR="/etc/systemd/system/getty@tty1.service.d"
-    mkdir -p "$GETTY_DIR"
-    cat <<EOT > "$GETTY_DIR/autologin.conf"
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}
-EOT
-    exe mkdir -p "$USER_SYSTEMD_DIR"
-    cat <<EOT > "$SERVICE_FILE"
+    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" > "/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+    
+    as_user mkdir -p "$(dirname "$LINK")"
+    cat <<EOT > "$SVC_FILE"
 [Unit]
 Description=Niri Session Autostart
 After=graphical-session-pre.target
-
 [Service]
 ExecStart=/usr/bin/niri-session
 Restart=on-failure
-
 [Install]
 WantedBy=default.target
 EOT
-    exe mkdir -p "$WANTS_DIR"
-    exe ln -sf "../niri-autostart.service" "$LINK_PATH"
-    exe chown -R "$TARGET_USER" "$HOME_DIR/.config/systemd"
+    as_user ln -sf "../niri-autostart.service" "$LINK"
+    # Ensure ownership is correct if root touched it
+    chown -R "$TARGET_USER:$TARGET_USER" "$SVC_DIR"
     success "Enabled."
 fi
 
-# ==============================================================================
-# STEP 11: Completion
-# ==============================================================================
-
-# Disable trap to avoid false positives during exit
 trap - ERR
-
 log "Module 04 completed."
