@@ -470,10 +470,10 @@ if command -v firefox &>/dev/null; then
         log "Initializing Firefox Profile..."
         # 1. 启动 Headless Firefox 以生成配置文件夹 (User Mode)
         # 使用 timeout 防止进程卡死，确保它运行足够长时间以生成文件
-        as_user timeout 5s firefox --headless >/dev/null 2>&1 || true
-        
+        as_user firefox --headless >/dev/null 2>&1 || true
+        sleep 3
         # 确保进程已完全终止
-        pkill firefox 2>/dev/null
+        pkill firefox >/dev/null
         sleep 3
 
         # 寻找生成的 Profile 目录
