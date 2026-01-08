@@ -87,8 +87,9 @@ select_desktop() {
     
     # 1. 定义选项 (显示名称|选择后会写入桌面环境变量的id值)
     local OPTIONS=(
-        "Niri (Morden Scrolling Wayland Compositor)|niri"
+        "Shorin's Niri (Scrolling Wayland Compositor)|niri"
         "KDE Plasma 6 (Full Desktop)|kde"
+        "DankMaterialShell(Quickshell for hyprland and niri)|dms"
         "No Desktop (Base System Only)|none"
     )
     
@@ -177,8 +178,11 @@ case "$DESKTOP_ENV" in
         BASE_MODULES+=("04-niri-setup.sh")
         ;;
     kde)
-        BASE_MODULES+=("06-kdeplasma-setup.sh")
+        BASE_MODULES+=("04b-kdeplasma-setup.sh")
         ;;
+    dms)
+        BASE_MODULES+=("04c-dms-quickshell.sh")
+    ;;
     none)
         log "Skipping Desktop Environment installation."
         ;;

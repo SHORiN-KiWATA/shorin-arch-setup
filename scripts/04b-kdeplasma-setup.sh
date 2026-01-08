@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 06-kdeplasma-setup.sh - KDE Plasma Setup (FZF Menu + Robust Installation)
+# 04b-kdeplasma-setup.sh - KDE Plasma Setup (FZF Menu + Robust Installation)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,7 +21,7 @@ fi
 
 trap 'echo -e "\n   ${H_YELLOW}>>> Operation cancelled by user (Ctrl+C). Skipping...${NC}"' INT
 
-section "Phase 6" "KDE Plasma Environment"
+section "Phase 4" "KDE Plasma Environment"
 
 # ------------------------------------------------------------------------------
 # 0. Identify Target User
