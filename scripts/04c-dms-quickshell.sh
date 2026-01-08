@@ -9,9 +9,7 @@ else
     echo "Error: 00-utils.sh not found."
     exit 1
 fi
-
-section "Extras" "Quickshell (DMS) Setup"
-
+log "installing dms..."
 # ==============================================================================
 #  Identify User & DM Check
 # ==============================================================================
@@ -64,7 +62,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
     log "NOTE: If the installer asks for input, this script might hang."
     
     # --- 关键步骤：切换用户执行 ---
-    if runuser -u "$TARGET_USER" -- bash -c "$INSTALLER_SCRIPT"; then
+    if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
         success "DankMaterialShell installed successfully."
     else
         # DMS 安装失败不应该导致整个系统安装退出，所以只警告
@@ -73,14 +71,21 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
     
     # 清理
     rm -f "$INSTALLER_SCRIPT"
-    SVC_DIR="$HOME_DIR/.config/systemd/user"
-    SVC_FILE="$SVC_DIR/niri-autostart.service"
-    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
-    if [ "$SKIP_AUTOLOGIN" = true ]; then
+else
+    warn "Failed to download DMS installer script from $DMS_URL."
+fi
+
+#auto login 
+
+SVC_DIR="$HOME_DIR/.config/systemd/user"
+SVC_FILE="$SVC_DIR/niri-autostart.service"
+LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+
+if [ "$SKIP_AUTOLOGIN" = true ]; then
     log "Auto-login skipped."
     as_user rm -f "$LINK" "$SVC_FILE"
-    else
+else
     log "Configuring TTY Auto-login..."
     mkdir -p "/etc/systemd/system/getty@tty1.service.d"
     echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
@@ -99,11 +104,8 @@ EOT
     as_user ln -sf "../niri-autostart.service" "$LINK"
     chown -R "$TARGET_USER" "$SVC_DIR"
     success "Enabled."
-    fi
-
-
-else
-    warn "Failed to download DMS installer script from $DMS_URL."
 fi
+
+#-------fcitx5--------------
 
 log "Module 05 completed."
