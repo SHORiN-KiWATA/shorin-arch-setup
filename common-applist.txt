@@ -25,6 +25,8 @@ udftools                                 # Tools for UDF filesystems (DVD/Optica
 xfsprogs                                 # Tools for XFS filesystems
 
 # --- Others ---
+neovim                                   # Advanced version of vim 
+lazyvim                                  # Great preset of neovim 
 code                                     # vscode
 gnome-font-viewer                        # manage fonts easily
 gnome-calendar                           # calendar

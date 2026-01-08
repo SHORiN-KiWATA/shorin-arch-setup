@@ -10,6 +10,10 @@ source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
 
+# --- [CONFIGURATION] ---
+# LazyVim 硬性依赖列表
+LAZYVIM_DEPS=("neovim" "ripgrep" "fd" "ttf-jetbrains-mono-nerd" "git")
+
 # Ensure FZF is installed
 if ! command -v fzf &> /dev/null; then
     log "Installing dependency: fzf..."
@@ -53,6 +57,7 @@ REPO_APPS=()
 AUR_APPS=()
 FLATPAK_APPS=()
 FAILED_PACKAGES=()
+INSTALL_LAZYVIM=false
 
 if [ ! -f "$LIST_FILE" ]; then
     warn "File $LIST_FILENAME not found. Skipping."
@@ -140,6 +145,13 @@ while IFS= read -r line; do
     raw_pkg=$(echo "$line" | cut -f1 -d$'\t' | xargs)
     [[ -z "$raw_pkg" ]] && continue
 
+    # Check for LazyVim keyword (Case Insensitive)
+    if [ "${raw_pkg,,}" == "lazyvim" ]; then
+        INSTALL_LAZYVIM=true
+        REPO_APPS+=("${LAZYVIM_DEPS[@]}")
+        continue
+    fi
+
     if [[ "$raw_pkg" == flatpak:* ]]; then
         clean_name="${raw_pkg#flatpak:}"
         FLATPAK_APPS+=("$clean_name")
@@ -152,6 +164,9 @@ while IFS= read -r line; do
 done <<< "$SELECTED_RAW"
 
 info_kv "Scheduled" "Repo: ${#REPO_APPS[@]}" "AUR: ${#AUR_APPS[@]}" "Flatpak: ${#FLATPAK_APPS[@]}"
+if [ "$INSTALL_LAZYVIM" = true ]; then
+    info_kv "Config" "LazyVim detected (Setup queued)"
+fi
 
 # ------------------------------------------------------------------------------
 # [SETUP] GLOBAL SUDO CONFIGURATION
@@ -207,7 +222,6 @@ if [ ${#AUR_APPS[@]} -gt 0 ]; then
             continue
         fi
 
-
         log "Installing AUR: $app ..."
         install_success=false
         max_retries=2
@@ -255,7 +269,7 @@ if [ ${#FLATPAK_APPS[@]} -gt 0 ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# 4. Environment & Additional Configs (Virt/Wine/Steam)
+# 4. Environment & Additional Configs (Virt/Wine/Steam/LazyVim)
 # ------------------------------------------------------------------------------
 section "Post-Install" "System & App Tweaks"
 
@@ -263,35 +277,22 @@ section "Post-Install" "System & App Tweaks"
 if pacman -Qi virt-manager &>/dev/null; then
   info_kv "Config" "Virt-Manager detected"
   
-  # 1. 安装完整依赖
-  # iptables-nft 和 dnsmasq 是默认 NAT 网络必须的
   log "Installing QEMU/KVM dependencies..."
   pacman -S --noconfirm --needed qemu-full virt-manager swtpm dnsmasq 
 
-  # 2. 添加用户组 (需要重新登录生效)
   log "Adding $TARGET_USER to libvirt group..."
   usermod -a -G libvirt "$TARGET_USER"
-  # 同时添加 kvm 和 input 组以防万一
   usermod -a -G kvm,input "$TARGET_USER"
 
-  # 3. 开启服务
   log "Enabling libvirtd service..."
   systemctl enable --now libvirtd
 
-  # 4. [修复] 强制设置 virt-manager 默认连接为 QEMU/KVM
-  # 解决第一次打开显示 LXC 或无法连接的问题
   log "Setting default URI to qemu:///system..."
-  
-  # 编译 glib schemas (防止 gsettings 报错)
   glib-compile-schemas /usr/share/glib-2.0/schemas/
 
-  # 强制写入 Dconf 配置
-  # uris: 连接列表
-  # autoconnect: 自动连接的列表
   as_user gsettings set org.virt-manager.virt-manager.connections uris "['qemu:///system']"
   as_user gsettings set org.virt-manager.virt-manager.connections autoconnect "['qemu:///system']"
 
-  # 5. 配置网络 (Default NAT)
   log "Starting default network..."
   sleep 3
   virsh net-start default >/dev/null 2>&1 || warn "Default network might be already active."
@@ -304,52 +305,38 @@ fi
 if pacman -Qi wine &>/dev/null; then
   info_kv "Config" "Wine detected"
   
-  # 1. 安装 Gecko 和 Mono
   log "Ensuring Wine Gecko/Mono are installed..."
   pacman -S --noconfirm --needed wine wine-gecko wine-mono
 
-  # 2. 初始化 Wine (使用 wineboot -u 在后台运行，不弹窗)
   WINE_PREFIX="$HOME_DIR/.wine"
   if [ ! -d "$WINE_PREFIX" ]; then
     log "Initializing wine prefix (This may take a minute)..."
-    # WINEDLLOVERRIDES prohibits popups
     as_user env WINEDLLOVERRIDES="mscoree,mshtml=" wineboot -u
-    # Wait for completion
     as_user wineserver -w
   else
     log "Wine prefix already exists."
   fi
 
-  # 3. 复制字体
   FONT_SRC="$SCRIPT_DIR/resources/windows-sim-fonts"
   FONT_DEST="$WINE_PREFIX/drive_c/windows/Fonts"
 
   if [ -d "$FONT_SRC" ]; then
     log "Copying Windows fonts from resources..."
     
-    # 1. 确保目标目录存在 (以用户身份创建)
     if [ ! -d "$FONT_DEST" ]; then
         as_user mkdir -p "$FONT_DEST"
     fi
 
-    # 2. 执行复制 (关键修改：直接以目标用户身份复制，而不是 Root 复制后再 Chown)
-    # 使用 cp -rT 确保目录内容合并，而不是把源目录本身拷进去
-    # 注意：这里假设 as_user 能够接受命令参数。如果 as_user 只是简单的 su/sudo 封装：
     if sudo -u "$TARGET_USER" cp -rf "$FONT_SRC"/. "$FONT_DEST/"; then
         success "Fonts copied successfully."
     else
         error "Failed to copy fonts."
     fi
 
-    # 3. 强制刷新 Wine 字体缓存 (非常重要！)
-    # 字体文件放进去了，但 Wine 不一定会立刻重修构建 fntdata.dat
-    # 杀死 wineserver 会强制 Wine 下次启动时重新扫描系统和本地配置
     log "Refreshing Wine font cache..."
     if command -v wineserver &> /dev/null; then
-        # 必须以目标用户身份执行 wineserver -k
         as_user env WINEPREFIX="$WINE_PREFIX" wineserver -k
     fi
-    
     success "Wine fonts installed and cache refresh triggered."
   else
     warn "Resources font directory not found at: $FONT_SRC"
@@ -376,6 +363,26 @@ if flatpak list | grep -q "com.valvesoftware.Steam"; then
     exe flatpak override --env=LANG=zh_CN.UTF-8 com.valvesoftware.Steam
     success "Applied Flatpak Steam override."
     STEAM_desktop_modified=true
+fi
+
+# --- [MOVED] LazyVim Configuration ---
+if [ "$INSTALL_LAZYVIM" = true ]; then
+  section "Config" "Applying LazyVim Overrides"
+  NVIM_CFG="$HOME_DIR/.config/nvim"
+
+  if [ -d "$NVIM_CFG" ]; then
+    BACKUP_PATH="$HOME_DIR/.config/nvim.old.apps.$(date +%s)"
+    warn "Collision detected. Moving existing nvim config to $BACKUP_PATH"
+    mv "$NVIM_CFG" "$BACKUP_PATH"
+  fi
+
+  log "Cloning LazyVim starter..."
+  if as_user git clone https://github.com/LazyVim/starter "$NVIM_CFG"; then
+    rm -rf "$NVIM_CFG/.git"
+    success "LazyVim installed (Override)."
+  else
+    error "Failed to clone LazyVim."
+  fi
 fi
 
 # ------------------------------------------------------------------------------

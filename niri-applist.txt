@@ -1,5 +1,3 @@
-neovim                                   # Advanced version of vim 
-lazyvim                                  # Great preset of neovim 
 imv                                      # Image Viewer for Wayland
 fish                                     # Friendly Interactive Shell
 gnome-software                           # Gui store for flatpak software
