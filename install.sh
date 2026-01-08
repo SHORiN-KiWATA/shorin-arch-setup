@@ -88,10 +88,10 @@ select_desktop() {
     # 1. 定义选项 (显示名称|选择后会写入桌面环境变量的id值)
     local OPTIONS=(
         "Shorin's Niri (Scrolling Wayland Compositor)|niri"
-        "KDE Plasma 6 (Full Desktop)|kde"
+        "KDE Plasma |kde"
         "DankMaterialShell (Quickshell)|dms"
         "Noctalia (Quickshell)|noctalia"
-        "No Desktop (Base System Only)|none"
+        "No Desktop (Base Setup only)|none"
     )
     
     # 2. 绘制菜单 (半开放式风格)
