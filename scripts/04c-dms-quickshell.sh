@@ -12,14 +12,32 @@ fi
 
 section "Extras" "Quickshell (DMS) Setup"
 
-# 2. 获取目标用户 (必须准确，因为脚本禁止 Root)
-
+# ==============================================================================
+#  Identify User & DM Check
+# ==============================================================================
+log "Identifying user..."
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
 TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
+HOME_DIR="/home/$TARGET_USER"
+info_kv "Target" "$TARGET_USER"
 
-if [ -z "$TARGET_USER" ]; then
-    error "Could not detect target user. Skipping DMS installation."
-    exit 1
+# DM Check
+KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd")
+SKIP_AUTOLOGIN=false
+DM_FOUND=""
+for dm in "${KNOWN_DMS[@]}"; do
+  if pacman -Q "$dm" &>/dev/null; then
+    DM_FOUND="$dm"
+    break
+  fi
+done
+
+if [ -n "$DM_FOUND" ]; then
+  info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
+  SKIP_AUTOLOGIN=true
+else
+  read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
+  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
 fi
 
 log "Target user for DMS installation: $TARGET_USER"
@@ -46,8 +64,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
     log "NOTE: If the installer asks for input, this script might hang."
     
     # --- 关键步骤：切换用户执行 ---
-    # 我们进入用户的家目录执行，以防万一它在当前目录写文件
-    if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
+    if runuser -u "$TARGET_USER" -- bash -c "$INSTALLER_SCRIPT"; then
         success "DankMaterialShell installed successfully."
     else
         # DMS 安装失败不应该导致整个系统安装退出，所以只警告
@@ -56,6 +73,35 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
     
     # 清理
     rm -f "$INSTALLER_SCRIPT"
+    SVC_DIR="$HOME_DIR/.config/systemd/user"
+    SVC_FILE="$SVC_DIR/niri-autostart.service"
+    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+
+    if [ "$SKIP_AUTOLOGIN" = true ]; then
+    log "Auto-login skipped."
+    as_user rm -f "$LINK" "$SVC_FILE"
+    else
+    log "Configuring TTY Auto-login..."
+    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+
+    as_user mkdir -p "$(dirname "$LINK")"
+    cat <<EOT >"$SVC_FILE"
+[Unit]
+Description=Niri Session Autostart
+After=graphical-session-pre.target
+[Service]
+ExecStart=/usr/bin/niri-session
+Restart=on-failure
+[Install]
+WantedBy=default.target
+EOT
+    as_user ln -sf "../niri-autostart.service" "$LINK"
+    chown -R "$TARGET_USER" "$SVC_DIR"
+    success "Enabled."
+    fi
+
+
 else
     warn "Failed to download DMS installer script from $DMS_URL."
 fi
