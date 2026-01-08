@@ -130,6 +130,10 @@ exe() {
         return $status
     fi
 }
+#c简化的用户执行封装
+as_user() {
+  runuser -u "$TARGET_USER" -- "$@"
+}
 
 # 静默执行
 exe_silent() {

@@ -20,10 +20,8 @@ check_root
 
 # --- [HELPER FUNCTIONS] ---
 
-# 1. 简化的用户执行封装
-as_user() {
-  runuser -u "$TARGET_USER" -- "$@"
-}
+
+
 
 # 2. Critical Failure Handler (The "Big Red Box")
 critical_failure_handler() {
