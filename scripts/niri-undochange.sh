@@ -9,21 +9,17 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
+INSTALLER_SCRIPT="/tmp/dms_install.sh"
 
-echo ""
-echo -e "${H_RED}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${H_RED}║           NIRI INSTALLATION FAILURE DETECTED         ║${NC}"
-echo -e "${H_RED}╚══════════════════════════════════════════════════════╝${NC}"
-echo ""
-warn "Critical error encountered during Niri setup."
-log "Initiating system rollback to checkpoint: 'Before Niri Setup'..."
+warn "Critical error encountered during setup."
+log "Initiating system rollback to checkpoint: 'Before Shorin Setup'..."
 
 # ------------------------------------------------------------------------------
 # Function: Perform Rollback
 # ------------------------------------------------------------------------------
 perform_rollback() {
     local config="$1"
-    local marker="Before Niri Setup"
+    local marker="Before Shorin Setup"
     
     # 1. 查找標記快照的 ID
     local snap_id

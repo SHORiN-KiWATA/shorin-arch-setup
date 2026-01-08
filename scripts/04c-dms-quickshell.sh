@@ -40,12 +40,7 @@ fi
 
 log "Target user for DMS installation: $TARGET_USER"
 
-# 3. 安装脚本所需的依赖 (gzip 是关键，其他通常都有)
-log "Ensuring dependencies (gzip, curl)..."
-exe pacman -S --noconfirm --needed gzip curl
-
-# 4. 下载并执行安装脚本
-# 我们不直接 curl | sh，而是下载下来处理，更稳健
+# 下载并执行安装脚本
 INSTALLER_SCRIPT="/tmp/dms_install.sh"
 DMS_URL="https://install.danklinux.com"
 
