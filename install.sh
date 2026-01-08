@@ -89,7 +89,8 @@ select_desktop() {
     local OPTIONS=(
         "Shorin's Niri (Scrolling Wayland Compositor)|niri"
         "KDE Plasma 6 (Full Desktop)|kde"
-        "DankMaterialShell(Quickshell for hyprland and niri)|dms"
+        "DankMaterialShell (Quickshell)|dms"
+        "Noctalia (Quickshell)|noctalia"
         "No Desktop (Base System Only)|none"
     )
     
@@ -181,6 +182,9 @@ case "$DESKTOP_ENV" in
         BASE_MODULES+=("04b-kdeplasma-setup.sh")
         ;;
     dms)
+        BASE_MODULES+=("04c-dms-quickshell.sh")
+    ;;
+    noctalia)
         BASE_MODULES+=("04c-dms-quickshell.sh")
     ;;
     none)
