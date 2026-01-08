@@ -1,4 +1,8 @@
-# --- Gaming & Media ---
+neovim                                   # Advanced version of vim 
+lazyvim                                  # Great preset of neovim 
+firefox                                  # browser
+
+# --- gaming & media ---
 steam                                    # Gaming Platform (Valve)
 lutris                                   # Gaming outside steam
 mpv                                      # Minimalist High Performance Video Player
@@ -25,8 +29,6 @@ udftools                                 # Tools for UDF filesystems (DVD/Optica
 xfsprogs                                 # Tools for XFS filesystems
 
 # --- Others ---
-neovim                                   # Advanced version of vim 
-lazyvim                                  # Great preset of neovim 
 code                                     # vscode
 gnome-font-viewer                        # manage fonts easily
 gnome-calendar                           # calendar
