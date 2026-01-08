@@ -55,7 +55,7 @@ else
     exe sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
     
     log "Refreshing database..."
-    exe pacman -S
+    exe pacman -Syu
     success "[multilib] enabled."
 fi
 
@@ -65,7 +65,7 @@ fi
 section "Step 3/6" "Base Fonts"
 
 log "Installing adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts noto-fonts-cjk, noto-fonts, emoji..."
-exe pacman -S --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts noto-fonts-cjk noto-fonts noto-fonts-emoji
+exe pacman -Syu --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts noto-fonts-cjk noto-fonts noto-fonts-emoji
 success "Base fonts installed."
 
 # ------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ success "ArchLinuxCN configured."
 section "Step 5/6" "AUR Helpers"
 
 log "Installing yay and paru..."
-exe pacman -S --noconfirm --needed base-devel yay paru
+exe pacman -Syu --noconfirm --needed base-devel yay paru
 success "Helpers installed."
 
 log "Module 01 completed."
