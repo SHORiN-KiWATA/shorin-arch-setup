@@ -119,18 +119,18 @@ else
     warn "Failed to generate directories."
 fi
 
-
-
 # ------------------------------------------------------------------------------
 # fcitx5 post-config
 # ------------------------------------------------------------------------------
 section "fcitx5" "enable rime input method"
 RIME_USER_DIR="$REAL_HOME/.local/share/fcitx5/rime"
 exe runuser -u "$MY_USERNAME" -- mkdir -p "$RIME_USER_DIR"
-exe runuser -u "$MY_USERNAME" -- cat <<EOF > "$RIME_USER_DIR/default.custom.yaml"
+
+cat <<EOF > "$RIME_USER_DIR/default.custom.yaml"
 patch:
   __include: rime_ice_suggestion:/
 EOF
+chown -R "$MY_USERNAME" "$RIME_USER_DIR"
 
 if grep -q "fcitx" /etc/environment; then
     echo "XMODIFIERS=@im=fcitx" >> /etc/environment
