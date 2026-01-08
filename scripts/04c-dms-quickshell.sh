@@ -1,5 +1,5 @@
 #!/bin/bash
-# 05-quickshell-setup.sh
+# 04c-quickshell-setup.sh
 
 # 1. 引用工具库
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,11 +13,9 @@ fi
 section "Extras" "Quickshell (DMS) Setup"
 
 # 2. 获取目标用户 (必须准确，因为脚本禁止 Root)
-if [ -n "$SUDO_USER" ]; then
-    TARGET_USER="$SUDO_USER"
-else
-    TARGET_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd | head -n 1)
-fi
+
+DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
 
 if [ -z "$TARGET_USER" ]; then
     error "Could not detect target user. Skipping DMS installation."
