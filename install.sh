@@ -183,10 +183,10 @@ case "$DESKTOP_ENV" in
         ;;
     dms)
         BASE_MODULES+=("04c-dms-quickshell.sh")
-    ;;
+        ;;
     noctalia)
         BASE_MODULES+=("04c-dms-quickshell.sh")
-    ;;
+        ;;
     none)
         log "Skipping Desktop Environment installation."
         ;;

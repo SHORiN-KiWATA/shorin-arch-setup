@@ -90,7 +90,7 @@ fi
 
 log "Installing archlinuxcn-keyring..."
 # Keyring installation often needs -Sy specifically, but -Syu is safe too
-exe pacman -S --noconfirm archlinuxcn-keyring
+exe pacman -Syu --noconfirm archlinuxcn-keyring
 success "ArchLinuxCN configured."
 
 # ------------------------------------------------------------------------------
