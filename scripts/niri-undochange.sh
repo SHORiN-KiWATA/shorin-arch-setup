@@ -12,18 +12,18 @@ check_root
 
 echo ""
 echo -e "${H_RED}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${H_RED}║           NIRI INSTALLATION FAILURE DETECTED         ║${NC}"
+echo -e "${H_RED}║              INSTALLATION FAILURE DETECTED           ║${NC}"
 echo -e "${H_RED}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
 warn "Critical error encountered during Niri setup."
-log "Initiating system rollback to checkpoint: 'Before Niri Setup'..."
+log "Initiating system rollback to checkpoint: 'Before Desktop Environments'..."
 
 # ------------------------------------------------------------------------------
 # Function: Perform Rollback
 # ------------------------------------------------------------------------------
 perform_rollback() {
     local config="$1"
-    local marker="Before Niri Setup"
+    local marker="Before Desktop Environments"
     
     # 1. 查找標記快照的 ID
     local snap_id

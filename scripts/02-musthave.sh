@@ -108,14 +108,7 @@ section "Step 4/8" "Input Method (Fcitx5)"
 
 exe pacman -S --noconfirm --needed fcitx5-im fcitx5-rime rime-ice-pinyin-git fcitx5-mozc
 
-log "Configuring Rime defaults..."
-TARGET_DIR="/etc/skel/.local/share/fcitx5/rime"
-exe mkdir -p "$TARGET_DIR"
-cat <<EOT > "$TARGET_DIR/default.custom.yaml"
-patch:
-  __include: rime_ice_suggestion:/
-EOT
-success "Fcitx5 configured."
+success "Fcitx5 installed."
 
 # ------------------------------------------------------------------------------
 # 5. Bluetooth (Smart Detection)

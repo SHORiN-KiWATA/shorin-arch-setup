@@ -84,40 +84,53 @@ show_banner() {
 # --- Desktop Selection Menu ---
 select_desktop() {
     show_banner
-    echo -e "${H_PURPLE}╭──────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}                             ${H_PURPLE}│${NC}"
-    echo -e "${H_PURPLE}│${NC}                                                              ${H_PURPLE}│${NC}"
-    echo -e "${H_PURPLE}│${NC}  ${H_CYAN}[1]${NC} Niri (Wayland Tiling Compositor)                       ${H_PURPLE}│${NC}"
-    echo -e "${H_PURPLE}│${NC}  ${H_CYAN}[2]${NC} KDE Plasma 6 (Full Desktop Environment)                ${H_PURPLE}│${NC}"
-    echo -e "${H_PURPLE}│${NC}                                                              ${H_PURPLE}│${NC}"
-    echo -e "${H_PURPLE}╰──────────────────────────────────────────────────────────────╯${NC}"
+    
+    # 1. 定义选项 (显示名称|内部ID)
+    local OPTIONS=(
+        "No Desktop |none"
+        "Shorin's Niri |niri"
+        "KDE Plasma |kde"
+    )
+    
+    # 2. 绘制菜单 (半开放式风格)
+    # 定义一条足够长的横线，或者固定长度
+    local HR="──────────────────────────────────────────────────"
+    
+    echo -e "${H_PURPLE}╭${HR}${NC}"
+    echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}"
+    echo -e "${H_PURPLE}│${NC}" # 空行分隔
+
+    local idx=1
+    for opt in "${OPTIONS[@]}"; do
+        local name="${opt%%|*}"
+        # 直接打印，无需计算填充空格
+        echo -e "${H_PURPLE}│${NC}  ${H_CYAN}[${idx}]${NC} ${name}"
+        ((idx++))
+    done
+    echo -e "${H_PURPLE}│${NC}" # 空行分隔
+    echo -e "${H_PURPLE}╰${HR}${NC}"
     echo ""
     
+    # 3. 输入处理
     echo -e "   ${DIM}Waiting for input (Timeout: 2 mins)...${NC}"
-    read -t 120 -p "$(echo -e "   ${H_YELLOW}Select [1/2]: ${NC}")" dt_choice
+    read -t 120 -p "$(echo -e "   ${H_YELLOW}Select [1-${#OPTIONS[@]}]: ${NC}")" choice
     
-    if [ -z "$dt_choice" ]; then
+    if [ -z "$choice" ]; then
         echo -e "\n${H_RED}Timeout or no selection.${NC}"
         exit 1
     fi
     
-    case "$dt_choice" in
-        1)
-            export DESKTOP_ENV="niri"
-            log "Selected: Niri"
-            ;;
-        2)
-            export DESKTOP_ENV="kde"
-            log "Selected: KDE Plasma"
-            ;;
-        *)
-            error "Invalid selection."
-            exit 1
-            ;;
-    esac
-    sleep 1
+    # 4. 验证并提取 ID
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#OPTIONS[@]}" ]; then
+        local selected_opt="${OPTIONS[$((choice-1))]}"
+        export DESKTOP_ENV="${selected_opt##*|}" # 提取 ID
+        log "Selected: ${selected_opt%%|*}"
+    else
+        error "Invalid selection."
+        exit 1
+    fi
+    sleep 0.5
 }
-
 sys_dashboard() {
     echo -e "${H_BLUE}╔════ SYSTEM DIAGNOSTICS ══════════════════════════════╗${NC}"
     echo -e "${H_BLUE}║${NC} ${BOLD}Kernel${NC}   : $(uname -r)"
@@ -158,11 +171,20 @@ BASE_MODULES=(
     "03c-snapshot-before-desktop.sh"
 )
 
-if [ "$DESKTOP_ENV" == "niri" ]; then
-    BASE_MODULES+=("04-niri-setup.sh")
-elif [ "$DESKTOP_ENV" == "kde" ]; then
-    BASE_MODULES+=("06-kdeplasma-setup.sh")
-fi
+case "$DESKTOP_ENV" in
+    niri)
+        BASE_MODULES+=("04-niri-setup.sh")
+        ;;
+    kde)
+        BASE_MODULES+=("04b-kdeplasma-setup.sh")
+        ;;
+    none)
+        log "Skipping Desktop Environment installation."
+        ;;
+    *)
+        warn "Unknown selection, skipping desktop setup."
+        ;;
+esac
 
 BASE_MODULES+=("07-grub-theme.sh" "99-apps.sh")
 MODULES=("${BASE_MODULES[@]}")

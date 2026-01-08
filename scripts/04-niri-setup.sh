@@ -12,10 +12,6 @@ DEBUG=${DEBUG:-0}
 CN_MIRROR=${CN_MIRROR:-0}
 UNDO_SCRIPT="$SCRIPT_DIR/niri-undochange.sh"
 
-# --- [CONFIGURATION] ---
-# LazyVim 硬性依赖列表
-LAZYVIM_DEPS=("neovim" "ripgrep" "fd" "ttf-jetbrains-mono-nerd" "git")
-
 check_root
 
 # --- [HELPER FUNCTIONS] ---
@@ -109,18 +105,7 @@ ensure_package_installed() {
   fi
 }
 
-# hide .desktop
-hide_desktop_file() {
 
-  local file="$1"
-
-  if [[ -f "$file" ]] && ! grep -q "^NoDisplay=true$" "$file"; then
-
-    echo "NoDisplay=true" >> "$file"
-
-  fi
-
-}
 
 
 # Ensure whiptail
@@ -276,22 +261,6 @@ if [ -f "$LIST_FILE" ]; then
     fi
   fi
 
-  # --- Pre-Installation Filter (LazyVim Interceptor) ---
-  INSTALL_LAZYVIM=false
-  FINAL_ARRAY=()
-  if [ ${#PACKAGE_ARRAY[@]} -gt 0 ]; then
-    for pkg in "${PACKAGE_ARRAY[@]}"; do
-      if [ "${pkg,,}" == "lazyvim" ]; then
-        INSTALL_LAZYVIM=true
-        FINAL_ARRAY+=("${LAZYVIM_DEPS[@]}")
-        info_kv "Config" "LazyVim detected" "Setup deferred to post-dotfiles"
-      else
-        FINAL_ARRAY+=("$pkg")
-      fi
-    done
-    PACKAGE_ARRAY=("${FINAL_ARRAY[@]}")
-  fi
-
   # --- Installation Loop ---
   if [ ${#PACKAGE_ARRAY[@]} -gt 0 ]; then
     BATCH_LIST=()
@@ -335,7 +304,7 @@ else
 fi
 
 # ==============================================================================
-# STEP 6: Dotfiles & LazyVim
+# STEP 6: Dotfiles
 # ==============================================================================
 section "Step 5/9" "Deploying Dotfiles"
 
@@ -406,126 +375,7 @@ else
   warn "Dotfiles missing in temp directory."
 fi
 
-# --- Post-Dotfiles Configuration: LazyVim ---
-if [ "$INSTALL_LAZYVIM" = true ]; then
-  section "Config" "Applying LazyVim Overrides"
-  NVIM_CFG="$HOME_DIR/.config/nvim"
 
-  if [ -d "$NVIM_CFG" ]; then
-    BACKUP_PATH="$HOME_DIR/.config/nvim.old.dotfiles.$(date +%s)"
-    warn "Collision detected. Moving existing nvim config to $BACKUP_PATH"
-    mv "$NVIM_CFG" "$BACKUP_PATH"
-  fi
-
-  log "Cloning LazyVim starter..."
-  if as_user git clone https://github.com/LazyVim/starter "$NVIM_CFG"; then
-    rm -rf "$NVIM_CFG/.git"
-    success "LazyVim installed (Override)."
-  else
-    error "Failed to clone LazyVim."
-  fi
-fi
-# --- Post-Dotfiles Configuration: Firefox ---
-# Define resource path (shorin-arch-setup/resources/firefox/user.js.snippet)
-FF_SNIPPET="$PARENT_DIR/resources/firefox/user.js.snippet"
-
-# 【新增】检查 Firefox 是否已安装
-# command -v firefox 会检查 firefox 可执行文件是否存在于 PATH 中
-if command -v firefox &>/dev/null; then
-
-    if [ -f "$FF_SNIPPET" ]; then
-        section "Config" "Firefox UI Customization"
-        
-        log "Initializing Firefox Profile..."
-        # 1. 启动 Headless Firefox 以生成配置文件夹 (User Mode)
-        as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-        sleep 3
-        # 确保进程已完全终止
-        pkill firefox
-        sleep 3
-
-        # 寻找生成的 Profile 目录
-        PROFILE_DIR=$(find "$HOME_DIR/.mozilla/firefox" -maxdepth 1 -type d -name "*.default-release" 2>/dev/null | head -n 1)
-        
-        if [ -n "$PROFILE_DIR" ]; then
-            USER_JS="$PROFILE_DIR/user.js"
-            log "Found Profile: $(basename "$PROFILE_DIR")"
-            
-            # 2. 备份现有的 user.js (如果存在)
-            HAS_EXISTING_USER_JS=false
-            if [ -f "$USER_JS" ]; then
-                 as_user cp "$USER_JS" "$USER_JS.bak"
-                 HAS_EXISTING_USER_JS=true
-            fi
-
-            log "Injecting UI settings..."
-            # 3. 注入配置片段和自定义设置
-            as_user bash -c "cat '$FF_SNIPPET' >> '$USER_JS'"
-            
-            # 注入垂直标签页等特定设置
-            as_user bash -c "echo 'user_pref(\"sidebar.verticalTabs\", true);' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"sidebar.visibility\", \"expand-on-hover\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.toolbars.bookmarks.visibility\", \"never\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.sessionstore.resume_from_crash\", false);' >> '$USER_JS'"
-            log "Applying settings (Headless Startup)..."
-            # 4. 再次启动 Headless Firefox 以应用配置
-            as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-            log "Waiting for initialization (5s)..."
-            sleep 5
-            log "Closing Firefox..."
-            # 杀掉目标用户的 firefox 进程，确保配置写入 prefs.js
-            pkill firefox
-            sleep 3
-
-            log "fix firefox maximize issue"
-            XUL_STORE="$PROFILE_DIR/xulStore.json"
-cat <<EOF > "$XUL_STORE"
-{
-    "chrome://browser/content/browser.xhtml": {
-        "main-window": {
-            "sizemode": "normal",
-        }
-    }
-}
-EOF
-            chown -R "$TARGET_USER" "$XUL_STORE"
-            log "Cleaning up injection..."
-            # 5. 清理/还原 user.js
-            if [ "$HAS_EXISTING_USER_JS" = true ]; then
-                 as_user mv "$USER_JS.bak" "$USER_JS"
-                 log "Restored original user.js"
-            else
-                 as_user rm "$USER_JS"
-                 log "Removed temporary user.js"
-            fi
-            
-            success "Firefox configured."
-        else
-            warn "Firefox profile not found. Skipping customization."
-        fi
-    else
-        # 如果找不到 snippet 文件，仅打印警告但不中断脚本
-        if [ -d "$PARENT_DIR/resources/firefox" ]; then
-             warn "user.js.snippet not found in resources/firefox."
-        fi
-    fi
-
-else
-    log "Skipping Firefox config (Not installed)"
-fi
-
-log "Hiding useless .desktop files"
-hide_desktop_file "/usr/share/applications/avahi-discover.desktop"
-hide_desktop_file "/usr/share/applications/qv4l2.desktop"
-hide_desktop_file "/usr/share/applications/qvidcap.desktop"
-hide_desktop_file "/usr/share/applications/bssh.desktop"
-hide_desktop_file "/usr/share/applications/org.fcitx.Fcitx5.desktop"
-hide_desktop_file "/usr/share/applications/org.fcitx.fcitx5-migrator.desktop"
-hide_desktop_file "/usr/share/applications/xgps.desktop"
-hide_desktop_file "/usr/share/applications/xgpsspeed.desktop"
-hide_desktop_file "/usr/share/applications/gvim.desktop"
-hide_desktop_file "/usr/share/applications/kbd-layout-viewer5.desktop"
-hide_desktop_file "/usr/share/applications/bvnc.desktop"
 # ==============================================================================
 # STEP 7: Wallpapers & Templates
 # ==============================================================================

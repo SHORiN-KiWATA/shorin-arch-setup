@@ -1,3 +1,7 @@
+Firefox                                  # browser
+neovim                                   # Advanced version of vim 
+lazyvim                                  # Great preset of neovim 
+
 # --- Gaming & Media ---
 steam                                    # Gaming Platform (Valve)
 lutris                                   # Gaming outside steam
