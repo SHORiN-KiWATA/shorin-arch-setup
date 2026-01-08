@@ -102,12 +102,7 @@ ensure_package_installed() {
 }
 
 # hide .desktop
-hide_desktop_file() {
-  local file="$1"
-  if [[ -f "$file" ]] && ! grep -q "^NoDisplay=true$" "$file"; then
-    echo "NoDisplay=true" >> "$file"
-  fi
-}
+
 
 # Ensure whiptail
 if ! command -v whiptail &>/dev/null; then
@@ -375,92 +370,6 @@ else
   warn "Dotfiles missing in temp directory."
 fi
 
-# --- Post-Dotfiles Configuration: Firefox ---
-# Define resource path (shorin-arch-setup/resources/firefox/user.js.snippet)
-FF_SNIPPET="$PARENT_DIR/resources/firefox/user.js.snippet"
-
-if command -v firefox &>/dev/null; then
-    if [ -f "$FF_SNIPPET" ]; then
-        section "Config" "Firefox UI Customization"
-        
-        log "Initializing Firefox Profile..."
-        as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-        sleep 3
-        pkill firefox
-        sleep 3
-
-        PROFILE_DIR=$(find "$HOME_DIR/.mozilla/firefox" -maxdepth 1 -type d -name "*.default-release" 2>/dev/null | head -n 1)
-        
-        if [ -n "$PROFILE_DIR" ]; then
-            USER_JS="$PROFILE_DIR/user.js"
-            log "Found Profile: $(basename "$PROFILE_DIR")"
-            
-            HAS_EXISTING_USER_JS=false
-            if [ -f "$USER_JS" ]; then
-                 as_user cp "$USER_JS" "$USER_JS.bak"
-                 HAS_EXISTING_USER_JS=true
-            fi
-
-            log "Injecting UI settings..."
-            as_user bash -c "cat '$FF_SNIPPET' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"sidebar.verticalTabs\", true);' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"sidebar.visibility\", \"expand-on-hover\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.toolbars.bookmarks.visibility\", \"never\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.sessionstore.resume_from_crash\", false);' >> '$USER_JS'"
-            log "Applying settings (Headless Startup)..."
-            as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-            log "Waiting for initialization (5s)..."
-            sleep 5
-            log "Closing Firefox..."
-            pkill firefox
-            sleep 3
-
-            log "fix firefox maximize issue"
-            XUL_STORE="$PROFILE_DIR/xulStore.json"
-cat <<EOF > "$XUL_STORE"
-{
-    "chrome://browser/content/browser.xhtml": {
-        "main-window": {
-            "sizemode": "normal"
-        }
-    }
-}
-EOF
-            chown -R "$TARGET_USER" "$XUL_STORE"
-            log "Cleaning up injection..."
-            if [ "$HAS_EXISTING_USER_JS" = true ]; then
-                 as_user mv "$USER_JS.bak" "$USER_JS"
-                 log "Restored original user.js"
-            else
-                 as_user rm "$USER_JS"
-                 log "Removed temporary user.js"
-            fi
-            
-            success "Firefox configured."
-        else
-            warn "Firefox profile not found. Skipping customization."
-        fi
-    else
-        if [ -d "$PARENT_DIR/resources/firefox" ]; then
-             warn "user.js.snippet not found in resources/firefox."
-        fi
-    fi
-else
-    log "Skipping Firefox config (Not installed)"
-fi
-
-log "Hiding useless .desktop files"
-hide_desktop_file "/usr/share/applications/avahi-discover.desktop"
-hide_desktop_file "/usr/share/applications/qv4l2.desktop"
-hide_desktop_file "/usr/share/applications/qvidcap.desktop"
-hide_desktop_file "/usr/share/applications/bssh.desktop"
-hide_desktop_file "/usr/share/applications/org.fcitx.Fcitx5.desktop"
-hide_desktop_file "/usr/share/applications/org.fcitx.fcitx5-migrator.desktop"
-hide_desktop_file "/usr/share/applications/xgps.desktop"
-hide_desktop_file "/usr/share/applications/xgpsspeed.desktop"
-hide_desktop_file "/usr/share/applications/gvim.desktop"
-hide_desktop_file "/usr/share/applications/kbd-layout-viewer5.desktop"
-hide_desktop_file "/usr/share/applications/bvnc.desktop"
 # ==============================================================================
 # STEP 7: Wallpapers & Templates
 # ==============================================================================
