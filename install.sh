@@ -85,10 +85,11 @@ show_banner() {
 select_desktop() {
     show_banner
     
-    # 1. 定义选项 (显示名称|内部ID)
+    # 1. 定义选项 (显示名称|选择后会写入桌面环境变量的id值)
     local OPTIONS=(
-        "Niri (Vanilla Tiling Compositor)|niri"
+        "Niri (Morden Scrolling Wayland Compositor)|niri"
         "KDE Plasma 6 (Full Desktop)|kde"
+        "No Desktop (Base System Only)|none"
     )
     
     # 2. 绘制菜单 (半开放式风格)
@@ -106,7 +107,7 @@ select_desktop() {
         echo -e "${H_PURPLE}│${NC}  ${H_CYAN}[${idx}]${NC} ${name}"
         ((idx++))
     done
-
+    echo -e "${H_PURPLE}│${NC}" # 空行分隔
     echo -e "${H_PURPLE}╰${HR}${NC}"
     echo ""
     
@@ -171,11 +172,20 @@ BASE_MODULES=(
     "03c-snapshot-before-desktop.sh"
 )
 
-if [ "$DESKTOP_ENV" == "niri" ]; then
-    BASE_MODULES+=("04-niri-setup.sh")
-elif [ "$DESKTOP_ENV" == "kde" ]; then
-    BASE_MODULES+=("06-kdeplasma-setup.sh")
-fi
+case "$DESKTOP_ENV" in
+    niri)
+        BASE_MODULES+=("04-niri-setup.sh")
+        ;;
+    kde)
+        BASE_MODULES+=("06-kdeplasma-setup.sh")
+        ;;
+    none)
+        log "Skipping Desktop Environment installation."
+        ;;
+    *)
+        warn "Unknown selection, skipping desktop setup."
+        ;;
+esac
 
 BASE_MODULES+=("07-grub-theme.sh" "99-apps.sh")
 MODULES=("${BASE_MODULES[@]}")
