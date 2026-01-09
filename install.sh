@@ -89,7 +89,8 @@ select_desktop() {
     local OPTIONS=(
         "No Desktop |none"
         "Shorin's Niri |niri"
-        "KDE Plasma |kde"
+        "Shorin's KDE Plasma |kde"
+        "Gnome |gnome"
         "Quickshell--DankMaterialShell (dms) |dms"
     )
     
@@ -181,6 +182,9 @@ case "$DESKTOP_ENV" in
         ;;
     dms)
         BASE_MODULES+=("04c-dms-quickshell.sh")
+        ;;
+    gnome)
+        BASE_MODULES+=("04d-gnome.sh")
         ;;
     none)
         log "Skipping Desktop Environment installation."
