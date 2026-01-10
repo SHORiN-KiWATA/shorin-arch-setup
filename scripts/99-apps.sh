@@ -310,6 +310,22 @@ if pacman -Qi virt-manager &>/dev/null; then
   virsh net-start default >/dev/null 2>&1 || warn "Default network might be already active."
   virsh net-autostart default >/dev/null 2>&1 || true
   
+  # 修复虚拟机安装后的dns问题
+    if systemd-detect-virt -q; then
+        log "Virtual Machine environment detected."
+        
+        # 1. 检测是否在中国 
+        if [[ $(readlink -f /etc/localtime) == *"Shanghai"* ]]; then
+            # 中国：只加国内 DNS
+            log "Region: China. Prepending DNS..."
+            sed -i '1i nameserver 223.5.5.5' /etc/resolv.conf
+            sed -i '1i nameserver 119.29.29.29' /etc/resolv.conf
+        else
+            # 非中国：加 Google DNS
+            log "Region: Global. Appending Google DNS..."
+            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+        fi
+    fi
   success "Virtualization (KVM) configured."
 fi
 
