@@ -205,6 +205,13 @@ CURRENT_STEP=0
 log "Initializing installer sequence..."
 sleep 0.5
 
+# ---- update keyring-----
+
+section "Pre-Flight" "Update Keyring"
+
+exe pacman -Sy
+exe pacman -S archlinux-keyring
+
 # --- Reflector Mirror Update (State Aware) ---
 section "Pre-Flight" "Mirrorlist Optimization"
 
@@ -215,7 +222,7 @@ if grep -q "^REFLECTOR_DONE$" "$STATE_FILE"; then
 else
     # --- Start Reflector Logic ---
     log "Checking Reflector..."
-    exe pacman -Syu --noconfirm --needed reflector
+    exe pacman -S --noconfirm --needed reflector
 
     CURRENT_TZ=$(readlink -f /etc/localtime)
     REFLECTOR_ARGS="-a 24 -f 10 --sort score --save /etc/pacman.d/mirrorlist --verbose"
