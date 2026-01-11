@@ -28,6 +28,7 @@ grim                                     # Screenshot utility (Grabs images)
 slurp                                    # Region selector (Works with grim)
 wf-recorder                              # Screen recorder for Wayland
 hyprpicker                               # Color picker for Wayland
+satty                                   # Modern screenshot annotation tool
 
 # --- Clipboard ---
 wl-clipboard                             # Command-line copy/paste utilities
@@ -53,7 +54,6 @@ AUR:wlogout                              # Logout menu (Shutdown/Reboot/Lock)
 AUR:matugen                              # Material You theme generator
 AUR:clipse-bin                           # Clipboard manager
 AUR:clipse-gui                           # Clipboard manager (GUI binary)
-AUR:satty-git                            # Modern screenshot annotation tool
 AUR:python-pywalfox                      # Pywal support for Firefox
 AUR:waypaper                             # GUI wallpaper setter (Frontend for swww)
 AUR:ddcutil-service                      # Monitor hardware brightness control service
