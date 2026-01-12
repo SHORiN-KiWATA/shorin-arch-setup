@@ -74,7 +74,7 @@ exe pacman -S --noconfirm --needed terminus-font
 
 log "Setting font for current session..."
 # 设置当前会话立即生效（防止用户在安装过程中还需要眯着眼看屏幕）
-exe setfont ter-v32n
+exe setfont ter-v24n
 
 log "Configuring permanent vconsole font..."
 # 写入 /etc/vconsole.conf 以永久生效
