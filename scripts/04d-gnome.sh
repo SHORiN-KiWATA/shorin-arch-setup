@@ -55,15 +55,19 @@ trap cleanup_sudo EXIT INT TERM
 section "Step 1" "Install base pkgs"
 log "Installing GNOME and base tools..."
 if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None \
-    gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty \
+    gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid \
     gnome-control-center gnome-software flatpak file-roller \
     nautilus-python firefox nm-connection-editor pacman-contrib \
     dnsmasq ttf-jetbrains-maple-mono-nf-xx-xx; then
+
+        exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
         log "Packages installed successfully."
+        
 else
         log "Installation failed."
         return 1
 fi
+
 
 # start gdm 
 log "Enable gdm..."
