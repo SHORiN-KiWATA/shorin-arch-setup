@@ -386,8 +386,8 @@ if command -v wine &>/dev/null; then
   fi
 fi
 
-if command -v lutris; then 
-
+if command -v lutris &> /dev/null; then 
+    log "Lutris detected. Installing 32-bit gaming dependencies..."
     pacman -S --noconfirm --needed alsa-plugins giflib glfw gst-plugins-base-libs lib32-alsa-plugins lib32-giflib lib32-gst-plugins-base-libs lib32-gtk3 lib32-libjpeg-turbo lib32-libva lib32-mpg123  lib32-openal libjpeg-turbo libva libxslt mpg123 openal ttf-liberation
 fi
 # --- Steam Locale Fix ---
