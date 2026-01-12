@@ -309,6 +309,23 @@ echo '{
 
 exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
 log "Firefox policies updated."
+#=================================================
+# nautilus fix
+#=================================================
+DESKTOP_FILE="/usr/share/applications/org.gnome.Nautilus.desktop"
+if [ -f "$DESKTOP_FILE" ]; then
+  GPU_COUNT=$(lspci | grep -E -i "vga|3d" | wc -l)
+  HAS_NVIDIA=$(lspci | grep -E -i "nvidia" | wc -l)
+  [ "$GPU_COUNT" -gt 1 ] && [ "$HAS_NVIDIA" -gt 0 ] && ENV_VARS="env GSK_RENDERER=gl GTK_IM_MODULE=fcitx"
+
+  if ! grep -q "^Exec=$ENV_VARS" "$DESKTOP_FILE"; then
+    exe sed -i "s|^Exec=|Exec=$ENV_VARS |" "$DESKTOP_FILE"
+  fi
+
+  if ! grep -q GSK_RENDERER=gl /etc/environment; then 
+    exe echo "GSK_RENDERER=gl" >> /etc/environment
+  fi
+fi
 
 #=================================================
 # Step 6: Input Method
