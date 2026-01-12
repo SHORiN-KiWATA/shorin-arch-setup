@@ -210,7 +210,16 @@ log "Downloading extensions..."
 sudo -u $TARGET_USER dbus-launch gnome-extensions-cli install ${EXTENSION_LIST[@]}
 sudo -u $TARGET_USER dbus-launch gnome-extensions-cli enable ${EXTENSION_LIST[@]}
 
-
+chown -R $TARGET_USER $HOME_DIR/.local/share/gnome-shell/extensions
+sudo -u "$TARGET_USER" bash <<EOF
+    EXT_DIR="$HOME_DIR/.local/share/gnome-shell/extensions"
+    
+    for dir in "\$EXT_DIR"/*; do
+        if [ -d "\$dir/schemas" ]; then
+            glib-compile-schemas "\$dir/schemas"
+        fi
+    done
+EOF
 # === firefox inte ===
 log "Configuring Firefox GNOME Integration..."
 
@@ -258,7 +267,7 @@ fi
 log "Deploying dotfiles..."
 GNOME_DOTFILES_DIR=$PARENT_DIR/gnome-dotfiles
 as_user mkdir -p $HOME_DIR/.config
-cp -rf $GNOME_DOTFILES_DIR/.config/* $HOME_DIR/.config/
+cp -rf $GNOME_DOTFILES_DIR/. $HOME_DIR
 chown -R $TARGET_USER $HOME_DIR/.config
 pacman -S --noconfirm --needed thefuck starship eza fish zoxide
 
