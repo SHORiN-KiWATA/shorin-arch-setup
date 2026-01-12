@@ -318,7 +318,7 @@ log "Deploying dotfiles..."
 GNOME_DOTFILES_DIR=$PARENT_DIR/gnome-dotfiles
 as_user mkdir -p $HOME_DIR/.config
 cp -rf $GNOME_DOTFILES_DIR/. $HOME_DIR
-chown -R $TARGET_USER $HOME_DIR/.config
+chown -R $TARGET_USER $HOME_DIR
 pacman -S --noconfirm --needed thefuck starship eza fish zoxide
 
 log "Dotfiles deployed and shell tools installed."
