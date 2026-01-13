@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 03b-gpu-driver.sh GPU Driver Installer
+# 03b-gpu-driver.sh GPU Driver Installer 参考了cachyos的chwd脚本
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
