@@ -156,7 +156,7 @@ fi
 # ==============================================================================
 section "Step 1/9" "Core Components"
 PKGS="niri xdg-desktop-portal-gnome fuzzel kitty firefox libnotify mako polkit-gnome"
-exe pacman - --noconfirm --needed $PKGS
+exe pacman -S --noconfirm --needed $PKGS
 
 log "Configuring Firefox Policies..."
 POL_DIR="/etc/firefox/policies"
