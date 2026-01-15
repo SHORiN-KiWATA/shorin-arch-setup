@@ -553,7 +553,9 @@ FF_SNIPPET="$PARENT_DIR/resources/firefox/user.js.snippet"
 # else
 #     log "Skipping Firefox config (Not installed)"
 # fi
-
+mkdir -p $HOME_DIR/.mozilla
+cp -rf $PARENT_DIR/resources/firefox $HOME_DIR/.mozilla/.
+chown -R $TARGET_USER $HOME_DIR/.mozilla
 # ------------------------------------------------------------------------------
 # [FIX] CLEANUP GLOBAL SUDO CONFIGURATION
 # ------------------------------------------------------------------------------
