@@ -469,90 +469,90 @@ hide_desktop_file "/usr/share/applications/org.gnome.Settings.desktop"
 # Define resource path (shorin-arch-setup/resources/firefox/user.js.snippet)
 FF_SNIPPET="$PARENT_DIR/resources/firefox/user.js.snippet"
 
-# ---- firefox customization-----
-# command -v firefox 会检查 firefox 可执行文件是否存在于 PATH 中
-if command -v firefox &>/dev/null; then
+# # ---- firefox customization-----
+# # command -v firefox 会检查 firefox 可执行文件是否存在于 PATH 中
+# if command -v firefox &>/dev/null; then
 
-    if [ -f "$FF_SNIPPET" ]; then
-        section "Config" "Firefox UI Customization"
+#     if [ -f "$FF_SNIPPET" ]; then
+#         section "Config" "Firefox UI Customization"
         
-        log "Initializing Firefox Profile..."
-        # 1. 启动 Headless Firefox 以生成配置文件夹 (User Mode)
-        as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-        sleep 3
-        # 确保进程已完全终止
-        pkill firefox
-        sleep 3
+#         log "Initializing Firefox Profile..."
+#         # 1. 启动 Headless Firefox 以生成配置文件夹 (User Mode)
+#         as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
+#         sleep 3
+#         # 确保进程已完全终止
+#         pkill firefox
+#         sleep 3
 
-        # 寻找生成的 Profile 目录
-        PROFILE_DIR=$(find "$HOME_DIR/.mozilla/firefox" -maxdepth 1 -type d -name "*.default-release" 2>/dev/null | head -n 1)
+#         # 寻找生成的 Profile 目录
+#         PROFILE_DIR=$(find "$HOME_DIR/.mozilla/firefox" -maxdepth 1 -type d -name "*.default-release" 2>/dev/null | head -n 1)
         
-        if [ -n "$PROFILE_DIR" ]; then
-            USER_JS="$PROFILE_DIR/user.js"
-            log "Found Profile: $(basename "$PROFILE_DIR")"
+#         if [ -n "$PROFILE_DIR" ]; then
+#             USER_JS="$PROFILE_DIR/user.js"
+#             log "Found Profile: $(basename "$PROFILE_DIR")"
             
-            # 2. 备份现有的 user.js (如果存在)
-            HAS_EXISTING_USER_JS=false
-            if [ -f "$USER_JS" ]; then
-                 as_user cp "$USER_JS" "$USER_JS.bak"
-                 HAS_EXISTING_USER_JS=true
-            fi
+#             # 2. 备份现有的 user.js (如果存在)
+#             HAS_EXISTING_USER_JS=false
+#             if [ -f "$USER_JS" ]; then
+#                  as_user cp "$USER_JS" "$USER_JS.bak"
+#                  HAS_EXISTING_USER_JS=true
+#             fi
 
-            log "Injecting UI settings..."
-            # 3. 注入配置片段和自定义设置
-            as_user bash -c "cat '$FF_SNIPPET' >> '$USER_JS'"
+#             log "Injecting UI settings..."
+#             # 3. 注入配置片段和自定义设置
+#             as_user bash -c "cat '$FF_SNIPPET' >> '$USER_JS'"
             
-            # 注入垂直标签页等特定设置
-            as_user bash -c "echo 'user_pref(\"sidebar.verticalTabs\", true);' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"sidebar.visibility\", \"expand-on-hover\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.toolbars.bookmarks.visibility\", \"never\");' >> '$USER_JS'"
-            as_user bash -c "echo 'user_pref(\"browser.sessionstore.resume_from_crash\", false);' >> '$USER_JS'"
-            log "Applying settings (Headless Startup)..."
-            # 4. 再次启动 Headless Firefox 以应用配置
-            as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
-            log "Waiting for initialization (5s)..."
-            sleep 5
-            log "Closing Firefox..."
-            # 杀掉目标用户的 firefox 进程，确保配置写入 prefs.js
-            pkill firefox
-            sleep 3
+#             # 注入垂直标签页等特定设置
+#             as_user bash -c "echo 'user_pref(\"sidebar.verticalTabs\", true);' >> '$USER_JS'"
+#             as_user bash -c "echo 'user_pref(\"sidebar.visibility\", \"expand-on-hover\");' >> '$USER_JS'"
+#             as_user bash -c "echo 'user_pref(\"browser.toolbars.bookmarks.visibility\", \"never\");' >> '$USER_JS'"
+#             as_user bash -c "echo 'user_pref(\"browser.sessionstore.resume_from_crash\", false);' >> '$USER_JS'"
+#             log "Applying settings (Headless Startup)..."
+#             # 4. 再次启动 Headless Firefox 以应用配置
+#             as_user env LANG=zh_CN.UTF-8 firefox --headless >/dev/null 2>&1 &
+#             log "Waiting for initialization (5s)..."
+#             sleep 5
+#             log "Closing Firefox..."
+#             # 杀掉目标用户的 firefox 进程，确保配置写入 prefs.js
+#             pkill firefox
+#             sleep 3
 
-            log "fix firefox maximize issue"
-            XUL_STORE="$PROFILE_DIR/xulStore.json"
-cat <<EOF > "$XUL_STORE"
-{
-    "chrome://browser/content/browser.xhtml": {
-        "main-window": {
-            "sizemode": "normal",
-        }
-    }
-}
-EOF
-            chown -R "$TARGET_USER" "$XUL_STORE"
-            log "Cleaning up injection..."
-            # 5. 清理/还原 user.js
-            if [ "$HAS_EXISTING_USER_JS" = true ]; then
-                 as_user mv "$USER_JS.bak" "$USER_JS"
-                 log "Restored original user.js"
-            else
-                 as_user rm "$USER_JS"
-                 log "Removed temporary user.js"
-            fi
+#             log "fix firefox maximize issue"
+#             XUL_STORE="$PROFILE_DIR/xulStore.json"
+# cat <<EOF > "$XUL_STORE"
+# {
+#     "chrome://browser/content/browser.xhtml": {
+#         "main-window": {
+#             "sizemode": "normal"
+#         }
+#     }
+# }
+# EOF
+#             chown -R "$TARGET_USER" "$XUL_STORE"
+#             log "Cleaning up injection..."
+#             # 5. 清理/还原 user.js
+#             if [ "$HAS_EXISTING_USER_JS" = true ]; then
+#                  as_user mv "$USER_JS.bak" "$USER_JS"
+#                  log "Restored original user.js"
+#             else
+#                  as_user rm "$USER_JS"
+#                  log "Removed temporary user.js"
+#             fi
             
-            success "Firefox configured."
-        else
-            warn "Firefox profile not found. Skipping customization."
-        fi
-    else
-        # 如果找不到 snippet 文件，仅打印警告但不中断脚本
-        if [ -d "$PARENT_DIR/resources/firefox" ]; then
-             warn "user.js.snippet not found in resources/firefox."
-        fi
-    fi
+#             success "Firefox configured."
+#         else
+#             warn "Firefox profile not found. Skipping customization."
+#         fi
+#     else
+#         # 如果找不到 snippet 文件，仅打印警告但不中断脚本
+#         if [ -d "$PARENT_DIR/resources/firefox" ]; then
+#              warn "user.js.snippet not found in resources/firefox."
+#         fi
+#     fi
 
-else
-    log "Skipping Firefox config (Not installed)"
-fi
+# else
+#     log "Skipping Firefox config (Not installed)"
+# fi
 
 # ------------------------------------------------------------------------------
 # [FIX] CLEANUP GLOBAL SUDO CONFIGURATION
