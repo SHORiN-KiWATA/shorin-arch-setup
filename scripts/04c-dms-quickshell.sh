@@ -70,24 +70,6 @@ else
 fi
 
 # ==============================================================================
-#  tty autologin
-# ==============================================================================
-section "Config" "tty autostart"
-
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/niri-autostart.service"
-LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
-
-# 确保目录存在
-as_user mkdir -p "$SVC_DIR/default.target.wants"
-# tty自动登录
-if [ "$SKIP_AUTOLOGIN" = false ]; then
-    log "Configuring Niri Auto-start (TTY)..."
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
-
-fi
-# ==============================================================================
 #  dms 随图形化环境自动启动
 # ==============================================================================
 section "Config" "dms autostart"
@@ -127,10 +109,27 @@ elif [ $DMS_HYPR_INSTALLED = true ]; then
     true
 
 fi
+# ==============================================================================
+#  tty autologin
+# ==============================================================================
+section "Config" "tty autostart"
 
-# ==============================================================================
+SVC_DIR="$HOME_DIR/.config/systemd/user"
+SVC_FILE="$SVC_DIR/niri-autostart.service"
+LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+
+# 确保目录存在
+as_user mkdir -p "$SVC_DIR/default.target.wants"
+# tty自动登录
+if [ "$SKIP_AUTOLOGIN" = false ]; then
+    log "Configuring Niri Auto-start (TTY)..."
+    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+
+fi
+# ===================================================
 #  window manager autostart (if don't have any of dm)
-# ==============================================================================
+# ===================================================
 section "Config" "WM autostart"
 # 如果安装了niri
 if [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_NIRI_INSTALLED = true ] &>/dev/null; then
