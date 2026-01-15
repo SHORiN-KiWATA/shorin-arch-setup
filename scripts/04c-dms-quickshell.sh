@@ -77,6 +77,7 @@ section "Config" "dms autostart"
 # dms.service 路径
 DMS_AUTOSTART_LINK="$HOME_DIR/.config/systemd/user/graphical-session.target.wants/dms.service"
 DMS_NIRI_CONFIG_FILE="$HOME_DIR/.config/niri/config.kdl"
+DMS_HYPR_CONFIG_FILE="$HOME_DIR/.config/hypr/hyprland.conf"
 # 删除dms自己的服务链接（如果有的话）
 if [ -L "$DMS_AUTOSTART_LINK" ]; then
     log "detect dms systemd service enabled, disabling ...." 
@@ -105,17 +106,26 @@ if [ $DMS_NIRI_INSTALLED = true ]; then
     fi
 
 # 修改hyprland的配置文件设置dms自动启动
-elif [ $DMS_HYPR_INSTALLED = true ]; then
+elif [ "$DMS_HYPR_INSTALLED" = true ]; then
 
-    true
+    log "Configuring Hyprland autostart..."
 
+    # 1. 配置 dms run
+    # 检查文件中是否已经有 dms run 相关的 exec-once
+    if ! grep -q "exec-once.*dms run" "$DMS_HYPR_CONFIG_FILE"; then
+        log "Adding dms autostart to hyprland.conf"
+        echo 'exec-once = dms run' >> "$DMS_HYPR_CONFIG_FILE"
+    else
+        log "dms autostart already exists in Hyprland config, skipping."
+    fi
 fi
 
 # ==============================================================================
-#  fcitx5 configuration and autostart 
+#  fcitx5 configuration and locale
 # ==============================================================================
 section "Config" "input method"
 
+# niri的输入法配置
 if [ "$DMS_NIRI_INSTALLED" = true ]; then
 
     # fcitx5 自动启动
@@ -148,6 +158,7 @@ if [ "$DMS_NIRI_INSTALLED" = true ]; then
 environment {
     LC_CTYPE "en_US.UTF-8"
     XMODIFIERS "@im=fcitx"
+    LANG "zh_CN.UTF-8"
 }
 EOT
     fi
@@ -156,11 +167,33 @@ EOT
     cp -rf "$PARENT_DIR/quickshell-dotfiles/"* "$HOME_DIR/.config/"
     chown -R "$TARGET_USER" "$HOME_DIR/.config"
 
+
+# hyprland 的输入法配置
 elif [ "$DMS_HYPR_INSTALLED" = true ]; then
-    true
+    
+    if ! grep -q "fcitx5" "$DMS_HYPR_CONFIG_FILE"; then
+        log "Adding fcitx5 autostart to hyprland.conf"
+        echo 'exec-once = fcitx5 -d' >> "$DMS_HYPR_CONFIG_FILE"
+        
+        # 【可选但推荐】同时写入 fcitx5 需要的环境变量
+        # Hyprland 的环境变量写法是 env = KEY,VALUE
+        cat << EOT >> "$DMS_HYPR_CONFIG_FILE"
+
+# Fcitx5 Environment Variables
+env = XMODIFIERS,@im=fcitx
+env = LC_CTYPE,en_US.UTF-8
+# locale
+env = LANG,zh_CN.UTF-8
+EOT
+
+    cp -rf "$PARENT_DIR/quickshell-dotfiles/"* "$HOME_DIR/.config/"
+    chown -R "$TARGET_USER" "$HOME_DIR/.config"
+    else
+        log "fcitx5 configuration already exists in Hyprland config, skipping."
+    fi
 fi
 # ==============================================================================
-# nautilus
+# filemanager
 # ==============================================================================
 section "Config" "file manager"
 
@@ -199,7 +232,12 @@ if [ "$DMS_NIRI_INSTALLED" = true ]; then
     fi
 
 elif [ "$DMS_HYPR_INSTALLED" = true ]; then
-    true
+    log "dms hyprland detected, configuring xdg-desktop-portal"
+    exe pacman -S --noconfirm --needed xdg-desktop-portal-hyprland
+    if ! grep -q '/usr/lib/xdg-desktop-portal-hyprland' $DMS_NIRI_CONFIG_FILE; then
+        log "configuring environment in hyprland.conf"
+        echo 'exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=hyprland & /usr/lib/xdg-desktop-portal-hyprland' >> $DMS_NIRI_CONFIG_FILE
+    fi
 fi
 
 # ==============================================================================
@@ -208,8 +246,6 @@ fi
 section "Config" "tty autostart"
 
 SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/niri-autostart.service"
-LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
 # 确保目录存在
 as_user mkdir -p "$SVC_DIR/default.target.wants"
@@ -226,7 +262,8 @@ fi
 section "Config" "WM autostart"
 # 如果安装了niri
 if [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_NIRI_INSTALLED = true ] &>/dev/null; then
-    
+    SVC_FILE="$SVC_DIR/niri-autostart.service"
+    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
     # 创建niri自动登录服务
     cat <<EOT >"$SVC_FILE"
 [Unit]
@@ -251,7 +288,8 @@ EOT
 
 # 如果安装了hyprland
 elif [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_HYPR_INSTALLED = true ] &>/dev/null; then
-
+        SVC_FILE="$SVC_DIR/hyprland-autostart.service"
+    LINK="$SVC_DIR/default.target.wants/hypyland-autostart.service"
     cat <<EOT >"$SVC_FILE"
 [Unit]
 Description=Hyprland DMS Session Autostart
