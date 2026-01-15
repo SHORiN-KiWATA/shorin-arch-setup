@@ -41,7 +41,7 @@ else
 fi
 
 log "Target user for End4 installation: $TARGET_USER"
-
+section "Desktop" "illogical-impulse"
 # 下载并执行安装脚本
 INSTALLER_SCRIPT="/tmp/end4_install.sh"
 II_URL="https://ii.clsty.link/get"
@@ -65,6 +65,68 @@ if curl -fsSL "$II_URL" -o "$INSTALLER_SCRIPT"; then
 else
     warn "Failed to download installer script from $II_URL."
 fi
+# ==============================================================================
+#  Input Method & Environment (End4 Config)
+# ==============================================================================
+section "end4" "Input Method and Environment Configuration"
+
+# 1. 定义变量与路径
+END4_HYPR_DOT_DIR="$HOME_DIR/.config/hypr"
+CUSTOM_DIR="$END4_HYPR_DOT_DIR/custom"
+END4_HYPR_CUS_ENV="$CUSTOM_DIR/env.conf"
+END4_HYPR_CUS_EXEC="$CUSTOM_DIR/execs.conf"
+SOURCE_DOTFILES="$PARENT_DIR/quickshell-dotfiles"
+
+# 2. 部署配置文件
+if [ -d "$SOURCE_DOTFILES" ]; then
+    log "Deploying Quickshell dotfiles to $HOME_DIR/.config/..."
+    cp -rf "$SOURCE_DOTFILES/"* "$HOME_DIR/.config/"
+else
+    warn "Source directory not found: $SOURCE_DOTFILES"
+    warn "Skipping dotfiles copy."
+fi
+
+# 确保 custom 目录存在 (防止因拷贝未发生而导致后续报错)
+if [ ! -d "$CUSTOM_DIR" ]; then
+    mkdir -p "$CUSTOM_DIR"
+    log "Created missing directory: $CUSTOM_DIR"
+fi
+
+# 3. 配置环境变量 (env.conf)
+# 使用 grep 检查是否已经存在 fcitx 配置，防止重复追加
+if ! grep -q "XMODIFIERS,@im=fcitx" "$END4_HYPR_CUS_ENV" 2>/dev/null; then
+    log "Injecting Fcitx5 environment variables into env.conf..."
+    
+    # 补充了 QT, GTK, SDL 的输入法变量，确保在各种应用中都能唤起输入法
+    cat << EOT >> "$END4_HYPR_CUS_ENV"
+
+# --- Added by Auto-Setup Script ---
+# Fcitx5 Input Method Variables
+env = XMODIFIERS,@im=fcitx
+env = LC_CTYPE,en_US.UTF-8
+# Locale Settings
+env = LANG,zh_CN.UTF-8
+# ----------------------------------
+EOT
+else
+    log "Fcitx5 environment variables already exist in env.conf, skipping."
+fi
+
+# 4. 配置自动启动 (execs.conf)
+# 同样检查防止重复添加
+if ! grep -q "fcitx5" "$END4_HYPR_CUS_EXEC" 2>/dev/null; then
+    log "Adding Fcitx5 autostart command to execs.conf..."
+    echo 'exec-once = fcitx5 -d' >> "$END4_HYPR_CUS_EXEC"
+else
+    log "Fcitx5 autostart already exists in execs.conf, skipping."
+fi
+
+# 5. 统一修复权限 (Critical Step)
+# 必须在所有写入操作完成后执行，确保新追加的内容也属于目标用户
+log "Applying permission fixes for user: $TARGET_USER..."
+chown -R "$TARGET_USER" "$HOME_DIR/.config"
+
+success "End4 input method and environment configured."
 
 # ==============================================================================
 #  autologin
