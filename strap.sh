@@ -26,7 +26,7 @@ fi
 
 # 3. 克隆指定分支 (-b 参数)
 echo "Cloning repository..."
-if git clone -b "$TARGET_BRANCH" "$REPO_URL"; then
+if git clone --depth 1 -b "$TARGET_BRANCH" "$REPO_URL"; then
     echo "Clone successful."
 else
     echo -e "\033[0;31mError: Failed to clone branch '$TARGET_BRANCH'. Check if it exists.\033[0m"

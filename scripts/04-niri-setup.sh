@@ -314,7 +314,7 @@ TEMP_DIR="/tmp/shorin-repo"
 rm -rf "$TEMP_DIR"
 
 log "Cloning configuration..."
-if ! as_user git clone "$REPO_GITHUB" "$TEMP_DIR"; then
+if ! as_user git clone --depth 1 "$REPO_GITHUB" "$TEMP_DIR"; then
   warn "GitHub failed. Trying Gitee..."
   rm -rf "$TEMP_DIR"
   if ! as_user git clone "$REPO_GITEE" "$TEMP_DIR"; then
