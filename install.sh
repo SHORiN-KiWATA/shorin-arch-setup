@@ -437,7 +437,14 @@ else
     log "Repo cleanup skipped (not in /root/shorin-arch-setup)."
     log "If you cloned this manually, please remove the folder yourself."
 fi
-
+# --- 3. Remove Installer Files ---
+if [ -d "$HOME_DIR/shorin-arch-setup" ]; then
+    log "Removing installer from $HOME_DIR/shorin-arch-setup"
+    rm -rfv $HOME_DIR/shorin-arch-setup
+else
+    log "Repo cleanup skipped."
+    log "please remove the folder yourself."
+fi
 # --- 4. Final GRUB Update ---
 log "Regenerating final GRUB configuration..."
 exe grub-mkconfig -o /boot/grub/grub.cfg
