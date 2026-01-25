@@ -50,7 +50,7 @@ AUR:waybar-module-pacman-updates-git     # Waybar module: Pacman updates indicat
 AUR:wlogout                              # Logout menu (Shutdown/Reboot/Lock)
 AUR:matugen                              # Material You theme generator
 AUR:clipse                               # Clipboard manager
-AUR:clipse-gui                           # Clipboard manager (GUI binary)
+#AUR:clipse-gui                           # Clipboard manager (GUI binary)
 AUR:python-pywalfox                      # Pywal support for Firefox
 AUR:waypaper                             # GUI wallpaper setter (Frontend for swww)
 AUR:ddcutil-service                      # Monitor hardware brightness control service
