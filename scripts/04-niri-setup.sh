@@ -386,7 +386,8 @@ prepare_repository() {
     if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME" --depth 1; then # <--- 修改
       critical_failure_handler "Failed to download dotfiles (Sparse+Shallow failed)."
     else 
-      git -C "$DOTFILES_REPO" branch --set-upstream-to=origin/main main
+      as_user git -C "$DOTFILES_REPO" branch --set-upstream-to=origin/main main
+      as_user git config --global --add safe.directory "$DOTFILES_REPO"
     fi
 
   fi
