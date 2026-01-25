@@ -7,7 +7,6 @@ pacman-contrib                           # Pacman utilities (paccache, checkupda
 btop                                     # Resource Monitor (TUI)
 lact                                     # GPU Control Panel (Overclocking/Fan control)
 upscaler                                 # # AI Image Upscaler (Enhance low-res images)
-curtail                                  # Image Compressor (Reduce PNG/JPG size)
 
 # --- Disk & Filesystem Tools ---
 gnome-disk-utility                       # Disk Management Utility (Disks)

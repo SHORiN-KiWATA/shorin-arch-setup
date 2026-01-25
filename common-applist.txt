@@ -17,7 +17,6 @@ fragments                                # BitTorrent Client (GNOME style)
 mangohud                                 # OSD tool for gaming (like msi afterburner)
 gamescope                                # gaming conpositor made by Valve
 upscaler                                 # image upscaler (make it more clear)
-curtail                                  # compress image (make it smaller)    
 lact                                     # GPU Control Tool (Overclocking/Fan)
 obs-studio                               # OBS Studio (Streaming & Recording)
 # --- System Utilities ---
@@ -40,7 +39,6 @@ code                                     # vscode
 gnome-font-viewer                        # manage fonts easily
 gnome-calendar                           # calendar
 gnome-clocks                             # clocks
-gnome-text-editor                        # notebook
 localsend                                # send files to other devices
 
 # --- AUR Packages (Social) ---

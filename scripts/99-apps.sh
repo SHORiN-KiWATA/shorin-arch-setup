@@ -452,6 +452,12 @@ hide_desktop_file "/usr/share/applications/nvim.desktop"
 hide_desktop_file "/usr/share/applications/nvtop.desktop"
 hide_desktop_file "/usr/share/applications/mpv.desktop"
 hide_desktop_file "/usr/share/applications/org.gnome.Settings.desktop"
+hide_desktop_file "/usr/share/applications/thunar-settings.desktop"
+hide_desktop_file "/usr/share/applications/thunar-bulk-rename.desktop"
+hide_desktop_file "/usr/share/applications/thunar-volman-settings.desktop"
+hide_desktop_file "/usr/share/applications/clipse-gui.desktop"
+hide_desktop_file "/usr/share/applications/waypaper.desktop"
+hide_desktop_file "/usr/share/applications/xfce4-about.desktop"
 
 # --- Post-Dotfiles Configuration: Firefox ---
 section "Config" "Firefox UI Customization"
