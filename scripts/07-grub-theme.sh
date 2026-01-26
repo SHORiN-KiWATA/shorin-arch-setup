@@ -22,7 +22,7 @@ fi
 
 section "Phase 7" "GRUB Customization & Theming"
 
-# --- Helper Functions (Moved from 02a) ---
+# --- Helper Functions ---
 
 set_grub_value() {
     local key="$1"
@@ -60,7 +60,7 @@ manage_kernel_param() {
 }
 
 # ------------------------------------------------------------------------------
-# 1. Advanced GRUB Configuration (Moved from 02a)
+# 1. Advanced GRUB Configuration
 # ------------------------------------------------------------------------------
 section "Step 1/5" "General GRUB Settings"
 
@@ -97,23 +97,25 @@ DEST_DIR="/boot/grub/themes"
 
 if [ ! -d "$SOURCE_BASE" ]; then
     warn "Directory 'grub-themes' not found in repo."
-    exit 0
+    # 继续执行后续步骤，不直接退出，因为可能只想改内核参数
+    THEME_NAMES=()
+else
+    mapfile -t FOUND_DIRS < <(find "$SOURCE_BASE" -mindepth 1 -maxdepth 1 -type d | sort)
+    THEME_PATHS=()
+    THEME_NAMES=()
+
+    for dir in "${FOUND_DIRS[@]}"; do
+        if [ -f "$dir/theme.txt" ]; then
+            THEME_PATHS+=("$dir")
+            THEME_NAMES+=("$(basename "$dir")")
+        fi
+    done
 fi
-
-mapfile -t FOUND_DIRS < <(find "$SOURCE_BASE" -mindepth 1 -maxdepth 1 -type d | sort)
-THEME_PATHS=()
-THEME_NAMES=()
-
-for dir in "${FOUND_DIRS[@]}"; do
-    if [ -f "$dir/theme.txt" ]; then
-        THEME_PATHS+=("$dir")
-        THEME_NAMES+=("$(basename "$dir")")
-    fi
-done
 
 if [ ${#THEME_NAMES[@]} -eq 0 ]; then
     warn "No valid theme folders found."
-    exit 0
+    # 若没找到主题，强制进入跳过模式
+    SKIP_THEME=true
 fi
 
 # ------------------------------------------------------------------------------
@@ -121,17 +123,28 @@ fi
 # ------------------------------------------------------------------------------
 section "Step 3/5" "Theme Selection"
 
-if [ ${#THEME_NAMES[@]} -eq 1 ]; then
-    SELECTED_INDEX=0
-    log "Only one theme detected. Auto-selecting: ${THEME_NAMES[0]}"
+# 初始化变量
+SKIP_THEME=false
+SKIP_OPTION_NAME="No theme (Skip)"
+
+# 如果已经强制跳过（例如没找到文件夹），则不显示菜单
+if [ "$SKIP_THEME" == "true" ]; then
+    log "Skipping theme selection (No themes found)."
 else
     # Calculation & Menu Rendering
     TITLE_TEXT="Select GRUB Theme (60s Timeout)"
     MAX_LEN=${#TITLE_TEXT}
+    
+    # 计算主题名称最大长度
     for name in "${THEME_NAMES[@]}"; do
         ITEM_LEN=$((${#name} + 20))
         if (( ITEM_LEN > MAX_LEN )); then MAX_LEN=$ITEM_LEN; fi
     done
+    
+    # 检查“不安装”选项的长度是否更长
+    SKIP_LEN=$((${#SKIP_OPTION_NAME} + 10))
+    if (( SKIP_LEN > MAX_LEN )); then MAX_LEN=$SKIP_LEN; fi
+
     MENU_WIDTH=$((MAX_LEN + 4))
     
     LINE_STR=""; printf -v LINE_STR "%*s" "$MENU_WIDTH" ""; LINE_STR=${LINE_STR// /─}
@@ -144,9 +157,12 @@ else
     echo -e "${H_PURPLE}│${NC}${T_PAD_L}${BOLD}${TITLE_TEXT}${NC}${T_PAD_R}${H_PURPLE}│${NC}"
     echo -e "${H_PURPLE}├${LINE_STR}┤${NC}"
 
+    # 打印主题列表
     for i in "${!THEME_NAMES[@]}"; do
         NAME="${THEME_NAMES[$i]}"
         DISPLAY_IDX=$((i+1))
+        
+        # 默认第一个高亮标记为 Default
         if [ "$i" -eq 0 ]; then
             COLOR_STR=" ${H_CYAN}[$DISPLAY_IDX]${NC} ${NAME} - ${H_GREEN}Default${NC}"
             RAW_STR=" [$DISPLAY_IDX] $NAME - Default"
@@ -158,67 +174,89 @@ else
         PAD_STR=""; if [ "$PADDING" -gt 0 ]; then printf -v PAD_STR "%*s" "$PADDING" ""; fi
         echo -e "${H_PURPLE}│${NC}${COLOR_STR}${PAD_STR}${H_PURPLE}│${NC}"
     done
+
+    # 打印“不安装”选项（作为列表的最后一项）
+    SKIP_IDX=$((${#THEME_NAMES[@]} + 1))
+    SKIP_RAW_STR=" [$SKIP_IDX] $SKIP_OPTION_NAME"
+    SKIP_COLOR_STR=" ${H_CYAN}[$SKIP_IDX]${NC} ${H_YELLOW}${SKIP_OPTION_NAME}${NC}"
+    
+    SKIP_PADDING=$((MENU_WIDTH - ${#SKIP_RAW_STR}))
+    SKIP_PAD_STR=""; if [ "$SKIP_PADDING" -gt 0 ]; then printf -v SKIP_PAD_STR "%*s" "$SKIP_PADDING" ""; fi
+    echo -e "${H_PURPLE}│${NC}${SKIP_COLOR_STR}${SKIP_PAD_STR}${H_PURPLE}│${NC}"
+
     echo -e "${H_PURPLE}╰${LINE_STR}╯${NC}\n"
 
-    echo -ne "   ${H_YELLOW}Enter choice [1-${#THEME_NAMES[@]}]: ${NC}"
+    echo -ne "   ${H_YELLOW}Enter choice [1-$SKIP_IDX]: ${NC}"
     read -t 60 USER_CHOICE
     if [ -z "$USER_CHOICE" ]; then echo ""; fi
-    USER_CHOICE=${USER_CHOICE:-1}
+    USER_CHOICE=${USER_CHOICE:-1} # 默认选择第一个
 
-    if ! [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] || [ "$USER_CHOICE" -lt 1 ] || [ "$USER_CHOICE" -gt "${#THEME_NAMES[@]}" ]; then
+    # 验证输入
+    if ! [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] || [ "$USER_CHOICE" -lt 1 ] || [ "$USER_CHOICE" -gt "$SKIP_IDX" ]; then
         log "Invalid choice or timeout. Defaulting to first option..."
         SELECTED_INDEX=0
+    elif [ "$USER_CHOICE" -eq "$SKIP_IDX" ]; then
+        SKIP_THEME=true
+        info_kv "Selected" "None (Skip Theme Installation)"
     else
         SELECTED_INDEX=$((USER_CHOICE-1))
+        THEME_SOURCE="${THEME_PATHS[$SELECTED_INDEX]}"
+        THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
+        info_kv "Selected" "$THEME_NAME"
     fi
 fi
-
-THEME_SOURCE="${THEME_PATHS[$SELECTED_INDEX]}"
-THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
-info_kv "Selected" "$THEME_NAME"
 
 # ------------------------------------------------------------------------------
 # 4. Install & Configure Theme
 # ------------------------------------------------------------------------------
 section "Step 4/5" "Theme Installation"
 
-if [ ! -d "$DEST_DIR" ]; then exe mkdir -p "$DEST_DIR"; fi
-if [ -d "$DEST_DIR/$THEME_NAME" ]; then
-    log "Removing existing version..."
-    exe rm -rf "$DEST_DIR/$THEME_NAME"
-fi
-
-exe cp -r "$THEME_SOURCE" "$DEST_DIR/"
-
-if [ -f "$DEST_DIR/$THEME_NAME/theme.txt" ]; then
-    success "Theme installed."
+if [ "$SKIP_THEME" == "true" ]; then
+    log "Skipping theme copy and configuration as requested."
+    # 可选：如果选择不安装，是否要清理现有的 GRUB_THEME 配置？
+    # 目前逻辑为“不触碰”，即保留现状。
 else
-    error "Failed to copy theme files."
-    exit 1
-fi
+    if [ ! -d "$DEST_DIR" ]; then exe mkdir -p "$DEST_DIR"; fi
+    if [ -d "$DEST_DIR/$THEME_NAME" ]; then
+        log "Removing existing version..."
+        exe rm -rf "$DEST_DIR/$THEME_NAME"
+    fi
 
-GRUB_CONF="/etc/default/grub"
-THEME_PATH="$DEST_DIR/$THEME_NAME/theme.txt"
+    exe cp -r "$THEME_SOURCE" "$DEST_DIR/"
 
-if [ -f "$GRUB_CONF" ]; then
-    if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
-        exe sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
-    elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
-        exe sed -i "s|^#GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+    if [ -f "$DEST_DIR/$THEME_NAME/theme.txt" ]; then
+        success "Theme installed."
     else
-        echo "GRUB_THEME=\"$THEME_PATH\"" >> "$GRUB_CONF"
+        error "Failed to copy theme files."
+        exit 1
     fi
-    
-    if grep -q "^GRUB_TERMINAL_OUTPUT=\"console\"" "$GRUB_CONF"; then
-        exe sed -i 's/^GRUB_TERMINAL_OUTPUT="console"/#GRUB_TERMINAL_OUTPUT="console"/' "$GRUB_CONF"
+
+    GRUB_CONF="/etc/default/grub"
+    THEME_PATH="$DEST_DIR/$THEME_NAME/theme.txt"
+
+    if [ -f "$GRUB_CONF" ]; then
+        # 设置 GRUB_THEME 变量
+        if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^#GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        else
+            echo "GRUB_THEME=\"$THEME_PATH\"" >> "$GRUB_CONF"
+        fi
+        
+        # 确保不使用 console 输出模式，以便显示图形主题
+        if grep -q "^GRUB_TERMINAL_OUTPUT=\"console\"" "$GRUB_CONF"; then
+            exe sed -i 's/^GRUB_TERMINAL_OUTPUT="console"/#GRUB_TERMINAL_OUTPUT="console"/' "$GRUB_CONF"
+        fi
+        # 确保设置了 GFXMODE
+        if ! grep -q "^GRUB_GFXMODE=" "$GRUB_CONF"; then
+            echo 'GRUB_GFXMODE=auto' >> "$GRUB_CONF"
+        fi
+        success "Configured GRUB to use theme."
+    else
+        error "$GRUB_CONF not found."
+        exit 1
     fi
-    if ! grep -q "^GRUB_GFXMODE=" "$GRUB_CONF"; then
-        echo 'GRUB_GFXMODE=auto' >> "$GRUB_CONF"
-    fi
-    success "Configured GRUB to use theme."
-else
-    error "$GRUB_CONF not found."
-    exit 1
 fi
 
 # ------------------------------------------------------------------------------
@@ -231,8 +269,8 @@ cp /etc/grub.d/40_custom /etc/grub.d/99_custom
 echo 'menuentry "Reboot"' {reboot} >> /etc/grub.d/99_custom
 echo 'menuentry "Shutdown"' {halt} >> /etc/grub.d/99_custom
 
-# 赋予执行权限
 success "Added grub menuentry 99-shutdown"
+
 # ------------------------------------------------------------------------------
 # 6. Apply Changes
 # ------------------------------------------------------------------------------
