@@ -120,16 +120,39 @@ success "Audio setup complete."
 # ------------------------------------------------------------------------------
 section "Step 3/8" "Locale Configuration"
 
+# 标记是否需要重新生成
+NEED_GENERATE=false
+
+# --- 1. 检测 en_US.UTF-8 ---
+if locale -a | grep -iq "en_US.utf8"; then
+    success "English locale (en_US.UTF-8) is active."
+else
+    log "Enabling en_US.UTF-8..."
+    # 使用 sed 取消注释
+    sed -i 's/^#\s*en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+    NEED_GENERATE=true
+fi
+
+# --- 2. 检测 zh_CN.UTF-8 ---
 if locale -a | grep -iq "zh_CN.utf8"; then
     success "Chinese locale (zh_CN.UTF-8) is active."
 else
-    log "Generating zh_CN.UTF-8..."
+    log "Enabling zh_CN.UTF-8..."
+    # 使用 sed 取消注释
     sed -i 's/^#\s*zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen
+    NEED_GENERATE=true
+fi
+
+# --- 3. 如果有修改，统一执行生成 ---
+if [ "$NEED_GENERATE" = true ]; then
+    log "Generating locales (this may take a moment)..."
     if exe locale-gen; then
-        success "Locale generated."
+        success "Locales generated successfully."
     else
         error "Locale generation failed."
     fi
+else
+    success "All locales are already up to date."
 fi
 
 # ------------------------------------------------------------------------------
