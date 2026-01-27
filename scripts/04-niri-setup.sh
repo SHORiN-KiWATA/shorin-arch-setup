@@ -471,6 +471,9 @@ if [ -d "$DOTFILES_REPO/wallpapers" ]; then
   as_user chmod +x "$HOME_DIR/Templates/new.sh"
   success "Installed."
 fi
+
+# === remove gtk bottom =======
+as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":"
 # ==============================================================================
 # STEP 8: Hardware Tools
 # ==============================================================================
