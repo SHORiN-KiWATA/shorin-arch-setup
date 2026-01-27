@@ -465,7 +465,7 @@ MOZILLA_DIR="$HOME_DIR/.config/mozilla"
 
 if [ -d "$MOZILLA_DIR" ]; then 
     log "Backing up existing mozilla directory..."
-    mv "$HMOZILLA_DIR" "$MOZILLA_DIR.bak.$(date +%s)"
+    mv "$MOZILLA_DIR" "$MOZILLA_DIR.bak.$(date +%s)"
 fi
     
 mkdir -p "$MOZILLA_DIR"
