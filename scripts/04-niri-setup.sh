@@ -473,7 +473,7 @@ if [ -d "$DOTFILES_REPO/wallpapers" ]; then
 fi
 
 # === remove gtk bottom =======
-as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":"
+as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":close"
 # ==============================================================================
 # STEP 8: Hardware Tools
 # ==============================================================================
