@@ -8,7 +8,6 @@ btop                                     # great tui mission center / system inf
 fcitx5-mozc                              # Japanese Input Method
 nm-connection-editor                     # Advanced network editor
 # --- Gaming & Media ---
-pilipuls                                 # bilibili 
 steam                                    # Gaming Platform (Valve)
 lutris                                   # Gaming outside steam
 heroic-games-launcher-bin                # Playing Epic games
