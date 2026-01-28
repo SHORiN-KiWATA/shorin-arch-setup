@@ -13,7 +13,7 @@ lutris                                   # Gaming outside steam
 heroic-games-launcher-bin                # Playing Epic games
 protonplus                               # mange proton 
 mpv                                      # Minimalist High Performance Video Player
-fragments                                # BitTorrent Client (GNOME style)
+transmission-gtk                         # BitTorrent Client
 mangohud                                 # OSD tool for gaming (like msi afterburner)
 gamescope                                # gaming conpositor made by Valve
 upscaler                                 # image upscaler (make it more clear)
