@@ -300,7 +300,7 @@ fi
 # ==============================================================================
 section "Step 5/9" "Deploying Dotfiles"
 
-REPO_GITHUB="https://github.com/SHORiN-KiWATA/ShorinArchExperience-ArchlinuxGuide.git"
+REPO_GITHUB="https://github.com/ignent/ShorinArchExperience-ArchlinuxGuide.git"
 
 # 1. 仓库位置：放在 .local/share 下，不污染 home 根目录
 DOTFILES_REPO="$HOME_DIR/.local/share/shorin-niri"
