@@ -493,6 +493,17 @@ success "Tools configured."
 section "Final" "Cleanup & Boot"
 rm -f "$SUDO_TEMP_FILE"
 
+# 关盖忽略
+LOGIND_DROPIN_DIR="/etc/systemd/logind.conf.d"
+LOGIND_DROPIN_FILE="$LOGIND_DROPIN_DIR/99-lidswitch-ignore.conf"
+mkdir -p "$LOGIND_DROPIN_DIR"
+cat >"$LOGIND_DROPIN_FILE" <<'EOT'
+[Login]
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+EOT
+
 SVC_DIR="$HOME_DIR/.config/systemd/user"
 SVC_FILE="$SVC_DIR/niri-autostart.service"
 LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
