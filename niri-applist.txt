@@ -50,7 +50,7 @@ bluetui                                  # tui for bluetooth
 AUR:waybar-niri-taskbar-git              # Waybar module: Niri Workspaces/Taskbar
 AUR:wlogout                              # Logout menu (Shutdown/Reboot/Lock)
 AUR:matugen                              # Material You theme generator
-AUR:clipse-git                           # Clipboard manager
+AUR:clipse                               # Clipboard manager
 #AUR:clipse-gui                           # Clipboard manager (GUI binary)
 AUR:python-pywalfox                      # Pywal support for Firefox
 AUR:waypaper                             # GUI wallpaper setter (Frontend for swww)
