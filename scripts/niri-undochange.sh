@@ -1,101 +1,102 @@
 #!/bin/bash
+
 # ==============================================================================
-# Script: niri-undochange.sh
-# Purpose: Emergency rollback to 'Before Niri Setup' checkpoint
+# undochange.sh - Emergency System Rollback Tool (Btrfs Assistant Edition)
+# ==============================================================================
+# Usage: sudo ./undochange.sh
+# Description: Reverts system to "Before Shorin Setup" using btrfs-assistant
+#              This performs a Subvolume Rollback, not just a file diff undo.
 # ==============================================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-source "$SCRIPT_DIR/00-utils.sh"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-check_root
+TARGET_DESC="Before Shorin Setup"
 
-warn "Critical error encountered during Niri setup."
-log "Initiating system rollback to checkpoint: 'Before Desktop Environments'..."
+# 1. Check Root
+if [ "$EUID" -ne 0 ]; then
+    echo -e "${RED}Error: Please run as root (sudo ./undochange.sh)${NC}"
+    exit 1
+fi
 
-# ------------------------------------------------------------------------------
-# Function: Perform Rollback
-# ------------------------------------------------------------------------------
+# 2. Check Dependencies
+if ! command -v snapper &> /dev/null; then
+    echo -e "${RED}Error: Snapper is not installed.${NC}"
+    exit 1
+fi
+
+if ! command -v btrfs-assistant &> /dev/null; then
+    echo -e "${RED}Error: btrfs-assistant is not installed.${NC}"
+    echo "Cannot perform subvolume rollback."
+    exit 1
+fi
+
+echo -e "${YELLOW}>>> Initializing Emergency Rollback (Target: '$TARGET_DESC')...${NC}"
+
+# --- Helper Function: Rollback Logic from quickload ---
+# Args: $1 = Subvolume Name (e.g., @ or @home), $2 = Snapper Config (e.g., root or home)
 perform_rollback() {
-    local config="$1"
-    local marker="Before Desktop Environments"
+    local subvol="$1"
+    local snap_conf="$2"
     
-    # 1. 查找標記快照的 ID
-    local snap_id
-    snap_id=$(snapper -c "$config" list --columns number,description | grep "$marker" | awk '{print $1}' | tail -n 1)
-    
-    if [ -n "$snap_id" ]; then
-        log "Reverting changes in '$config' (Target Snapshot ID: $snap_id)..."
-        
-        # 2. 執行撤銷 (undochange ID..0)
-        # 這會將文件系統當前狀態(0) 恢復到 ID 的狀態
-        if snapper -c "$config" undochange "$snap_id"..0; then
-            success "Successfully reverted $config."
-        else
-            error "Failed to revert $config. Manual intervention required."
-            # 如果回滾失敗，不要重啟，讓用戶看日誌
-            exit 1 
-        fi
+    echo -e "Checking config: ${YELLOW}$snap_conf${NC} for subvolume: ${YELLOW}$subvol${NC}..."
+
+    # 1. Get Snapper ID
+    # logic: list snapshots -> filter by description -> take the last one -> get ID
+    local snap_id=$(snapper -c "$snap_conf" list --columns number,description | grep "$TARGET_DESC" | tail -n 1 | awk '{print $1}')
+
+    if [ -z "$snap_id" ]; then
+        echo -e "${RED}  [SKIP] Snapshot '$TARGET_DESC' not found in config '$snap_conf'.${NC}"
+        return 1
+    fi
+
+    echo -e "  Found Snapshot ID: ${GREEN}$snap_id${NC}"
+
+    # 2. Map to Btrfs-Assistant Index
+    # Logic from quickload: Match Subvolume Name ($2) and Snapper ID ($3) to get Index ($1)
+    local ba_index=$(btrfs-assistant -l | awk -v v="$subvol" -v s="$snap_id" '$2==v && $3==s {print $1}')
+
+    if [ -z "$ba_index" ]; then
+        echo -e "${RED}  [FAIL] Could not map Snapper ID $snap_id to Btrfs-Assistant index.${NC}"
+        return 1
+    fi
+
+    # 3. Execute Restore
+    echo -e "  Executing rollback (Index: $ba_index)..."
+    if btrfs-assistant -r "$ba_index"; then
+        echo -e "  ${GREEN}Success.${NC}"
+        return 0
     else
-        warn "Checkpoint '$marker' not found in $config. Skipping."
+        echo -e "  ${RED}Restore command failed.${NC}"
+        return 1
     fi
 }
 
-# ------------------------------------------------------------------------------
-# Execution
-# ------------------------------------------------------------------------------
+# --- Main Execution ---
 
-# 1. 回滾 Root 和 Home
-perform_rollback "root"
-perform_rollback "home"
-
-# 2. [新增] 清理緩存 (Clean Caches)
-# 這是為了確保下次重試時不會因為緩存損壞而再次失敗
-log "Cleaning package manager caches..."
-
-# 清理 Pacman 緩存 (刪除未安裝的包和緩存數據)
-pacman -Sc --noconfirm
-
-# 清理 Yay 緩存 (針對 UID 1000 用戶)
-# 雖然回滾 /home 可能已經清除了一部分，但強制刪除是最保險的
-MAIN_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-if [ -n "$MAIN_USER" ]; then
-    YAY_CACHE="/home/$MAIN_USER/.cache/yay"
-    if [ -d "$YAY_CACHE" ]; then
-        log "Removing yay cache directory for $MAIN_USER..."
-        rm -rf "$YAY_CACHE"
-    fi
-    
-    # 順便清理 paru，如果存在的話
-    PARU_CACHE="/home/$MAIN_USER/.cache/paru"
-    if [ -d "$PARU_CACHE" ]; then
-        rm -rf "$PARU_CACHE"
-    fi
-fi
-success "Caches cleaned."
-
-# 3. 狀態文件保護
-# 我們保留 .install_progress 文件，這樣重啟後前面 00-03 的步驟會被自動跳過
-# 但為了安全，我們確保 04-niri-setup.sh 不在裡面
-if [ -f "$PARENT_DIR/.install_progress" ]; then
-    sed -i "/04-niri-setup.sh/d" "$PARENT_DIR/.install_progress"
+# 3. Rollback Root (Critical)
+# Arch layout usually maps config 'root' to subvolume '@'
+echo -e "${YELLOW}>>> Restoring Root Filesystem...${NC}"
+if ! perform_rollback "@" "root"; then
+    echo -e "${RED}CRITICAL FAILURE: Failed to restore root partition.${NC}"
+    echo "Aborting operation to prevent partial system state."
+    exit 1
 fi
 
-# 4. 強制重啟與用戶提示
-echo ""
-echo -e "${H_YELLOW}╔═════════════════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${H_YELLOW}║                                                                                     ║${NC}"
-echo -e "${H_YELLOW}║   AFTER REBOOT: LOGIN AS YOUR ORIGINAL USER -> RUN install.sh AGAIN TO RETRY        ║${NC}"
-echo -e "${H_YELLOW}║   AFTER REBOOT: LOGIN AS YOUR ORIGINAL USER -> RUN install.sh AGAIN TO RETRY        ║${NC}"
-echo -e "${H_YELLOW}║   AFTER REBOOT: LOGIN AS YOUR ORIGINAL USER -> RUN install.sh AGAIN TO RETRY        ║${NC}"
-echo -e "${H_YELLOW}║                                                                                     ║${NC}"
-echo -e "${H_YELLOW}╚═════════════════════════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
+# 4. Rollback Home (Optional)
+# Only attempt if 'home' config exists
+if snapper list-configs | grep -q "^home "; then
+    echo -e "${YELLOW}>>> Restoring Home Filesystem...${NC}"
+    # Arch layout usually maps config 'home' to subvolume '@home'
+    perform_rollback "@home" "home"
+else
+    echo -e "No 'home' snapper config found, skipping home restore."
+fi
 
-for i in {10..1}; do
-    echo -ne "\r   ${H_RED}Rebooting in ${i}s...${NC}"
-    sleep 1
-done
-
-echo ""
-systemctl reboot
+# 5. Reboot
+echo -e "${GREEN}System rollback successful.${NC}"
+echo -e "${YELLOW}Rebooting in 3 seconds...${NC}"
+sleep 3
+reboot
