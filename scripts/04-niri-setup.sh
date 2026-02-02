@@ -369,8 +369,8 @@ prepare_repository() {
 
   if [ ! -d "$DOTFILES_REPO" ]; then
     log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
-
-    chown -R $TARGET_USER $HOME_DIR/.local/share
+    cd "$HOME_DIR"
+    #chown -R $TARGET_USER $HOME_DIR/.local/share
     as_user mkdir -p "$DOTFILES_REPO"
     
     as_user git -C "$DOTFILES_REPO" init
