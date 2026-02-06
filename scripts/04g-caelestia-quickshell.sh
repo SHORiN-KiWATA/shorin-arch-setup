@@ -29,7 +29,7 @@ info_kv "Target User" "$TARGET_USER"
 info_kv "Home Dir"    "$HOME_DIR"
 
 # Check for conflicting Display Managers (DM)
-KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd")
+KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
 SKIP_AUTOLOGIN=false
 DM_FOUND=""
 
