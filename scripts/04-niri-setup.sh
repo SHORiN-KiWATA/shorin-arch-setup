@@ -364,6 +364,18 @@ prepare_repository() {
   local TARGET_DIRS=("dotfiles" "wallpapers")
   # 建议定义一个变量指定主分支名，防止以后 Github 变成 other-branch
   local BRANCH_NAME="main" 
+  if [ -d "$DOTFILES_REPO" ]; then
+    if ! as_user git -C "$DOTFILES_REPO" rev-parse --is-inside-work-tree &>/dev/null; then
+      warn "Found incomplete or broken repository folder. Cleaning up..."
+       rm -rf "$DOTFILES_REPO"
+    else
+      log "Repository already exists. Checking for updates..."
+      if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME"; then
+         warn "Update failed (network issue?), cleaning up..."
+         rm -rf "$DOTFILES_REPO"
+      fi
+    fi
+  fi
 
   if [ ! -d "$DOTFILES_REPO" ]; then
     log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
@@ -386,7 +398,10 @@ prepare_repository() {
     
     log "Downloading latest snapshot (Github)..."
     # 修复点 2：同样明确指定 origin main
-    if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME" --depth 1 ; then # <--- 修改
+    if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME" --depth 1 ; then 
+      error "Failed to download dotfiles." 
+      warn "Cleaning up empty directory to prevent errors on retry..."
+      rm -rf "$DOTFILES_REPO" 
       critical_failure_handler "Failed to download dotfiles (Sparse+Shallow failed)."
     else 
       chown -R $TARGET_USER $DOTFILES_REPO
