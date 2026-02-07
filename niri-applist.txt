@@ -42,6 +42,7 @@ timg                                     # view image in terminal
 pacman-contrib                           # pacman utilus
 bat                                      # better cat
 ffmpegthumbnailer                        # generate thumbnailers
+chafa                                    # terminal image preview 
 # --- Hardware & Audio ---
 brightnessctl                            # Device brightness control
 cava                                     # Console-based Audio Visualizer
