@@ -377,9 +377,9 @@ STEAM_desktop_modified=false
 NATIVE_DESKTOP="/usr/share/applications/steam.desktop"
 if [ -f "$NATIVE_DESKTOP" ]; then
     log "Checking Native Steam..."
-    if ! grep -q "env LANG=zh_CN.UTF-8" "$NATIVE_DESKTOP"; then
-        exe sed -i 's|^Exec=/usr/bin/steam|Exec=env LANG=zh_CN.UTF-8 /usr/bin/steam|' "$NATIVE_DESKTOP"
-        exe sed -i 's|^Exec=steam|Exec=env LANG=zh_CN.UTF-8 steam|' "$NATIVE_DESKTOP"
+    if ! grep -q "env LC_CTYPE=zh_CN.UTF-8" "$NATIVE_DESKTOP"; then
+        exe sed -i 's|^Exec=/usr/bin/steam|Exec=env LC_CTYPE=zh_CN.UTF-8 /usr/bin/steam|' "$NATIVE_DESKTOP"
+        exe sed -i 's|^Exec=steam|Exec=env LC_CTYPE=zh_CN.UTF-8 steam|' "$NATIVE_DESKTOP"
         success "Patched Native Steam .desktop."
         STEAM_desktop_modified=true
     else
