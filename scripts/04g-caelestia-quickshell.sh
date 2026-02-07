@@ -88,7 +88,7 @@ if [ -d $CAELESTIA_DIR ]; then
         rm -rf "$CAELESTIA_DIR"
 fi
 
-if exe git clone "$CAELESTIA_REPO" "$CAELESTIA_DIR"; then
+if exe as_user git clone "$CAELESTIA_REPO" "$CAELESTIA_DIR"; then
     chown -R $TARGET_USER $CAELESTIA_DIR
     log "repo cloned."
 fi
