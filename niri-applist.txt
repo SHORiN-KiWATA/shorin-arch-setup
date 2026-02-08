@@ -1,6 +1,6 @@
 imv                                      # Image Viewer for Wayland
 fish                                     # Friendly Interactive Shell
-gnome-software                           # Gui store for flatpak software
+bazaar                                   # Gui store for flatpak software
 # --- Niri/Wayland Components ---
 xwayland-satellite                       # XWayland compatibility 
 swayidle                                 # Idle management daemon (Screen lock/suspend)
