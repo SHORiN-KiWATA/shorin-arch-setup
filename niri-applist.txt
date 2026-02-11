@@ -57,3 +57,5 @@ AUR:waypaper                             # GUI wallpaper setter (Frontend for sw
 AUR:ddcutil-service                      # Monitor hardware brightness control service
 AUR:ttf-jetbrains-maple-mono-nf-xx-xx    # Maple Mono NF font
 AUR:ttf-lxgw-wenkai-screen               # xia2 wu4 wen2 kai3 font
+AUR:shorinclip-git                       # My clipboard tui
+AUR:clipsync-git                         # x11 <--> wayland clipboard sync 
