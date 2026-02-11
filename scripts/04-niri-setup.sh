@@ -381,8 +381,7 @@ prepare_repository() {
     log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
     cd "$HOME_DIR"
 
-    mkdir -p "$DOTFILES_REPO"
-    chown -R "$TARGET_USER:" "$DOTFILES_REPO"
+    as_user mkdir -p "$DOTFILES_REPO"
     as_user git -C "$DOTFILES_REPO" init
     # 强制将本地分支名设为 main，避免本地是 master 远程是 main 造成的混乱
     as_user git -C "$DOTFILES_REPO" branch -m "$BRANCH_NAME"
