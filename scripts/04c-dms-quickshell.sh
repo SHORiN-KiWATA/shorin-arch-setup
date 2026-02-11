@@ -202,7 +202,7 @@ section "Config" "file manager"
 if [ "$DMS_NIRI_INSTALLED" = true ]; then
     log "dms niri detected, configuring nautilus"
     exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
-    if [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then
+    if pacman -Q | grep -q "kitty" && [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then
         ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
     fi
     as_user mkdir -p "$HOME_DIR/Templates"
