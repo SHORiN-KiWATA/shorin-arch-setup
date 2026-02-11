@@ -381,8 +381,7 @@ prepare_repository() {
     log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
     cd "$HOME_DIR"
     #chown -R $TARGET_USER $HOME_DIR/.local/share
-    mkdir -p "$DOTFILES_REPO"
-    chown -R $TARGET_USER "$DOTFILES_REPO"
+    as_user mkdir -p "$DOTFILES_REPO"
     as_user git -C "$DOTFILES_REPO" init
     # 强制将本地分支名设为 main，避免本地是 master 远程是 main 造成的混乱
     as_user git -C "$DOTFILES_REPO" branch -m "$BRANCH_NAME"
@@ -415,9 +414,8 @@ prepare_repository() {
 }
 
 prepare_repository
-if [ -d "$DOTFILES_REPO" ]; then
-    chown -R "$TARGET_USER:" "$DOTFILES_REPO"
-fi
+
+
 # 2. 执行链接
 if [ -d "$DOTFILES_REPO/dotfiles" ]; then
   EXCLUDE_LIST=""
@@ -459,7 +457,6 @@ if [ -d "$DOTFILES_REPO/dotfiles" ]; then
   # GTK Theme Symlinks (Fix internal links)
   GTK4="$HOME_DIR/.config/gtk-4.0"
   THEME="$HOME_DIR/.themes/adw-gtk3-dark/gtk-4.0"
-  chown -R $TARGET_USER "$THEME"
   if [ -d "$GTK4" ]; then
       as_user rm -f "$GTK4/gtk.css" "$GTK4/gtk-dark.css"
       as_user ln -sf "$THEME/gtk-dark.css" "$GTK4/gtk-dark.css"
