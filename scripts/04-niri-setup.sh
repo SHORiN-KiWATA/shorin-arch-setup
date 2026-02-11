@@ -415,7 +415,9 @@ prepare_repository() {
 }
 
 prepare_repository
-
+if [ -d "$DOTFILES_REPO" ]; then
+    chown -R "$TARGET_USER:" "$DOTFILES_REPO"
+fi
 # 2. 执行链接
 if [ -d "$DOTFILES_REPO/dotfiles" ]; then
   EXCLUDE_LIST=""
