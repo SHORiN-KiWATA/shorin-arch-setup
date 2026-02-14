@@ -456,7 +456,7 @@ if [ -d "$DOTFILES_REPO/dotfiles" ]; then
 
   # GTK Theme Symlinks (Fix internal links)
   GTK4="$HOME_DIR/.config/gtk-4.0"
-  THEME="$HOME_DIR/.themes/adw-gtk3-dark/gtk-4.0"
+  THEME="$HOME_DIR/.local/share/themes/adw-gtk3-dark/gtk-4.0"
   if [ -d "$GTK4" ]; then
       as_user rm -f "$GTK4/gtk.css" "$GTK4/gtk-dark.css"
       as_user ln -sf "$THEME/gtk-dark.css" "$GTK4/gtk-dark.css"
