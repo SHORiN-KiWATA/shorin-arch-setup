@@ -7,11 +7,8 @@ swayidle                                 # Idle management daemon (Screen lock/s
 hyprlock                                 # Screen locker with effects (Blur/Screenshots)
 swayosd                                  # On-Screen Display for Volume/Brightness
 nwg-look                                 # GTK3 settings editor for Wayland
-qt5ct                                    # Qt5 configuration tool
-qt6ct                                    # Qt6 configuration tool
 
 # --- Aesthetics & Theming ---
-breeze                                   # KDE Breeze visual style
 ttf-jetbrains-mono-nerd                  # JetBrains Mono font (Nerd Font patched)
 
 # --- Wallpaper ---
@@ -40,7 +37,6 @@ jq                                       # Command-line JSON processor
 imagemagick                              # Image manipulation tools
 timg                                     # view image in terminal
 pacman-contrib                           # pacman utilus
-bat                                      # better cat
 ffmpegthumbnailer                        # generate thumbnailers
 chafa                                    # terminal image preview 
 # --- Hardware & Audio ---
