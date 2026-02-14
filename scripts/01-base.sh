@@ -64,8 +64,8 @@ fi
 # ------------------------------------------------------------------------------
 section "Step 3/6" "Base Fonts"
 
-log "Installing adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts , noto-fonts, emoji..."
-exe pacman -S --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts noto-fonts noto-fonts-emoji ttf-jetbrains-mono-nerd
+log "Installing adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts , ttf-liberation, emoji..."
+exe pacman -S --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts ttf-liberation noto-fonts-emoji ttf-jetbrains-mono-nerd
 log "Base fonts installed."
 
 log "Installing terminus-font..."
