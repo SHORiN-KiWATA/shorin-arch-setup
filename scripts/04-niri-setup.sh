@@ -362,12 +362,13 @@ link_recursive() {
 # 1. 准备仓库
 prepare_repository() {
   local TARGET_DIRS=("dotfiles" "wallpapers")
-  # 建议定义一个变量指定主分支名，防止以后 Github 变成 other-branch
-  local BRANCH_NAME="main" 
+  local BRANCH_NAME="main"
+  
+  # --- 1. 检查是否存在旧仓库 ---
   if [ -d "$DOTFILES_REPO" ]; then
     if ! as_user git -C "$DOTFILES_REPO" rev-parse --is-inside-work-tree &>/dev/null; then
       warn "Found incomplete or broken repository folder. Cleaning up..."
-       rm -rf "$DOTFILES_REPO"
+      rm -rf "$DOTFILES_REPO"
     else
       log "Repository already exists. Checking for updates..."
       if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME"; then
@@ -377,15 +378,39 @@ prepare_repository() {
     fi
   fi
 
+  # --- 2. 初始化新仓库 ---
   if [ ! -d "$DOTFILES_REPO" ]; then
     log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
     cd "$HOME_DIR"
 
+    # ================= [修改开始：智能安全创建目录] =================
+    # 逻辑：
+    # 1. 优先尝试用 as_user (sudo -u) 创建，这是最干净的。
+    # 2. 如果失败，通常是因为父目录 (.local 或 .local/share) 被 Root 占用了。
+    # 3. 此时只修正父目录的 Owner (不递归)，然后再试。
+    
+    if ! as_user mkdir -p "$DOTFILES_REPO" 2>/dev/null; then
+        local parent_dir=$(dirname "$DOTFILES_REPO")
+        log "User creation failed. Fixing parent permissions: $parent_dir"
+        
+        # 确保父目录存在，并修正父目录权限 (非递归，瞬间完成)
+        if [ ! -d "$parent_dir" ]; then
+            mkdir -p "$parent_dir"
+        fi
+        chown "$TARGET_USER:" "$parent_dir"
+        
+        # 再次尝试以用户身份创建
+        if ! as_user mkdir -p "$DOTFILES_REPO"; then
+            # 最后的兜底：实在不行就用 Root 创建，然后只修这个新目录的权限
+            warn "Fallback to root creation..."
+            mkdir -p "$DOTFILES_REPO"
+            chown -R "$TARGET_USER:" "$DOTFILES_REPO"
+        fi
+    fi
+    # ================= [修改结束] =================
 
-    mkdir -p "$DOTFILES_REPO"
-    chown -R "$TARGET_USER:" "$HOME_DIR/.local"
     as_user git -C "$DOTFILES_REPO" init
-    # 强制将本地分支名设为 main，避免本地是 master 远程是 main 造成的混乱
+    # 强制将本地分支名设为 main
     as_user git -C "$DOTFILES_REPO" branch -m "$BRANCH_NAME"
     
     as_user git -C "$DOTFILES_REPO" config core.sparseCheckout true
@@ -394,21 +419,24 @@ prepare_repository() {
       log "  Configuring sparse-checkout: $item"
       echo "$item" | as_user tee -a "$sparse_file" >/dev/null
     done
+    
     log "  Adding remote origin: $REPO_GITHUB"
     as_user git -C "$DOTFILES_REPO" remote add origin "$REPO_GITHUB"
     
     log "Downloading latest snapshot (Github)..."
-    # 修复点 2：同样明确指定 origin main
     if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME" --depth 1 ; then 
       error "Failed to download dotfiles." 
       warn "Cleaning up empty directory to prevent errors on retry..."
       rm -rf "$DOTFILES_REPO" 
       critical_failure_handler "Failed to download dotfiles (Sparse+Shallow failed)."
     else 
-      chown -R "$TARGET_USER:" $DOTFILES_REPO
+      # 这里可以保留作为双重保险，或者因为上面已经处理好了权限，这行其实是可选的
+      chown -R "$TARGET_USER:" "$DOTFILES_REPO"
+      
       as_user git -C "$DOTFILES_REPO" branch --set-upstream-to=origin/main main
+      # 这是一个常见痛点：因为 git 也是 sudo -u 运行的，这步是为了防止 git 报错 "dubious ownership"
       as_user git config --global --add safe.directory "$DOTFILES_REPO"
-      success "Repository prepared and permissions fixed."
+      success "Repository prepared."
     fi
   else
     log "Dotfiles repo already exists. Skipping clone."
