@@ -457,6 +457,13 @@ for dir in /var/cache/pacman/pkg/download-*/; do
     fi
 done
 
+#--- 清理nmcli残留的连接配置
+
+if pacman -Qi networkmanager &> /dev/null; then
+
+    rm -rf /etc/NetworkManager/system-connections/* 
+fi
+
 # --- 4. Final GRUB Update ---
 log "Regenerating final GRUB configuration..."
 exe env LANG=en_US.UTF-8 grub-mkconfig -o /boot/grub/grub.cfg
