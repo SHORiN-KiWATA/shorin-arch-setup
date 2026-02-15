@@ -1,58 +1,47 @@
-imv                                      # Image Viewer for Wayland
-fish                                     # Friendly Interactive Shell
+# --- Standard Packages ---
 bazaar                                   # Gui store for flatpak software
-
-# --- Niri/Wayland Components ---
-xwayland-satellite                       # XWayland compatibility 
-swayidle                                 # Idle management daemon (Screen lock/suspend)
-hyprlock                                 # Screen locker with effects (Blur/Screenshots)
-swayosd                                  # On-Screen Display for Volume/Brightness
-nwg-look                                 # GTK3 settings editor for Wayland
-
-# --- Aesthetics & Theming ---
-ttf-jetbrains-mono-nerd                  # JetBrains Mono font (Nerd Font patched)
-
-# --- Wallpaper ---
-swww                                     # Efficient wallpaper daemon for Wayland
-
-# --- Status Bar ---
-waybar                                   # Highly customizable Wayland bar
-waifu2x-ncnn-vulkan                      # make anime wallpaper more clear
-# --- Screenshots & Recording ---
-grim                                     # Screenshot utility (Grabs images)
-slurp                                    # Region selector (Works with grim)
-wf-recorder                              # Screen recorder for Wayland
-hyprpicker                               # Color picker for Wayland
-satty                                   # Modern screenshot annotation tool
-wlsunset                                 # take care of your eyes
-# --- Clipboard ---
-wl-clipboard                             # Command-line copy/paste utilities
-cliphist                                 # Clipboard history manager
-xclip                                    # x11 clipboard manger
-clipnotify                               # x11 clipboard manager
-# --- CLI Enhancements ---
-starship                                 # Cross-shell prompt
-zoxide                                   # Smarter cd command
-eza                                      # Modern replacement for ls
-jq                                       # Command-line JSON processor
-imagemagick                              # Image manipulation tools
-timg                                     # view image in terminal
-pacman-contrib                           # pacman utilus
-ffmpegthumbnailer                        # generate thumbnailers
-chafa                                    # terminal image preview 
-# --- Hardware & Audio ---
+bluetui                                  # tui for bluetooth
 brightnessctl                            # Device brightness control
 cava                                     # Console-based Audio Visualizer
-bluetui                                  # tui for bluetooth
+chafa                                    # terminal image preview 
+cliphist                                 # Clipboard history manager
+clipnotify                               # x11 clipboard manager
+eza                                      # Modern replacement for ls
+ffmpegthumbnailer                        # generate thumbnailers
+fish                                     # Friendly Interactive Shell
+grim                                     # Screenshot utility (Grabs images)
+hyprlock                                 # Screen locker with effects (Blur/Screenshots)
+hyprpicker                               # Color picker for Wayland
+imagemagick                              # Image manipulation tools
+imv                                      # Image Viewer for Wayland
+jq                                       # Command-line JSON processor
+nwg-look                                 # GTK3 settings editor for Wayland
+pacman-contrib                           # pacman utilus
+satty                                    # Modern screenshot annotation tool
+slurp                                    # Region selector (Works with grim)
+starship                                 # Cross-shell prompt
+swayidle                                 # Idle management daemon (Screen lock/suspend)
+swayosd                                  # On-Screen Display for Volume/Brightness
+swww                                     # Efficient wallpaper daemon for Wayland
+timg                                     # view image in terminal
+ttf-jetbrains-mono-nerd                  # JetBrains Mono font (Nerd Font patched)
+waifu2x-ncnn-vulkan                      # make anime wallpaper more clear
+waybar                                   # Highly customizable Wayland bar
+wf-recorder                              # Screen recorder for Wayland
+wl-clipboard                             # Command-line copy/paste utilities
+wlsunset                                 # take care of your eyes
+xclip                                    # x11 clipboard manger
+xwayland-satellite                       # XWayland compatibility 
+zoxide                                   # Smarter cd command
 
 # --- AUR Packages ---
-AUR:waybar-niri-taskbar-git              # Waybar module: Niri Workspaces/Taskbar
-AUR:wlogout                              # Logout menu (Shutdown/Reboot/Lock)
+AUR:clipsync-git                         # x11 <--> wayland clipboard sync 
+AUR:ddcutil-service                      # Monitor hardware brightness control service
 AUR:matugen                              # Material You theme generator
 AUR:python-pywalfox                      # Pywal support for Firefox
-AUR:waypaper                             # GUI wallpaper setter (Frontend for swww)
-AUR:ddcutil-service                      # Monitor hardware brightness control service
+AUR:shorinclip-git                       # My clipboard tui
 AUR:ttf-jetbrains-maple-mono-nf-xx-xx    # Maple Mono NF font
 AUR:ttf-lxgw-wenkai-screen               # xia2 wu4 wen2 kai3 font
-AUR:shorinclip-git                       # My clipboard tui
-AUR:clipsync-git                         # x11 <--> wayland clipboard sync 
+AUR:waybar-niri-taskbar-git              # Waybar module: Niri Workspaces/Taskbar
+AUR:waypaper                             # GUI wallpaper setter (Frontend for swww)
+AUR:wlogout                              # Logout menu (Shutdown/Reboot/Lock)

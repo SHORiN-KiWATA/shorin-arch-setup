@@ -1,50 +1,47 @@
-firefox                                  # the best browser on linux
-neovim                                   # Advanced version of vim 
-lazyvim                                  # Great preset of neovim 
-wine                                     # run windows exe 
-virt-manager                             # KVM qemu virtual machine
-yazi                                     # great tui file manager
-btop                                     # great tui mission center / system info
-gdu                                      # tui disk usage manager
-fcitx5-mozc                              # Japanese Input Method
-rime-wubi                                # wubi input method
-nm-connection-editor                     # Advanced network editor
-# --- Gaming & Media ---
-steam                                    # Gaming Platform (Valve)
-lutris                                   # Gaming outside steam
-heroic-games-launcher-bin                # Playing Epic games
-protonplus                               # mange proton 
-mpv                                      # Minimalist High Performance Video Player
-transmission-gtk                         # BitTorrent Client
-mangohud                                 # OSD tool for gaming (like msi afterburner)
-gamescope                                # gaming conpositor made by Valve
-upscaler                                 # image upscaler (make it more clear)
-lact                                     # GPU Control Tool (Overclocking/Fan)
-obs-studio                               # OBS Studio (Streaming & Recording)
-# --- System Utilities ---
-gnome-disk-utility                       # Disk Management Utility (Disks)
+# --- Standard Packages ---
 baobab                                   # Disk Usage Analyzer
-mission-center                           # System Monitor (Task Manager style)
-flatseal                                 # flatpak permission manager 
-# --- Filesystem Support ---
+btop                                     # great tui mission center / system info
 dosfstools                               # Tools for FAT12/16/32 filesystems
 exfat-utils                              # exFAT filesystem utilities
-
-# --- Others ---
-gnome-font-viewer                        # manage fonts easily
+fcitx5-mozc                              # Japanese Input Method
+firefox                                  # the best browser on linux
+flatseal                                 # flatpak permission manager 
+gamescope                                # gaming compositor made by Valve
+gdu                                      # tui disk usage manager
 gnome-calendar                           # calendar
 gnome-clocks                             # clocks
+gnome-disk-utility                       # Disk Management Utility (Disks)
+gnome-font-viewer                        # manage fonts easily
+heroic-games-launcher-bin                # Playing Epic games
+lact                                     # GPU Control Tool (Overclocking/Fan)
+lazyvim                                  # Great preset of neovim 
 localsend                                # send files to other devices
+lutris                                   # Gaming outside steam
+mangohud                                 # OSD tool for gaming (like msi afterburner)
+mission-center                           # System Monitor (Task Manager style)
+mpv                                      # Minimalist High Performance Video Player
+neovim                                   # Advanced version of vim 
+nm-connection-editor                     # Advanced network editor
+obs-studio                               # OBS Studio (Streaming & Recording)
+protonplus                               # manage proton 
+rime-wubi                                # wubi input method
+steam                                    # Gaming Platform (Valve)
+transmission-gtk                         # BitTorrent Client
+upscaler                                 # image upscaler (make it more clear)
+virt-manager                             # KVM qemu virtual machine
+wine                                     # run windows exe 
+yazi                                     # great tui file manager
 
 # --- AUR Packages ---
-AUR:visual-studio-code-bin               # vscode 
+AUR:flclash-bin                          # Sometimes a detour is necessary to solve a problem
 AUR:linuxqq-appimage                     # Tencent QQ (AppImage)
-AUR:wechat-appimage                      # WeChat (AppImage)
 AUR:lsfg-vk-bin                          # yellow duck frame generator
 AUR:mangojuice-bin                       # GUI for mangohud                
-AUR:flclash-bin                          # Sometimes a detour is necessary to solve a problem
-AUR:video-downloader                     #Download youtube or bilibili videos
+AUR:video-downloader                     # Download youtube or bilibili videos
+AUR:visual-studio-code-bin               # vscode 
+AUR:wechat-appimage                      # WeChat (AppImage)
+
 # --- Flatpak Packages ---      
-flatpak:it.mijorus.gearlever             # AppImage Manager
-flatpak:io.github.fabrialberio.pinapp    # PinApp (modify .desktop files)
 flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire 
+flatpak:io.github.fabrialberio.pinapp    # PinApp (modify .desktop files)
+flatpak:it.mijorus.gearlever             # AppImage Manager
