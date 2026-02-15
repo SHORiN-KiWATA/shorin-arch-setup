@@ -129,18 +129,13 @@ section "Step 6/6" "Network Backend (iwd)"
 if pacman -Qi networkmanager &> /dev/null; then
     log "NetworkManager detected. Proceeding with iwd backend configuration..."
 
-    log "Installing iwd..."
-    exe pacman -S --noconfirm --needed iwd impala
-
     log "Configuring NetworkManager to use iwd backend..."
-
+    exe pacman -S --noconfirm --needed iwd impala
     # Ensure directory exists
     if [ ! -d /etc/NetworkManager/conf.d ]; then
         mkdir -p /etc/NetworkManager/conf.d
     fi
-
     echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
-    echo "wifi.iwd.autoconnect=false" >> /etc/NetworkManager/conf.d/iwd.conf
 
     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
     success "Network backend configured (iwd)."
