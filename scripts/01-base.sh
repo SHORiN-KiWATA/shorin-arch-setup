@@ -123,43 +123,30 @@ success "Helpers installed."
 # ------------------------------------------------------------------------------
 # 6. Configure NetworkManager Backend (iwd)
 # ------------------------------------------------------------------------------
-# section "Step 6/6" "Network Backend (iwd)"
+section "Step 6/6" "Network Backend (iwd)"
 
-# # Check if NetworkManager is installed before attempting configuration
-# if pacman -Qi networkmanager &> /dev/null; then
-#     log "NetworkManager detected. Proceeding with iwd backend configuration..."
+# Check if NetworkManager is installed before attempting configuration
+if pacman -Qi networkmanager &> /dev/null; then
+    log "NetworkManager detected. Proceeding with iwd backend configuration..."
 
-#     log "Installing iwd..."
-#     exe pacman -S --noconfirm --needed iwd impala
+    log "Installing iwd..."
+    exe pacman -S --noconfirm --needed iwd impala
 
-#     log "Configuring NetworkManager to use iwd backend..."
+    log "Configuring NetworkManager to use iwd backend..."
 
-#     # Ensure directory exists
-#     if [ ! -d /etc/NetworkManager/conf.d ]; then
-#         mkdir -p /etc/NetworkManager/conf.d
-#     fi
+    # Ensure directory exists
+    if [ ! -d /etc/NetworkManager/conf.d ]; then
+        mkdir -p /etc/NetworkManager/conf.d
+    fi
 
-#     # Write config file (Deferring restart to avoid network drop)
-#     # This sets iwd as the backend without restarting the service immediately
-#     echo -e "[device]\nwifi.backend=iwd" > /etc/NetworkManager/conf.d/iwd.conf
+    echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
+    echo "wifi.iwd.autoconnect=false" >> /etc/NetworkManager/conf.d/iwd.conf
 
-#     log "Setting up systemd services..."
-#     # Enable iwd so it starts on next boot
-#     exe systemctl enable iwd
-
-#     # Disable wpa_supplicant to prevent conflict on next boot.
-#     # We use is-enabled check to keep logs clean and avoid errors.
-#     # Note: We do NOT stop it now, to maintain current connection during script execution.
-#     if systemctl is-enabled --quiet wpa_supplicant; then
-#         log "Disabling wpa_supplicant (will take effect after reboot)..."
-#         exe systemctl disable wpa_supplicant
-#     fi
-
-#     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
-#     success "Network backend configured (iwd)."
-# else
-#     log "NetworkManager not found. Skipping iwd configuration."
-# fi
+    log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
+    success "Network backend configured (iwd)."
+else
+    log "NetworkManager not found. Skipping iwd configuration."
+fi
 
 # ------------------------------------------------------------------------------
 
