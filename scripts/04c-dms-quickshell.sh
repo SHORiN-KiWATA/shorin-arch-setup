@@ -164,9 +164,8 @@ EOT
     fi
 
     # 3. 复制其他配置
-    cp -rf "$PARENT_DIR/quickshell-dotfiles/"* "$HOME_DIR/.config/"
-    chown -R "$TARGET_USER" "$HOME_DIR/.config"
-
+    chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
+    as_user cp -rf "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
 
 # hyprland 的输入法配置
 elif [ "$DMS_HYPR_INSTALLED" = true ]; then

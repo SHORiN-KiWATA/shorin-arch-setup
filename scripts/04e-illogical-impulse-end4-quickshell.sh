@@ -83,7 +83,8 @@ SOURCE_DOTFILES="$PARENT_DIR/quickshell-dotfiles"
 # 2. 部署配置文件
 if [ -d "$SOURCE_DOTFILES" ]; then
     log "Deploying Quickshell dotfiles to $HOME_DIR/.config/..."
-    cp -rf "$SOURCE_DOTFILES/"* "$HOME_DIR/.config/"
+    chown -R "$TARGET_USER:" "$SOURCE_DOTFILES"
+    as_user cp -rf "$SOURCE_DOTFILES/." "$HOME_DIR/"
 else
     warn "Source directory not found: $SOURCE_DOTFILES"
     warn "Skipping dotfiles copy."
