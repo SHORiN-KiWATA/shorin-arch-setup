@@ -5,7 +5,9 @@ wine                                     # run windows exe
 virt-manager                             # KVM qemu virtual machine
 yazi                                     # great tui file manager
 btop                                     # great tui mission center / system info
+gdu                                      # tui disk usage manager
 fcitx5-mozc                              # Japanese Input Method
+rime-wubi                                # wubi input method
 nm-connection-editor                     # Advanced network editor
 # --- Gaming & Media ---
 steam                                    # Gaming Platform (Valve)
@@ -26,11 +28,7 @@ mission-center                           # System Monitor (Task Manager style)
 flatseal                                 # flatpak permission manager 
 # --- Filesystem Support ---
 dosfstools                               # Tools for FAT12/16/32 filesystems
-ntfs-3g                                  # NTFS filesystem driver
 exfat-utils                              # exFAT filesystem utilities
-f2fs-tools                               # Tools for Flash-Friendly File System
-udftools                                 # Tools for UDF filesystems (DVD/Optical)
-xfsprogs                                 # Tools for XFS filesystems
 
 # --- Others ---
 gnome-font-viewer                        # manage fonts easily
