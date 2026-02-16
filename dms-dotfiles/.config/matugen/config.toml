@@ -38,4 +38,7 @@ post_hook = 'bash ~/.cache/matugen/recoloricons.sh &'
 input_path = '~/.config/matugen/templates/fastfetch-config.jsonc'
 output_path = '~/.config/fastfetch/config.jsonc'
 
+[templates.fuzzel]
+input_path = '~/.config/matugen/templates/fuzzel.ini'
+output_path = '~/.config/fuzzel/colors.ini'
 

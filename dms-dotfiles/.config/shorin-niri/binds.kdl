@@ -1,0 +1,358 @@
+//这个文件是快捷键设置
+
+binds {
+    // Keys consist of modifiers separated by + signs, followed by an XKB key name
+    // in the end. To find an XKB name for a particular key, you may use a program
+    // like wev.
+    //
+    // "Mod" is a special modifier equal to Super when running on a TTY, and to Alt
+    // when running as a winit window.
+    //
+    // Most actions that you can bind here can also be invoked programmatically with
+    // `niri msg action do-something`.
+    // Mod-Shift-/, which is usually the same as Mod-?,
+    // shows a list of important hotkeys.
+
+    // 显示快捷键教程
+    Mod+Shift+Slash hotkey-overlay-title="快捷键教程 Keybind tutorial" { show-hotkey-overlay; }
+
+    // alt+tab切换窗口
+    Mod+F1 hotkey-overlay-title="开关输入法 Toggle fcitx" {spawn-sh "pkill fcitx5 || fcitx5 ";}
+    Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "~/.local/bin/quicksave";}
+    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "~/.local/bin/quickload";}
+
+    // alt+tab切换窗口
+    Alt+Tab hotkey-overlay-title="快速跳转窗口 Quick window switch menu" {spawn "~/.config/niri/shorin-niri/niri-quick-switch-fuzzel.py";}
+    // 临时开一个浮动终端
+    Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "kitty" "--single-instance" "--class" "quickterminal";}
+    //打开浏览器
+    Mod+B hotkey-overlay-title="浏览器 Browser" { spawn "firefox"; }        
+
+    // Suggested binds for running programs: terminal, app launcher, screen locker.
+    Mod+T hotkey-overlay-title="终端 Terminal" { spawn "kitty" "--single-instance"; }
+    // 文档管理器。如果有thunar的话会优先打开thunar，没有的话会打开nautilus，不要问我为什么（）
+    Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn-sh "thunar || env GSK_RENDERER=gl GTK_IM_MODULE=fcitx  nautilus"; }
+    // 另一个打开nautilus的快捷键，主要是为了在同时安装thunar和nautilus的情况下打开naultilus
+    Mod+Alt+E hotkey-overlay-title=null {spawn-sh "env GSK_RENDERER=gl GTK_IM_MODULE=fcitx  nautilus";}
+    Mod+Z hotkey-overlay-title="程序菜单 Applauncher" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
+    // 这是我自己的剪贴板程序，对应aur包shorinclip-git
+    Mod+Alt+V hotkey-overlay-title="剪贴板 Clipboard" {spawn-sh "kitty --single-instance --class shorinclip -e shorinclip";} // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
+
+    Mod+O hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
+    Mod+G repeat=false { toggle-overview; }
+    // 关闭聚焦窗口
+    Mod+Q hotkey-overlay-title="关闭聚焦窗口 Close focus window" repeat=false { close-window; }
+    Alt+F4 hotkey-overlay-title=null repeat=false { close-window; }
+
+    // mod+鼠标中键 关闭窗口
+    Mod+MouseMiddle  { close-window; }
+
+    // 下面的快捷键看着很多很复杂，其实并不难记。
+    // 记住三组方向键，wasd、hjkl和上下左右箭头
+    // 总的来说
+    // super+方向键就是切换聚焦，再加上ctrl就是移动窗口
+    // super+a/d 比较特殊，不是切换聚焦而是左右合并colume（相当于左右移动窗口）
+    // super+shift就是跨显示器，加上ctrl就是移动窗口
+    
+    // 切换聚焦
+    // super+方向键
+    Mod+Left hotkey-overlay-title=null { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+    // super+vim key
+    Mod+H     { focus-column-left; }
+    Mod+J     { focus-window-down; }
+    Mod+K     { focus-window-up; }
+    Mod+L     { focus-column-right; }
+
+    // 移动colume（列）
+    // super+ctrl+方向键
+    Mod+Ctrl+Left hotkey-overlay-title=null { move-column-left; }
+    Mod+Ctrl+Down  { move-window-down; }
+    Mod+Ctrl+Up    { move-window-up; }
+    Mod+Ctrl+Right hotkey-overlay-title=null { move-column-right; }
+    // super+ctrl+vimkey
+    Mod+Ctrl+H     { move-column-left; }
+    Mod+Ctrl+J     { move-window-down; }
+    Mod+Ctrl+K     { move-window-up; }
+    Mod+Ctrl+L     { move-column-right; }
+    // super+ctrl+a/d 向左/右移动列
+    Mod+Ctrl+A  { move-column-left; }
+    Mod+Ctrl+D { move-column-right; }
+    // mod+S/W 当前列内上下切换聚焦，如果到顶了会切换工作区
+    Mod+S  { focus-window-or-workspace-down; }
+    Mod+W    { focus-window-or-workspace-up; }
+    // mod+ctrl+S/W 上下切换窗口
+    Mod+Ctrl+S  { move-window-down; }
+    Mod+Ctrl+W    { move-window-up; }
+    
+    // Alternative commands that move across workspaces when reaching
+    // the first or last window in a column.
+    // Mod+J     { focus-window-or-workspace-down; }
+    // Mod+K     { focus-window-or-workspace-up; }
+    // Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
+    // Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
+
+    // 切换到第一个colume
+    Mod+Home { focus-column-first; }
+    // 切换到最后一个colume
+    Mod+End  { focus-column-last; }
+    // 移动colume到第一个
+    Mod+Ctrl+Home { move-column-to-first; }
+    // 移动colume到最后一个
+    Mod+Ctrl+End  { move-column-to-last; }
+
+    // 切换显示器聚焦
+    // mod+shift+方向键
+    Mod+Shift+Left  { focus-monitor-left; }
+    Mod+Shift+Down  { focus-monitor-down; }
+    Mod+Shift+Up    { focus-monitor-up; }
+    Mod+Shift+Right { focus-monitor-right; }
+    // mod+shift+vimkey
+    Mod+Shift+H     { focus-monitor-left; }
+    Mod+Shift+J     { focus-monitor-down; }
+    Mod+Shift+K     { focus-monitor-up; }
+    Mod+Shift+L     { focus-monitor-right; }
+    // 跨显示器移动colume
+    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+A     { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+S     { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+W     { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+D     { move-column-to-monitor-right; }
+    // Alternatively, there are commands to move just a single window:
+    // Mod+Shift+Ctrl+Left  { move-window-to-monitor-left; }
+    // ...
+
+    // And you can also move a whole workspace to another monitor:
+    
+    //移动整个工作区
+    // mod+shift跨显示器，alt代表移动整个工作区，再加上三组方向键
+    Mod+Shift+Alt+W  { move-workspace-to-monitor-up; }
+    Mod+Shift+Alt+S  { move-workspace-to-monitor-down; }
+    Mod+Shift+Alt+D  { move-workspace-to-monitor-right; }
+    Mod+Shift+Alt+A  { move-workspace-to-monitor-left; }
+
+    Mod+Shift+Alt+K  { move-workspace-to-monitor-up; }
+    Mod+Shift+Alt+J  { move-workspace-to-monitor-down; }
+    Mod+Shift+Alt+L  { move-workspace-to-monitor-right; }
+    Mod+Shift+Alt+H  { move-workspace-to-monitor-left; }
+
+    Mod+Shift+Alt+Up  { move-workspace-to-monitor-up; }
+    Mod+Shift+Alt+Down  { move-workspace-to-monitor-down; }
+    Mod+Shift+Alt+Right  { move-workspace-to-monitor-right; }
+    Mod+Shift+Alt+Left  { move-workspace-to-monitor-left; }
+    
+    // 上下切换工作区
+    Mod+Page_Down hotkey-overlay-title=null     { focus-workspace-down; }
+    Mod+Page_Up hotkey-overlay-title=null       { focus-workspace-up; }
+    Mod+U              { focus-workspace-down; }
+    Mod+I              { focus-workspace-up; }
+    // 上下移动窗口到其他工作区
+    Mod+Ctrl+Page_Down hotkey-overlay-title=null { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up hotkey-overlay-title=null  { move-column-to-workspace-up; }
+    Mod+Ctrl+U         { move-column-to-workspace-down; }
+    Mod+Ctrl+I         { move-column-to-workspace-up; }
+
+    // You can bind mouse wheel scroll ticks using the following syntax.
+    // These binds will change direction based on the natural-scroll setting.
+    //
+    // To avoid scrolling through workspaces really fast, you can use
+    // the cooldown-ms property. The bind will be rate-limited to this value.
+    // You can set a cooldown on any bind, but it's most useful for the wheel.
+
+    // mod+shitf+滚轮上下切换工作区
+    Mod+Shift+WheelScrollDown  hotkey-overlay-title="切换工作区 Change workspaces"    cooldown-ms=150 { focus-workspace-down; }
+    Mod+Shift+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    //再加上ctrl移动窗口
+    Mod+Ctrl+Shift+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+Shift+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+
+    // 如果滚轮支持左右的话这里可以设置切换聚焦和移动窗口
+    //Mod+WheelScrollRight      { focus-column-right; }
+    //Mod+WheelScrollLeft       { focus-column-left; }
+    //Mod+Ctrl+WheelScrollRight { move-column-right; }
+    //Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+
+    // Usually scrolling up and down with Shift in applications results in
+    // horizontal scrolling; these binds replicate that.
+
+    // mod+滚轮上下 左右切换聚焦
+    Mod+WheelScrollDown   hotkey-overlay-title="滚轮切换聚焦 Change focus with wheel"   { focus-column-right; }
+    Mod+WheelScrollUp        { focus-column-left; }
+    // 再加上ctrl移动colume
+    Mod+Ctrl+WheelScrollDown { move-column-right; }
+    Mod+Ctrl+WheelScrollUp   { move-column-left; }
+
+    // Similarly, you can bind touchpad scroll "ticks".
+    // Touchpad scrolling is continuous, so for these binds it is split into
+    // discrete intervals.
+    // These binds are also affected by touchpad's natural-scroll, so these
+    // example binds are "inverted", since we have natural-scroll enabled for
+    // touchpads by default.
+    // Mod+TouchpadScrollDown { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+"; }
+    // Mod+TouchpadScrollUp   { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-"; }
+
+    // You can refer to workspaces by index. However, keep in mind that
+    // niri is a dynamic workspace system, so these commands are kind of
+    // "best effort". Trying to refer to a workspace index bigger than
+    // the current workspace count will instead refer to the bottommost
+    // (empty) workspace.
+    //
+    // For example, with 2 workspaces + 1 empty, indices 3, 4, 5 and so on
+    // will all refer to the 3rd workspace.
+    // mod+数字切换工作区
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    // 再加上ctrl移动colume
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Alternatively, there are commands to move just a single window:
+    // Mod+Ctrl+1 { move-window-to-workspace 1; }
+
+    // Switches focus between the current and the previous workspace.
+    //Mod+Tab { focus-workspace-previous; }
+    
+    // The following binds move the focused window in and out of a column.
+    // If the window is alone, they will consume it into the nearby column to the side.
+    // If the window is already in a column, they will expel it out.
+
+    // mod+左右方括号 移动窗口（不是移动colume，是允许移动到另一个colume的窗口移动）
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    // mod+A/D 同效果
+    Mod+A hotkey-overlay-title="向左移动窗口 Move window to left between columes" { consume-or-expel-window-left; }
+    Mod+D hotkey-overlay-title="向右移动窗口 Move window to right between columes" { consume-or-expel-window-right; }
+
+    // mod+逗号/句号 把窗口合并或者踢出当前的colume
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+    // mod+shift+A/D 同效果
+    Mod+Shift+A  { consume-window-into-column; }
+    Mod+Shift+D { expel-window-from-column; }
+    // 开启colume的标签页模式（同一个colume中的窗口会以类似浏览器标签页的形式堆叠）
+    Mod+Shift+X { toggle-column-tabbed-display; }
+    Mod+X { toggle-column-tabbed-display; }
+    // mod+鼠标侧键 上下切换聚焦
+    Mod+MouseForward { focus-window-up; }
+    Mod+MouseBack    { focus-window-down; }
+    
+    // 按照预设切换窗口宽度
+    Mod+R  hotkey-overlay-title="按预设切换宽度 Switch width " { switch-preset-column-width; }
+    // Cycling through the presets in reverse order is also possible.
+    // Mod+R { switch-preset-column-width-back; }
+
+    // 按照预设切换窗口高度
+    Mod+Shift+R  { switch-preset-window-height; }
+    // 重置窗口高度
+    Mod+Ctrl+R { reset-window-height; }
+
+    Mod+F  hotkey-overlay-title="最大化 maximize" { maximize-column; }
+    Mod+Alt+F hotkey-overlay-title="全屏 fullscreen"  { fullscreen-window; }
+
+    // Expand the focused column to space not taken up by other fully visible columns.
+    // Makes the column "fill the rest of the space".
+    // 没什么用。增加窗口宽度占满空闲空间
+    Mod+Ctrl+F { expand-column-to-available-width; }
+
+    // 居中当前聚焦的colume
+    Mod+C { center-column; }
+
+    // Center all fully visible columns on screen.
+    // 没什么用
+    Mod+Ctrl+C { center-visible-columns; }
+
+    // Finer width adjustments.
+    // This command can also:
+    // * set width in pixels: "1000"
+    // * adjust width in pixels: "-5" or "+5"
+    // * set width as a percentage of screen width: "25%"
+    // * adjust width as a percentage of screen width: "-10%" or "+10%"
+    // Pixel sizes use logical, or scaled, pixels. I.e. on an output with scale 2.0,
+    // set-column-width "100" will make the column occupy 200 physical screen pixels.
+
+    // mod+加减号调整窗口宽度
+    Mod+Minus { set-column-width "-5%"; }
+    Mod+Equal { set-column-width "+5%"; }
+
+    // Finer height adjustments when in column with other windows.
+    // mod+shift+加减号调整窗口高度
+    Mod+Shift+Minus { set-window-height "-5%"; }
+    Mod+Shift+Equal { set-window-height "+5%"; }
+
+    // Move the focused window between the floating and the tiling layout.
+    // 切换浮动模式
+    Mod+V   hotkey-overlay-title="切换浮动 Toggle floating"    { toggle-window-floating; }
+    // 在浮动模式和非浮动模式之间切换聚焦
+    Mod+Shift+V hotkey-overlay-title=null { switch-focus-between-floating-and-tiling; }
+    Mod+N hotkey-overlay-title="切换浮动聚焦 Change focus to floating" { switch-focus-between-floating-and-tiling; }
+    Alt+grave hotkey-overlay-title=null { switch-focus-between-floating-and-tiling; }
+
+    Mod+Alt+N hotkey-overlay-title=null { switch-focus-between-floating-and-tiling; }
+
+    // Toggle tabbed column display mode.
+    // Windows in this column will appear as vertical tabs,
+    // rather than stacked on top of each other.
+    
+
+    // Actions to switch layouts.
+    // Note: if you uncomment these, make sure you do NOT have
+    // a matching layout switch hotkey configured in xkb options above.
+    // Having both at once on the same hotkey will break the switching,
+    // since it will switch twice upon pressing the hotkey (once by xkb, once by niri).
+    //Mod+Shift+X       { switch-layout "next"; }
+    //Mod+Shift+Z { switch-layout "prev"; }
+
+    // 截图相关
+    // 截图前创建一个用来触发截图音效进程的token
+    Mod+Alt+A  hotkey-overlay-title="选取区域截图 Select screenshot"  {spawn-sh "niri msg action screenshot --show-pointer false && pkill -f -USR1 screenshot-sound.sh";}
+    Mod+Alt+Ctrl+A  hotkey-overlay-title="截取聚焦窗口 Focus-window screenshot" { spawn-sh "niri msg action screenshot-window && pkill -f -USR1 screenshot-sound.sh"; }
+    Mod+Alt+Ctrl+Shift+A  hotkey-overlay-title="截取显示器 Monitor screenshot" { spawn-sh "niri msg action screenshot-screen --show-pointer false && pkill -f -USR1 screenshot-sound.sh"; }
+    Print  hotkey-overlay-title=null {spawn-sh "niri msg action screenshot --show-pointer false && pkill -f -USR1 screenshot-sound.sh";}
+    Ctrl+Print  hotkey-overlay-title=null { spawn-sh "niri msg action screenshot-window --show-pointer false && pkill -f -USR1 screenshot-sound.sh"; }
+    Shift+Print  hotkey-overlay-title=null { spawn-sh "niri msg action screenshot-screen --show-pointer false && pkill -f -USR1 screenshot-sound.sh"; }
+
+    Mod+Shift+S  hotkey-overlay-title="截图后按下此键进行编辑 Edit the image after screenshot" { spawn-sh "wl-paste | satty -f -";}
+
+    // Applications such as remote-desktop clients and software KVM switches may
+    // request that niri stops processing the keyboard shortcuts defined here
+    // so they may, for example, forward the key presses as-is to a remote machine.
+    // It's a good idea to bind an escape hatch to toggle the inhibitor,
+    // so a buggy application can't hold your session hostage.
+    //
+    // The allow-inhibiting=false property can be applied to other binds as well,
+    // which ensures niri always processes them, even when an inhibitor is active.
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // The quit action will show a confirmation dialog to avoid accidental exits.
+    Mod+Shift+Ctrl+Q hotkey-overlay-title=null { spawn "wlogout"; } 
+    Mod+Shift+E hotkey-overlay-title="退出niri Quit niri" { quit; }
+    Ctrl+Alt+Delete hotkey-overlay-title="电源菜单 Powermenu" { spawn "wlogout"; }
+    // Powers off the monitors. To turn them back on, do any input like
+
+    // moving the mouse or pressing any other key.
+    Mod+Alt+P  hotkey-overlay-title="关闭显示器 Turn off monitors" { spawn-sh "niri msg action power-off-monitors && hyprlock || swaylock"; }
+
+}

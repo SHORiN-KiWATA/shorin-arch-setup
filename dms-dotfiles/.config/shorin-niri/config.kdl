@@ -1,0 +1,390 @@
+//  ██████  ██   ██  ██████  ███████ ██ ███    ██ 
+//  ██      ██   ██ ██    ██ ██   ██    ██ ██  ██ 
+//  ███████ ███████ ██    ██ ██████  ██ ██ ██  ██ 
+//       ██ ██   ██ ██    ██ ██   ██ ██ ██  ██ ██ 
+//  ██████  ██   ██  ██████  ██   ██ ██ ██   ████ 
+
+// 这是niri的配置文件，我写了很多注释方便阅读，同时保留了部分英文注释
+//
+// 自25.11版本开始niri支持配置文件拆分，所有include都代表后面的文件是拆分出去的，不包含在这个文件内
+// binds里设置了快捷键，rule是窗口和layer规则，output是显示器，如果你用我的脚本安装，output里会是空的，配置方法可以看文档
+include "binds.kdl"
+include "rule.kdl"
+include "output.kdl"
+include "animation.kdl"
+// 截图保存位置
+screenshot-path "~/Pictures/Screenshots/Niri-screenshots/%Y-%m-%d %H-%M-%S.png"
+
+// 环境变量
+
+environment {
+    //LC_CTYPE "zh_CN.UTF-8" 会导致输入法出现漏字
+    //LC_MESSAGES "zh_CN.UTF-8" 让系统全局使用英文，仅主要界面为英文时使用这个环境变量
+    // 设置界面语言
+    LANG "zh_CN.UTF-8"
+    LC_CTYPE "en_US.UTF-8" //这一项可以解决漏字问题，但是也许会导致steam之类的x11应用无法使用中文输入法
+    // 输入法环境变量
+    XMODIFIERS "@im=fcitx"
+    // qt主题
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    // 解决quickshell图标主题缺失问题
+    QS_ICON_THEME "Adwaita"
+    // GTK软件使用的渲染器，可以解决n卡双显卡导致的GTK应用启动缓慢问题，AMD或Intel单显卡不需要这行设置可以注释掉
+    GSK_RENDERER "gl"
+    // 默认文本编辑器
+    EDITOR "vim"
+    
+}
+
+// 光标配置
+cursor {
+    // 主题，存放路径在~/.local/share/icons
+    xcursor-theme "breeze_cursors"
+    // 大小
+    xcursor-size 30
+    // 闲置多少毫秒自动隐藏光标
+    hide-after-inactive-ms 15000
+}
+ 
+// 带缩略图的alt+tab切换窗口功能（但是我设置的是super+tab，更符合逻辑）
+recent-windows {
+    // 取消//off的注释可以禁用
+    // off
+    debounce-ms 750
+    open-delay-ms 150
+
+    highlight {
+        active-color "#999999ff"
+        urgent-color "#ff9999ff"
+        // 缩略图背景内间距
+        padding 30
+        // 缩略图的背景圆角
+        corner-radius 12
+    }
+
+	//设置缩略图大小
+    previews {
+        max-height 480
+        max-scale 0.2
+    }
+
+    binds {
+        // scope可以设置显示的窗口是当前工作区的、还是当前显示器的、或者显示全部窗口
+        Mod+Tab         { next-window scope="workspace"; }
+        Mod+Shift+Tab   { previous-window scope="workspace"; }
+        // grave是波浪键，显示当前应用的所有窗口
+        Mod+grave       { next-window     filter="app-id"; }
+        Mod+Shift+grave { previous-window filter="app-id"; }
+    }
+}
+// 这是include进来的颜色文件，主要设置了窗口边框
+include "colors.kdl"
+
+input {
+    keyboard {
+        xkb {
+            // You can set rules, model, layout, variant and options.
+            // For more information, see xkeyboard-config(7).
+
+            // For example:
+            // layout "us,ru"
+            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
+
+            // If this section is empty, niri will fetch xkb settings
+            // from org.freedesktop.locale1. You can control these using
+            // localectl set-x11-keymap.
+        }
+
+        // Enable numlock on startup, omitting this setting disables it.
+        //numlock
+    }
+
+    // Next sections include libinput settings.
+    // Omitting settings disables them, or leaves them at their default values.
+    // All commented-out settings here are examples, not defaults.
+    touchpad {
+        // off
+        tap
+        // dwt
+        // dwtp
+        // drag false
+        // drag-lock
+        // nautural-scroll可以翻转触摸板滚动的方向
+        natural-scroll
+        //accel-speed -0.5
+        // accel-profile "flat"
+        // scroll-method "two-finger"
+        // disabled-on-external-mouse
+    }
+
+    mouse {
+        
+	// off
+        // natural-scroll
+        // 鼠标速度
+        accel-speed -0.15
+        // 禁用鼠标加速 
+        accel-profile "flat"
+	// scroll-method "no-scroll"
+        //speed of scroll,like:
+        //scroll-factor horizontal=2.0 vertical=-5.0 
+    }
+
+    trackpoint {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "on-button-down"
+        // scroll-button 273
+        // scroll-button-lock
+        // middle-emulation
+    }
+
+    // Uncomment this to make the mouse warp to the center of newly focused windows.
+    //warp-mouse-to-focus
+
+    // Focus windows and outputs automatically when moving the mouse into them.
+    // Setting max-scroll-amount="0%" makes it work only on windows already fully on screen.
+    //focus-follows-mouse max-scroll-amount="50%"
+}
+
+
+overview {
+	// 关闭overview里的工作区阴影，配合layout里面的透明工作区背景可以做到让工作区和overview共用同一个背景。在意内存占用的可以把waypaper的后端改成swaybg,然后关闭桌面自动模糊功能，取消swww自动启动，能节省250MB左右内存
+	workspace-shadow {
+	//off
+	}
+	//缩放
+	zoom 0.5
+}
+layout {
+
+    //设置工作区背景颜色
+    //background-color "transparent"
+    // Set gaps around windows in logical pixels.
+    // 窗口和窗口之间的间距
+    gaps 12
+    //empty-workspace-above-first
+    // When to center a column when changing focus, options are:
+    // - "never", default behavior, focusing an off-screen column will keep at the left
+    //   or right edge of the screen.
+    // - "always", the focused column will always be centered.
+    // - "on-overflow", focusing a column will center it if it doesn't fit
+    //   together with the previously focused column.
+    center-focused-column "never"
+    // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
+    // 预设窗口宽度
+    preset-column-widths {
+        // Proportion sets the width as a fraction of the output width, taking gaps into account.
+        // For example, you can perfectly fit four windows sized "proportion 0.25" on an output.
+        // The default preset widths are 1/3, 1/2 and 2/3 of the output.
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        // Fixed sets the width in logical pixels exactly.
+        // fixed 1920
+    }
+
+    // You can also customize the heights that "switch-preset-window-height" (Mod+Shift+R) toggles between.
+    // preset-window-heights { }
+
+    // You can change the default width of the new windows.
+    // 默认的窗口宽度
+    default-column-width { proportion 0.5; }
+    // If you leave the brackets empty, the windows themselves will decide their initial width.
+    // default-column-width {}
+
+    // By default focus ring and border are rendered as a solid background rectangle
+    // behind windows. That is, they will show up through semitransparent windows.
+    // This is because windows using client-side decorations can have an arbitrary shape.
+    //
+    // If you don't like that, you should uncomment `prefer-no-csd` below.
+    // Niri will draw focus ring and border *around* windows that agree to omit their
+    // client-side decorations.
+    //
+    // Alternatively, you can override it with a window rule called
+    // `draw-border-with-background`.
+
+    // You can change how the focus ring looks.
+    // 聚焦窗口边框，这个的颜色设置在我include进来的colors.kdl里
+    focus-ring {
+        // Uncomment this line to disable the focus ring.
+        // off
+        // How many logical pixels the ring extends out from the windows.
+        width 3
+
+        // Colors can be set in a variety of ways:
+        // - CSS named colors: "red"
+        // - RGB hex: "#rgb", "#rgba", "#rrggbb", "#rrggbbaa"
+        // - CSS-like notation: "rgb(255, 127, 0)", rgba(), hsl() and a few others.
+
+        // Color of the ring on the active monitor.
+        //active-color "@primary"
+        //active-color "#00000000"
+        // Color of the ring on inactive monitors.
+        //
+        // The focus ring only draws around the active window, so the only place
+        // where you can see its inactive-color is on other monitors.
+        //inactive-color "#505050"
+
+        // You can also use gradients. They take precedence over solid colors.
+        // Gradients are rendered the same as CSS linear-gradient(angle, from, to).
+        // The angle is the same as in linear-gradient, and is optional,
+        // defaulting to 180 (top-to-bottom gradient).
+        // You can use any CSS linear-gradient tool on the web to set these up.
+        // Changing the color space is also supported, check the wiki for more info.
+        //
+        // active-gradient from="#80c8ff" to="#c7ff7f" angle=45
+
+        // You can also color the gradient relative to the entire view
+        // of the workspace, rather than relative to just the window itself.
+        // To do that, set relative-to="workspace-view".
+        //
+         //inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+
+    // You can also add a border. It's similar to the focus ring, but always visible.
+    // 窗口边框
+    border {
+        // The settings are the same as for the focus ring.
+        // If you enable the border, you probably want to disable the focus ring.
+        off
+
+        width 4
+        active-color "#ffc87f"
+        inactive-color "#505050"
+
+        // Color of the border around windows that request your attention.
+        urgent-color "#9b0000"
+
+        // Gradients can use a few different interpolation color spaces.
+        // For example, this is a pastel rainbow gradient via in="oklch longer hue".
+        //
+        // active-gradient from="#e5989b" to="#ffb4a2" angle=45 relative-to="workspace-view" in="oklch longer hue"
+
+        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+
+    // You can enable drop shadows for windows.
+    // 阴影
+    shadow {
+        // Uncomment the next line to enable shadows.
+         on
+
+        // By default, the shadow draws only around its window, and not behind it.
+        // Uncomment this setting to make the shadow draw behind its window.
+        //
+        // Note that niri has no way of knowing about the CSD window corner
+        // radius. It has to assume that windows have square corners, leading to
+        // shadow artifacts inside the CSD rounded corners. This setting fixes
+        // those artifacts.
+        //
+        // However, instead you may want to set prefer-no-csd and/or
+        // geometry-corner-radius. Then, niri will know the corner radius and
+        // draw the shadow correctly, without having to draw it behind the
+        // window. These will also remove client-side shadows if the window
+        // draws any.
+        //
+         //draw-behind-window true
+
+        // You can change how shadows look. The values below are in logical
+        // pixels and match the CSS box-shadow properties.
+
+        // Softness controls the shadow blur radius.
+        softness 20
+
+        // Spread expands the shadow.
+        spread 2
+
+        // Offset moves the shadow relative to the window.
+        offset x=-4 y=-4
+
+        // You can also change the shadow color and opacity.
+        color "rgba(0, 0, 0, 0.7)"
+    }
+
+    // Struts shrink the area occupied by windows, similarly to layer-shell panels.
+    // You can think of them as a kind of outer gaps. They are set in logical pixels.
+    // Left and right struts will cause the next window to the side to always be visible.
+    // Top and bottom struts will simply add outer gaps in addition to the area occupied by
+    // layer-shell panels and regular gaps.
+    
+    //窗口距离屏幕边缘的距离
+    struts {
+        //left 64
+        // right 64
+        // top 64
+        // bottom 64
+    }
+}
+// Add lines like this to spawn processes at startup.
+// Note that running niri as a session supports xdg-desktop-autostart,
+// which may be more convenient to use.
+// See the binds section below for more ipawn examples.
+
+// This line starts waybar, a commonly used bar for Wayland compositors.
+// 自动启动设置
+// 桌面壁纸的守护进程
+spawn-at-startup "swww-daemon"
+// 总览界面背景壁纸的守护进程
+spawn-at-startup "swww-daemon" "-n" "overview"
+// 随机更换一张壁纸
+spawn-sh-at-startup "sleep 0.6 &&  waypaper --random"
+// 恢复壁纸
+//spawn-at-startup "waypaper" "--restore"
+// 询问管理员权限功能（身份验证）
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+// 有聚焦窗口时桌面自动模糊的脚本
+spawn-at-startup "~/.config/scripts/niri_auto_blur_bg.sh"
+// 屏幕分享、录屏相关的环境设置
+spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri & /usr/lib/xdg-desktop-portal-gnome"
+// GNOME tracker修复
+spawn-sh-at-startup "systemctl --user set-environment XDG_SESSION_CLASS=user"
+// 通知程序
+spawn-at-startup "mako"
+// 任务栏
+spawn-at-startup "waybar"
+// 输入法
+spawn-at-startup "fcitx5" 
+// 剪贴板守护进程
+	//cliphist
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+	// wayland <--> x11 剪贴板同步 这个包是我自己推的clipsync-git
+spawn-at-startup "systemctl" "--user" "start" "clipsync"
+// 闲置时自动熄屏锁屏睡眠的脚本
+spawn-at-startup "~/.config/niri/scripts/swayidle.sh"
+// 大写锁定键的osd显示
+spawn-at-startup "swayosd-server"
+// 自动开启护眼模式,经纬度设置位置
+spawn-at-startup "~/.local/bin/toggle-wlsunset"
+// 截图音效的守护进程
+spawn-at-startup "~/.config/scripts/screenshot-sound.sh"
+// alt+tab切换器（这是一个第三方，无缩略图显示的切换器）
+//spawn-at-startup "niriswitcher"
+// niri-siderbar
+spawn-at-startup "~/.local/bin/niri-sidebar" "listen"
+
+// To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
+// spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
+
+// 取消启动niri时自动开启快捷键教程
+hotkey-overlay {
+    // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
+     skip-at-startup
+}
+
+// Uncomment this line to ask the clients to omit their client-side decorations if possible.
+// If the client will specifically ask for CSD, the request will be honored.
+// Additionally, clients will be informed that they are tiled, removing some client-side rounded corners.
+// This option will also fix border/focus ring drawing behind some semitransparent windows.
+// After enabling or disabling this, you need to restart the apps for this to take effect.
+//
+// 隐藏窗口标题栏
+prefer-no-csd
+
+
+
+
+

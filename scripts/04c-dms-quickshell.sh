@@ -355,8 +355,61 @@ if command -v niri &>/dev/null; then
 fi
 
 # === shorin niri自定义配置 ===
+# 修复壁纸图层问题
+# ^quickshell$ place-within-backdrop true改成false
+sed -i '/match namespace="\^quickshell\$"/,/}/ s/place-within-backdrop[[:space:]]\+true/place-within-backdrop false/' "$DMS_NIRI_CONFIG_FILE"
+# 导入shorin的按键配置
+# 按键依赖的软件和配置
+exe as_user yay -S --noconfirm --needed satty mpv fuzzel shorinclip-git kitty
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/"
+# shorinclip剪贴板
+if ! grep -q "wl-paste --watch cliphist store" "$DMS_NIRI_CONFIG_FILE"; then
+    echo 'spawn-at-startup "wl-paste" "--watch" "cliphist" "store"' >> "$DMS_NIRI_CONFIG_FILE"
+fi
+# 截图音效
+if ! grep -q "screenshot-sound.sh" "$DMS_NIRI_CONFIG_FILE"; then
+    echo 'spawn-at-startup "shorin-niri/scripts/screenshot-sound.sh"' >> "$DMS_NIRI_CONFIG_FILE"
+fi
+# 用我的快捷键覆盖dms的
+if ! grep -q 'include "shorin-niri/binds.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
+    log "Importing Shorin's custom keybindings into niri config..."
+    echo 'include "shorin-niri/binds.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+    echo 'include "shorin-niri/rule.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+    echo 'include "shorin-niri/supertab.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+fi
 
-# === 自定义fish和kitty配置 ===
+
+# === 光标配置 ===
+section "Shorin DMS" "cursor"
+as_user mkdir -p "$HOME_DIR/.local/share/icons"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.local/share/icons/breeze_cursors" "$HOME_DIR/.local/share/icons/"
+# Check if the cursor block already exists
+if ! grep -q "^[[:space:]]*cursor[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
+    log "Cursor configuration missing. Appending default cursor block..."
+    
+    # Append the configuration exactly as requested
+    cat <<EOT >> "$DMS_NIRI_CONFIG_FILE"
+
+// 光标配置
+cursor {
+    // 主题，存放路径在~/.local/share/icons
+    xcursor-theme "breeze_cursors"
+    // 大小
+    xcursor-size 30
+    // 闲置多少毫秒自动隐藏光标
+    hide-after-inactive-ms 15000
+}
+EOT
+
+else
+    log "Cursor configuration block already exists, skipping."
+fi
+
+
+# === 自定义fish和kitty配置 === 
 if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
@@ -381,7 +434,7 @@ fi
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
 # 安装依赖
-exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox
+exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme
 # 复制配置文件
 # matugen
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
@@ -391,6 +444,9 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
 # yazi
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/yazi" "$HOME_DIR/.config/"
+# fcitx5
+rm -rf "$HOME_DIR/.config/fcitx5"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fcitx5" "$HOME_DIR/.config/"
 # firefox插件
 log "Configuring Firefox Policies..."
 POL_DIR="/etc/firefox/policies"
