@@ -319,7 +319,10 @@ fi
 #
 # 
 # ============================================================================
-
+log "Checking if Niri is installed ..."
+if ! command -v niri &>/dev/null; then
+    SHORIN_DMS=0
+fi 
 
 if [ "$SHORIN_DMS" != "1" ]; then
     log "Shorin DMS not selected, skipping custom configurations."
@@ -381,7 +384,6 @@ if ! grep -q 'include "shorin-niri/binds.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
     echo 'include "shorin-niri/supertab.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
 fi
 
-
 # === 光标配置 ===
 section "Shorin DMS" "cursor"
 as_user mkdir -p "$HOME_DIR/.local/share/icons"
@@ -390,7 +392,7 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.local/share/icons/breeze_cursors" "$HOME_
 if ! grep -q "^[[:space:]]*cursor[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
     log "Cursor configuration missing. Appending default cursor block..."
     
-    # Append the configuration exactly as requested
+    
     cat <<EOT >> "$DMS_NIRI_CONFIG_FILE"
 
 // 光标配置
