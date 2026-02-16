@@ -381,7 +381,7 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/yazi" "$HOME_DIR/.config/"
 
 
-# === font configuration  ===
+# === font configuration字体配置  ===
 section "Shorin DMS" "fonts"
 log "Configuring fonts for Shorin DMS..."
 exe as_user yay -S --noconfirm --needed ttf-jetbrains-maple-mono-nf-xx-xx
