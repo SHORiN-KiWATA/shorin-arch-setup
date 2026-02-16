@@ -266,33 +266,61 @@ configure_nautilus_user() {
   # 1. 检查系统文件是否存在
   if [ -f "$sys_file" ]; then
     
-    # 2. 显卡检测逻辑
+    local need_modify=0
+    local env_vars="env"
+
+    # --- 逻辑 1: Niri 检测 (输入法修复) ---
+    if command -v niri >/dev/null 2>&1; then
+        # 只要有 niri，就强制使用 fcitx 模块
+        env_vars="$env_vars GTK_IM_MODULE=fcitx"
+        need_modify=1
+        log "检测到 Niri 环境，准备注入 GTK_IM_MODULE=fcitx"
+    fi
+
+    # --- 逻辑 2: 双显卡 NVIDIA 检测 (GSK 渲染修复) ---
     local gpu_count=$(lspci | grep -E -i "vga|3d" | wc -l)
     local has_nvidia=$(lspci | grep -E -i "nvidia" | wc -l)
 
-    # 只有在双显卡且包含 NVIDIA 的情况下才应用修改
     if [ "$gpu_count" -gt 1 ] && [ "$has_nvidia" -gt 0 ]; then
-      
-      # 定义需要注入的环境变量
-      local env_vars="env GSK_RENDERER=gl GTK_IM_MODULE=fcitx"
+        # 叠加 GSK 渲染变量
+        env_vars="$env_vars GSK_RENDERER=gl"
+        need_modify=1
+        log "检测到双显卡 NVIDIA，准备注入 GSK_RENDERER=gl"
 
-      # 3. 准备用户目录并复制文件
+        # 额外操作: 创建 gsk.conf
+        local env_conf_dir="$HOME_DIR/.config/environment.d"
+        if [ ! -f "$env_conf_dir/gsk.conf" ]; then
+            mkdir -p "$env_conf_dir"
+            echo "GSK_RENDERER=gl" > "$env_conf_dir/gsk.conf"
+            # 修复权限
+            if [ -n "$TARGET_USER" ]; then
+                chown -R "$TARGET_USER" "$env_conf_dir"
+            fi
+            log "已添加用户级环境变量配置: $env_conf_dir/gsk.conf"
+        fi
+    fi
+
+    # --- 3. 执行修改 (如果命中了任意一个逻辑) ---
+    if [ "$need_modify" -eq 1 ]; then
+      
+      # 准备目录并复制
       mkdir -p "$user_dir"
       cp "$sys_file" "$user_file"
-      chown "$TARGET_USER" "$user_file"
-      # 4. 修改用户目录下的文件
+      
+      # 修复所有者
+      if [ -n "$TARGET_USER" ]; then
+          chown "$TARGET_USER" "$user_file"
+      fi
+
+      # 修改 Desktop 文件
+      # env_vars 此时可能是:
+      # - "env GTK_IM_MODULE=fcitx" (仅Niri)
+      # - "env GSK_RENDERER=gl" (仅双显卡)
+      # - "env GTK_IM_MODULE=fcitx GSK_RENDERER=gl" (两者都有)
       sed -i "s|^Exec=|Exec=$env_vars |" "$user_file"
       
-      log "已创建用户级 Nautilus 配置: $user_file"
-
-      local env_conf_dir="$HOME_DIR/.config/environment.d"
-      if [ ! -f "$env_conf_dir/gsk.conf" ]; then
-          mkdir -p "$env_conf_dir"
-          echo "GSK_RENDERER=gl" > "$env_conf_dir/gsk.conf"
-          log "已添加用户级环境变量配置: $env_conf_dir/gsk.conf"
-      fi
+      log "已生成 Nautilus 用户配置: $user_file (参数: $env_vars)"
       
     fi
   fi
-  
 }

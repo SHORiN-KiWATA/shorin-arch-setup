@@ -352,7 +352,7 @@ if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
     # 安装依赖
-    exe pacman -S --noconfirm --needed eza zoxide starship jq fish
+    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify
     # 复制终端配置
     log "Copying Terminal configuration..."
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
@@ -371,10 +371,9 @@ fi
 # === matugen 配置  ===
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
-# === 安装依赖 ===
-exe as_user yay -S --noconfirm --needed matugen python-pywalfox
-
-# === 复制配置文件 === 
+# 安装依赖
+exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox
+# 复制配置文件
 # matugen
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
 # btop
@@ -383,8 +382,14 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
 # yazi
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/yazi" "$HOME_DIR/.config/"
+# firefox插件
+log "Configuring Firefox Policies..."
+POL_DIR="/etc/firefox/policies"
+exe mkdir -p "$POL_DIR"
+echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' >"$POL_DIR/policies.json"
+exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
 
-# === 壁纸配置 ===
+# === 壁纸 ===
 section "Shorin DMS" "wallpaper"
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
 WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
@@ -393,10 +398,30 @@ chown -R "$TARGET_USER:" "$WALLPAPER_SOURCE_DIR"
 as_user mkdir -p "$WALLPAPER_DIR"
 exe as_user cp -rf "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 
+# === 主题 ===
+section "Shorin DMS" "theme"
+log "Configuring themes for Shorin DMS..."
+
+if ! grep -q 'QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"; then
+    log "QT/Icon variables missing. Injecting into environment block..."
+    
+    sed -i '/^[[:space:]]*environment[[:space:]]*{/a \
+// qt theme\
+QT_QPA_PLATFORMTHEME "gtk3"\
+QT_QPA_PLATFORMTHEME_QT6 "gtk3"\
+// fix quickshell icon theme missing\
+QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"
+    
+else
+    log "QT/Icon variables already exist in environment block."
+fi
+
 # === font configuration字体配置  ===
 section "Shorin DMS" "fonts"
 log "Configuring fonts for Shorin DMS..."
+# 依赖
 exe as_user yay -S --noconfirm --needed ttf-jetbrains-maple-mono-nf-xx-xx
+# 复制fontconfig
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fontconfig" "$HOME_DIR/.config/"
 
 log "Module 05 completed."
