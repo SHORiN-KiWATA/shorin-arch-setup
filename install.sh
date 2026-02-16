@@ -89,7 +89,7 @@ select_desktop() {
     local OPTIONS=(
         "No Desktop |none"
         "Shorin's Niri |niri"
-        "Shorin's DMS Niri |shorindms"
+        "Shorin's DMS Niri+Kitty |shorindms"
         "KDE Plasma |kde"
         "GNOME |gnome"
         "Quickshell: End4--illogical-impulse (Hyprland)|end4"
