@@ -379,7 +379,7 @@ if ! grep -q "wl-paste --watch cliphist store" "$DMS_NIRI_CONFIG_FILE"; then
 fi
 # 截图音效
 if ! grep -q "screenshot-sound.sh" "$DMS_NIRI_CONFIG_FILE"; then
-    echo 'spawn-at-startup "shorin-niri/scripts/screenshot-sound.sh"' >> "$DMS_NIRI_CONFIG_FILE"
+    echo 'spawn-at-startup "~/.config/niri/shorin-niri/scripts/screenshot-sound.sh"' >> "$DMS_NIRI_CONFIG_FILE"
 fi
 # 用我的快捷键覆盖dms的
 if ! grep -q 'include "shorin-niri/binds.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
@@ -423,7 +423,7 @@ if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
     # 安装依赖
-    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify timg
+    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify timg imv cava
     # 复制终端配置
     log "Copying Terminal configuration..."
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"

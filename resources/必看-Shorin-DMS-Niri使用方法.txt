@@ -1,14 +1,154 @@
 有一些必要设置需要手动完成
 
 super+T打开终端，super+Q关闭窗口，super+E打开文档管理器，super+alt+A截图。
-所有的键位可以看.config/niri目录以及子目录下的binds.kdl文件。
 
-1【overview壁纸】
+
+1.【overview壁纸】
 super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，设置一张壁纸。我在Wallpapers里存放了一张，可以直接使用。然后开启“带模糊效果的壁纸复本”，这是overview的模糊壁纸，super+G或者super+O打开overview就可以看到。
 
-2【颜色更随壁纸变化】【gtk主题和qt主题】
+2.【颜色更随壁纸变化】【gtk主题和qt主题】
 选择“主题与配色”，点击auto，然后选择一个自己喜欢的配色方案。然后到该页面底端，点击“应用GTK配色”，然后重启电脑，或者super+shift+E退出niri后重新打开niri。
 
+3.【Firefox颜色同步】
+打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
+
+4.
+
+
+
+
+【详细按键教程】
+所有的键位都可以在.config/niri目录下，以及其子目录下的binds.kdl文件中找到。
+查看.config/niri/config.kdl文件可以看到两条binds.kdl相关的inclue，我的写在dms的后面，所以我的快捷键会覆盖dms的快捷键。
+
+ 快捷键速查表（以下内容由gemini3pro提取配置文件后生成）
+================================================================
+说明：
+[Mod]   = Super 键 (Windows 徽标键)
+[Shift] = Shift 键
+[Ctrl]  = Ctrl 键
+[Alt]   = Alt 键
+================================================================
+
+[ 核心操作与系统 System ]
+----------------------------------------------------------------
+Mod + Shift + /         显示快捷键帮助 (Overlay)
+Mod + Shift + E         退出 Niri
+Mod + Shift + Ctrl + Q  电源菜单 (关机/重启/注销)
+Ctrl + Alt + Delete     电源菜单
+Mod + Alt + P           关闭显示器并锁屏
+Mod + Escape            切换键盘快捷键拦截 (用于虚拟机/远程桌面)
+Mod + F5                快速存档 (Quicksave)
+Mod + F8                快速读档 (Quickload)
+
+[ 程序启动 Applications ]
+----------------------------------------------------------------
+Mod + T                 打开终端 (Kitty)
+Mod + /                 打开临时浮动终端
+Mod + B                 打开浏览器 (Firefox)
+Mod + E                 打开文件管理器 (优先 Thunar)
+Mod + Alt + E           强制打开 Nautilus 文件管理器
+Mod + Z                 打开程序启动器 (Launcher)
+Mod + Alt + V           打开剪贴板历史
+Alt + Tab               窗口快速切换菜单
+Mod + F1                重启/切换输入法 (Fcitx5)
+
+[ 截图 Screenshot ]
+----------------------------------------------------------------
+Print                   选取区域截图
+Ctrl  + Print           截取当前聚焦窗口
+Shift + Print           截取当前显示器全屏
+
+Mod + Alt + A               选取区域截图 (备选)
+Mod + Alt + Ctrl + A        截取当前聚焦窗口 (备选)
+Mod + Alt + Ctrl + Shift + A 截取当前显示器全屏 (备选)
+
+Mod + Shift + S         编辑剪贴板中的截图 (Satty)
+
+[ 窗口基本控制 Window Actions ]
+----------------------------------------------------------------
+Mod + Q                 关闭当前窗口
+Alt + F4                关闭当前窗口
+Mod + 鼠标中键          关闭当前窗口
+
+Mod + F                 最大化当前列 (Maximize Column)
+Mod + Alt + F           全屏当前窗口 (Fullscreen)
+Mod + C                 居中当前列
+Mod + V                 切换 浮动/平铺 模式
+Mod + Shift + V         在 浮动/平铺 层级间切换聚焦
+Mod + N                 切换聚焦到浮动窗口 (同上)
+
+Mod + X                 切换标签页模式 (Tabbed Mode)
+Mod + Shift + X         切换标签页模式 (同上)
+Mod + O / Mod + G       切换总览视图 (Overview)
+
+[ 聚焦导航 Focus Navigation ]
+----------------------------------------------------------------
+> 基础方向 (支持方向键 与 Vim键 HJKL)
+Mod + Left  / H         聚焦左侧列
+Mod + Right / L         聚焦右侧列
+Mod + Down  / J         聚焦下方窗口
+Mod + Up    / K         聚焦上方窗口
+
+Mod + Home              聚焦第一列
+Mod + End               聚焦最后一列
+Mod + 滚轮上下          左右切换列聚焦
+Mod + 鼠标侧键(前后)    上下切换窗口聚焦
+
+> 跨显示器聚焦
+Mod + Shift + Left  / H 聚焦左侧显示器
+Mod + Shift + Right / L 聚焦右侧显示器
+Mod + Shift + Down  / J 聚焦下方显示器
+Mod + Shift + Up    / K 聚焦上方显示器
+
+[ 窗口移动 Window Movement ]
+----------------------------------------------------------------
+> 基础移动 (支持方向键 与 Vim键 HJKL)
+Mod + Ctrl + Left  / H  向左移动列
+Mod + Ctrl + Right / L  向右移动列
+Mod + Ctrl + Down  / J  向下移动窗口
+Mod + Ctrl + Up    / K  向上移动窗口
+
+> 列操作 (特殊)
+Mod + Ctrl + A          向左移动列
+Mod + Ctrl + D          向右移动列
+Mod + Ctrl + Home       将列移动到最前
+Mod + Ctrl + End        将列移动到最后
+
+> 吞吐与合并 (Consume / Expel)
+Mod + [                 向左合并/移出窗口
+Mod + ]                 向右合并/移出窗口
+Mod + A                 向左移动窗口 (列之间)
+Mod + D                 向右移动窗口 (列之间)
+Mod + , (逗号)          将窗口吸入当前列
+Mod + . (句号)          将窗口踢出当前列
+
+> 跨显示器移动
+Mod + Shift + Ctrl + 方向键/HJKL    移动列到指定显示器
+Mod + Shift + Alt  + 方向键/HJKL    移动整个工作区到指定显示器
+
+[ 工作区管理 Workspaces ]
+----------------------------------------------------------------
+Mod + Page_Down / U     切换到下个工作区
+Mod + Page_Up   / I     切换到上个工作区
+Mod + Shift + 滚轮      切换工作区
+
+Mod + 1 ~ 9             切换到工作区 1-9
+Mod + Ctrl + 1 ~ 9      移动当前列到工作区 1-9
+
+Mod + Ctrl + Page_Dn/U  移动当前列到 下个/上个 工作区
+Mod + Ctrl + U / I      移动当前列到 下个/上个 工作区
+
+[ 尺寸调整 Resizing ]
+----------------------------------------------------------------
+Mod + R                 按预设切换 宽度
+Mod + - (减号)          宽度 -5%
+Mod + = (等号)          宽度 +5%
+
+Mod + Shift + R         按预设切换 高度
+Mod + Ctrl  + R         重置高度
+Mod + Shift + - (减号)  高度 -5%
+Mod + Shift + = (等号)  高度 +5%
 
 
 

@@ -22,7 +22,7 @@ binds {
     Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "~/.local/bin/quickload";}
 
     // alt+tab切换窗口
-    Alt+Tab hotkey-overlay-title="快速跳转窗口 Quick window switch menu" {spawn "~/.config/niri/shorin-niri/niri-quick-switch-fuzzel.py";}
+    Alt+Tab hotkey-overlay-title="快速跳转窗口 Quick window switch menu" {spawn "~/.config/niri/shorin-niri/scripts/niri-quick-switch-fuzzel.py";}
     // 临时开一个浮动终端
     Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "kitty" "--single-instance" "--class" "quickterminal";}
     //打开浏览器
