@@ -425,7 +425,7 @@ if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
     # 安装依赖
-    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify timg imv cava
+    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify timg imv cava imagemagick
     # 复制终端配置
     log "Copying Terminal configuration..."
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
