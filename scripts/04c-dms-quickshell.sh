@@ -448,6 +448,18 @@ section "Shorin DMS" "vim"
 log "Configuring Vim for Shorin DMS..."
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.vimrc" "$HOME_DIR/"
 
+# === flatpak 配置 ===
+section "Shorin DMS" "flatpak"
+log "Configuring Flatpak for Shorin DMS..."
+
+if command -v flatpak &>/dev/null; then
+as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
+as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
+as_user flatpak override --user --filesystem=xdg-config/gtk-3.0
+as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
+as_user flatpak override --user --filesystem=xdg-config/fontconfig
+fi
+
 # === matugen 配置  ===
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
