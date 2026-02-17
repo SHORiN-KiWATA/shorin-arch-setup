@@ -57,7 +57,7 @@ log "Installing GNOME and base tools..."
 # 修正了字体包名，原来的 xx-xx 看起来像乱码，这里用标准的 Nerd Font 包名
 if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None \
     gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid loupe \
-    gnome-control-center gnome-software flatpak file-roller \
+    gnome-control-center bazaar flatpak file-roller \
     nautilus-python firefox nm-connection-editor pacman-contrib \
     dnsmasq ttf-jetbrains-mono-nerd; then
 
