@@ -1,6 +1,12 @@
 有一些必要设置需要手动完成
 
-super+T打开终端，super+Q关闭窗口，super+E打开文档管理器，super+alt+A截图。
+【重要按键】
+super+T打开终端
+super+Q关闭窗口
+super+E打开文档管理器
+super+H/L 左右切换聚焦
+super+A/D 左右移动窗口（可合并列）
+super+U/i 上下切换工作区
 
 
 1.【overview壁纸】
@@ -15,6 +21,15 @@ super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，�
 4.【vscode颜色同步】
 在vscode里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
 
+
+
+
+【实用命令】
+mirror-update 更新镜像源
+sysup 更新系统
+clean 系统清理
+quicksave 快速存档
+quickload 快速读档
 
 
 
