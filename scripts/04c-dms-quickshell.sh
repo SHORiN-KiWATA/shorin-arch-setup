@@ -240,78 +240,6 @@ elif [ "$DMS_HYPR_INSTALLED" = true ]; then
     fi
 fi
 
-# ==============================================================================
-#  tty autologin
-# ==============================================================================
-section "Config" "tty autostart"
-
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-
-# 确保目录存在
-as_user mkdir -p "$SVC_DIR/default.target.wants"
-# tty自动登录
-if [ "$SKIP_AUTOLOGIN" = false ]; then
-    log "Configuring Niri Auto-start (TTY)..."
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
-
-fi
-# ===================================================
-#  window manager autostart (if don't have any of dm)
-# ===================================================
-section "Config" "WM autostart"
-# 如果安装了niri
-if [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_NIRI_INSTALLED = true ] &>/dev/null; then
-    SVC_FILE="$SVC_DIR/niri-autostart.service"
-    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
-    # 创建niri自动登录服务
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Niri Session Autostart
-After=graphical-session-pre.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
-[Service]
-ExecStart=/usr/bin/niri-session
-Restart=on-failure
-RestartSec=2
-
-[Install]
-WantedBy=default.target
-
-EOT
-    # 启用服务
-    as_user ln -sf "$SVC_FILE" "$LINK"
-    # 确保权限
-    chown -R "$TARGET_USER" "$SVC_DIR"
-    success "Niri/DMS auto-start enabled with DMS dependency."
-
-# 如果安装了hyprland
-elif [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_HYPR_INSTALLED = true ] &>/dev/null; then
-        SVC_FILE="$SVC_DIR/hyprland-autostart.service"
-        LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Hyprland Session Autostart
-After=graphical-session-pre.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
-[Service]
-ExecStart=/usr/bin/start-hyprland
-Restart=on-failure
-RestartSec=2
-
-[Install]
-WantedBy=default.target
-
-EOT
-    # 启用服务
-    as_user ln -sf "$SVC_FILE" "$LINK"
-    # 确保权限
-    chown -R "$TARGET_USER" "$SVC_DIR"
-    success "Hyprland DMS auto-start enabled with DMS dependency."
-
-fi
 
 
 # ============================================================================
@@ -532,5 +460,79 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fontconfig" "$HOME_DIR/.config/"
 section "Shorin DMS" "tutorial"
 log "Copying tutorial files for Shorin DMS..."
 exe as_user cp -rf "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
+
+
+
+# ==============================================================================
+#  tty autologin
+# ==============================================================================
+section "Config" "tty autostart"
+
+SVC_DIR="$HOME_DIR/.config/systemd/user"
+
+# 确保目录存在
+as_user mkdir -p "$SVC_DIR/default.target.wants"
+# tty自动登录
+if [ "$SKIP_AUTOLOGIN" = false ]; then
+    log "Configuring Niri Auto-start (TTY)..."
+    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+fi
+# ===================================================
+#  window manager autostart (if don't have any of dm)
+# ===================================================
+section "Config" "WM autostart"
+# 如果安装了niri
+if [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_NIRI_INSTALLED = true ] &>/dev/null; then
+    SVC_FILE="$SVC_DIR/niri-autostart.service"
+    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+    # 创建niri自动登录服务
+    cat <<EOT >"$SVC_FILE"
+[Unit]
+Description=Niri Session Autostart
+After=graphical-session-pre.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+[Service]
+ExecStart=/usr/bin/niri-session
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+
+EOT
+    # 启用服务
+    as_user ln -sf "$SVC_FILE" "$LINK"
+    # 确保权限
+    chown -R "$TARGET_USER" "$SVC_DIR"
+    success "Niri/DMS auto-start enabled with DMS dependency."
+
+# 如果安装了hyprland
+elif [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_HYPR_INSTALLED = true ] &>/dev/null; then
+        SVC_FILE="$SVC_DIR/hyprland-autostart.service"
+        LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+    cat <<EOT >"$SVC_FILE"
+[Unit]
+Description=Hyprland Session Autostart
+After=graphical-session-pre.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+[Service]
+ExecStart=/usr/bin/start-hyprland
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+
+EOT
+    # 启用服务
+    as_user ln -sf "$SVC_FILE" "$LINK"
+    # 确保权限
+    chown -R "$TARGET_USER" "$SVC_DIR"
+    success "Hyprland DMS auto-start enabled with DMS dependency."
+
+fi
 
 log "Module 05 completed."
