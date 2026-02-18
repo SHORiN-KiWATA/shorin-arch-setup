@@ -19,10 +19,7 @@ binds {
     // alt+tab切换窗口
     Mod+F1 hotkey-overlay-title="开关输入法 Toggle fcitx" {spawn-sh "pkill fcitx5 || fcitx5 ";}
     Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "~/.local/bin/quicksave";}
-    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "~/.local/bin/quickload";}
 
-    // alt+tab切换窗口
-    Alt+Tab hotkey-overlay-title="快速跳转窗口 Quick window switch menu" {spawn "~/.config/niri/shorin-niri/scripts/niri-quick-switch-fuzzel.py";}
     // 临时开一个浮动终端
     Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "kitty" "--single-instance" "--class" "quickterminal";}
     //打开浏览器
@@ -320,11 +317,5 @@ binds {
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // The quit action will show a confirmation dialog to avoid accidental exits.
-    Mod+Shift+Ctrl+Q hotkey-overlay-title=null { spawn "wlogout"; } 
     Mod+Shift+E hotkey-overlay-title="退出niri Quit niri" { quit; }
-    // Powers off the monitors. To turn them back on, do any input like
-
-    // moving the mouse or pressing any other key.
-    Mod+Alt+P  hotkey-overlay-title="关闭显示器 Turn off monitors" { spawn-sh "niri msg action power-off-monitors && hyprlock || swaylock"; }
-
 }

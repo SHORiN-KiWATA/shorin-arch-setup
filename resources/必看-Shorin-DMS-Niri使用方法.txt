@@ -1,12 +1,22 @@
 有一些必要设置需要手动完成
 
 【重要按键】
-super+T打开终端
-super+Q关闭窗口
-super+E打开文档管理器
+super+T 打开终端
+super+E 打开文档管理器
+super+Z 开始菜单
+super+Q 关闭窗口
+super+R 按预设切换 宽度
+super+F 最大化
+super+G/O 切换overview（在overview的时候可以左键移动窗口，滚轮上下切换工作区）
+
+Super+alt+F 全屏
 super+H/L 左右切换聚焦
-super+A/D 左右移动窗口（可合并列）
+super+滚轮 左右切换聚焦
+super+A/D 左右移动窗口（合并列）
 super+U/i 上下切换工作区
+super+V 切换浮动窗口
+super+右键 调整窗口大小
+super+左键 移动窗口
 
 
 1.【overview壁纸】
@@ -29,9 +39,6 @@ mirror-update 更新镜像源
 sysup 更新系统
 clean 系统清理
 quicksave 快速存档
-quickload 快速读档
-
-
 
 【详细按键教程】
 所有的键位都可以在.config/niri目录下，以及其子目录下的binds.kdl文件中找到。
@@ -41,21 +48,14 @@ quickload 快速读档
 ================================================================
 说明：
 [Mod]   = Super 键 (Windows 徽标键)
-[Shift] = Shift 键
-[Ctrl]  = Ctrl 键
-[Alt]   = Alt 键
 ================================================================
 
 [ 核心操作与系统 System ]
 ----------------------------------------------------------------
 Mod + Shift + /         显示快捷键帮助 (Overlay)
 Mod + Shift + E         退出 Niri
-Mod + Shift + Ctrl + Q  电源菜单 (关机/重启/注销)
 Ctrl + Alt + Delete     电源菜单
-Mod + Alt + P           关闭显示器并锁屏
-Mod + Escape            切换键盘快捷键拦截 (用于虚拟机/远程桌面)
 Mod + F5                快速存档 (Quicksave)
-Mod + F8                快速读档 (Quickload)
 
 [ 程序启动 Applications ]
 ----------------------------------------------------------------
@@ -67,7 +67,7 @@ Mod + Alt + E           强制打开 Nautilus 文件管理器
 Mod + Z                 打开程序启动器 (Launcher)
 Mod + Alt + V           打开剪贴板历史
 Alt + Tab               窗口快速切换菜单
-Mod + F1                重启/切换输入法 (Fcitx5)
+Mod + F1                开关输入法进程 (Fcitx5)
 Mod + Alt + W 	 	壁纸切换
 
 [ 截图 Screenshot ]
@@ -76,9 +76,9 @@ Print                   选取区域截图
 Ctrl  + Print           截取当前聚焦窗口
 Shift + Print           截取当前显示器全屏
 
-Mod + Alt + A               选取区域截图 (备选)
-Mod + Alt + Ctrl + A        截取当前聚焦窗口 (备选)
-Mod + Alt + Ctrl + Shift + A 截取当前显示器全屏 (备选)
+Mod + Alt + A               选取区域截图
+Mod + Alt + Ctrl + A        截取当前聚焦窗口
+Mod + Alt + Ctrl + Shift + A 截取当前显示器全屏
 
 Mod + Shift + S         编辑剪贴板中的截图 (Satty)
 
@@ -88,9 +88,9 @@ Mod + Q                 关闭当前窗口
 Alt + F4                关闭当前窗口
 Mod + 鼠标中键          关闭当前窗口
 
-Mod + F                 最大化当前列 (Maximize Column)
-Mod + Alt + F           全屏当前窗口 (Fullscreen)
-Mod + C                 居中当前列
+Mod + F                 最大化
+Mod + Alt + F           全屏
+Mod + C                 居中
 Mod + V                 切换 浮动/平铺 模式
 Mod + Shift + V         在 浮动/平铺 层级间切换聚焦
 Mod + N                 切换聚焦到浮动窗口 (同上)
@@ -125,6 +125,8 @@ Mod + Ctrl + Left  / H  向左移动列
 Mod + Ctrl + Right / L  向右移动列
 Mod + Ctrl + Down  / J  向下移动窗口
 Mod + Ctrl + Up    / K  向上移动窗口
+Mod + A                 向左移动窗口 (列之间)
+Mod + D                 向右移动窗口 (列之间)
 
 > 列操作 (特殊)
 Mod + Ctrl + A          向左移动列
@@ -135,8 +137,6 @@ Mod + Ctrl + End        将列移动到最后
 > 吞吐与合并 (Consume / Expel)
 Mod + [                 向左合并/移出窗口
 Mod + ]                 向右合并/移出窗口
-Mod + A                 向左移动窗口 (列之间)
-Mod + D                 向右移动窗口 (列之间)
 Mod + , (逗号)          将窗口吸入当前列
 Mod + . (句号)          将窗口踢出当前列
 
