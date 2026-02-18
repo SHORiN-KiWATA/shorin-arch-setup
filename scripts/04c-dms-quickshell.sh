@@ -41,33 +41,7 @@ fi
 
 log "Target user for DMS installation: $TARGET_USER"
 
-# 下载并执行安装脚本
-INSTALLER_SCRIPT="/tmp/dms_install.sh"
-DMS_URL="https://install.danklinux.com"
-
-log "Downloading DMS installer wrapper..."
-if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
-    
-    # 赋予执行权限
-    chmod +x "$INSTALLER_SCRIPT"
-    
-    # 将文件所有权给用户，否则 runuser 可能会因为权限问题读不到 /tmp 下的文件
-    chown "$TARGET_USER" "$INSTALLER_SCRIPT"
-
-    log "Executing DMS installer as user ($TARGET_USER)..."
-    log "NOTE: If the installer asks for input, this script might hang."
-    
-    # --- 关键步骤：切换用户执行 ---
-    if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
-        success "DankMaterialShell installed successfully."
-    else
-        # DMS 安装失败不应该导致整个系统安装退出，所以只警告
-        warn "DMS installer returned an error code. You may need to install it manually."
-    fi
-    rm -f "$INSTALLER_SCRIPT"
-else
-    warn "Failed to download DMS installer script from $DMS_URL."
-fi
+exe as_user yay -S --noconfirm --needed dms-shell-git niri kitty xdg-desktop-portal-gnome xwayland-satellite dgop dsearch qt6-multimedia 
 
 # ==============================================================================
 #  dms 随图形化环境自动启动
