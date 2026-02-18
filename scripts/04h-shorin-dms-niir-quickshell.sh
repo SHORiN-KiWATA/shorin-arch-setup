@@ -1,0 +1,329 @@
+# ============================================================================
+#   Shorin DMS 杂交/自定义
+# ============================================================================
+
+
+# ============================================================================
+#   Temp sudo privileges for the installer
+# ============================================================================
+SUDO_TEMP_FILE="/etc/sudoers.d/99_shorin_installer_temp"
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" >"$SUDO_TEMP_FILE"
+chmod 440 "$SUDO_TEMP_FILE"
+log "Temp sudo file created..."
+
+# 定义清理函数：无论脚本是成功结束还是意外中断(Ctrl+C)，都确保删除免密文件
+cleanup_sudo() {
+    if [ -f "$SUDO_TEMP_FILE" ]; then
+        rm -f "$SUDO_TEMP_FILE"
+        log "Security: Temporary sudo privileges revoked."
+    fi
+}
+# 注册陷阱：在脚本退出(EXIT)或被中断(INT/TERM)时触发清理
+trap cleanup_sudo EXIT INT TERM
+
+# ============================================================================
+# === Identify User & DM Check ===
+# ===========================================================================
+
+log "Identifying user..."
+DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
+TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
+HOME_DIR="/home/$TARGET_USER"
+info_kv "Target" "$TARGET_USER"
+
+# DM Check
+KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
+SKIP_AUTOLOGIN=false
+DM_FOUND=""
+for dm in "${KNOWN_DMS[@]}"; do
+  if pacman -Q "$dm" &>/dev/null; then
+    DM_FOUND="$dm"
+    break
+  fi
+done
+
+if [ -n "$DM_FOUND" ]; then
+  info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
+  SKIP_AUTOLOGIN=true
+else
+  read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
+  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
+fi
+
+
+
+# ============================================================================
+#   install niri and dms 
+# ============================================================================
+section "Shorin DMS" "core components"
+exe as_user yay -S --noconfirm --needed niri xwayland-satellite xdg-desktop-portal-gnome dms-shell-bin cava cliphist wl-clipboard dgop dsearch matugen qt6-multimedia 
+
+# 基本配置文件
+exe as_user mkdir -p "$HOME_DIR/.config/niri"
+exe as_user mv "$DMS_DOTFILES_DIR/.config/niri/config.kdl" "$HOME_DIR/.config/niri/config.kdl"
+
+# 
+
+
+
+
+# 定义 DMS 配置文件目录
+DMS_DOTFILES_DIR="$PARENT_DIR/dms-dotfiles"
+
+# === 文档管理器配置 ===
+# 修复输入法导致nautilus无法重命名的问题
+configure_nautilus_user
+# 安装thuanar
+if command -v niri &>/dev/null; then
+    log "Niri detected, installing Thunar and related plugins..."
+    exe as_user yay -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
+fi
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/Thunar" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/xfce4" "$HOME_DIR/.config/"
+# bookmarks侧边栏书签
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/gtk-3.0" "$HOME_DIR/.config/"
+as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
+
+# === shorin niri自定义配置 ===
+# 修复壁纸图层问题
+# ^quickshell$ place-within-backdrop true改成false
+sed -i '/match namespace="\^quickshell\$"/,/}/ s/place-within-backdrop[[:space:]]\+true/place-within-backdrop false/' "$DMS_NIRI_CONFIG_FILE"
+# 开启niri的时候不要自动开启数字锁定
+sed -i -E '/^\s*\/\//b; s/^(\s*)numlock/\1\/\/numlock/' "$DMS_NIRI_CONFIG_FILE"
+# 导入shorin的按键配置
+# 按键依赖的软件和配置
+exe as_user yay -S --noconfirm --needed satty mpv fuzzel shorinclip-git kitty
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/"
+# shorinclip剪贴板
+if ! grep -q "wl-paste --watch cliphist store" "$DMS_NIRI_CONFIG_FILE"; then
+    echo 'spawn-at-startup "wl-paste" "--watch" "cliphist" "store"' >> "$DMS_NIRI_CONFIG_FILE"
+fi
+# 截图音效
+if ! grep -q "screenshot-sound.sh" "$DMS_NIRI_CONFIG_FILE"; then
+    echo 'spawn-at-startup "~/.config/niri/shorin-niri/scripts/screenshot-sound.sh"' >> "$DMS_NIRI_CONFIG_FILE"
+fi
+# 用我的快捷键覆盖dms的
+if ! grep -q 'include "shorin-niri/binds.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
+    log "Importing Shorin's custom keybindings into niri config..."
+    echo 'include "shorin-niri/binds.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+    echo 'include "shorin-niri/rule.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+    echo 'include "shorin-niri/supertab.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
+    # 移除按键冲突
+    sed -i '/Mod+Tab repeat=false { toggle-overview; }/d' "$HOME_DIR/.config/niri/dms/binds.kdl"
+fi
+
+# === 光标配置 ===
+section "Shorin DMS" "cursor"
+as_user mkdir -p "$HOME_DIR/.local/share/icons"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.local/share/icons/breeze_cursors" "$HOME_DIR/.local/share/icons/"
+# Check if the cursor block already exists
+if ! grep -q "^[[:space:]]*cursor[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
+    log "Cursor configuration missing. Appending default cursor block..."
+    
+    
+    cat <<EOT >> "$DMS_NIRI_CONFIG_FILE"
+
+// 光标配置
+cursor {
+    // 主题，存放路径在~/.local/share/icons
+    xcursor-theme "breeze_cursors"
+    // 大小
+    xcursor-size 30
+    // 闲置多少毫秒自动隐藏光标
+    hide-after-inactive-ms 15000
+}
+EOT
+
+else
+    log "Cursor configuration block already exists, skipping."
+fi
+
+
+# === 自定义fish和kitty配置 === 
+if command -v kitty &>/dev/null; then
+    section "Shorin DMS" "terminal and shell"
+    log "Applying Shorin DMS custom configurations for Terminal..."
+    # 安装依赖
+    exe pacman -S --noconfirm --needed eza zoxide starship jq fish libnotify timg imv cava imagemagick
+    # 复制终端配置
+    log "Copying Terminal configuration..."
+    chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
+    as_user mkdir -p "$HOME_DIR/.config"
+    exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fish" "$HOME_DIR/.config/"
+    exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/kitty" "$HOME_DIR/.config/"
+    exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/starship.toml" "$HOME_DIR/.config/"
+    # 复制自定义脚本
+    as_user mkdir -p "$HOME_DIR/.local/bin"
+    exe as_user cp -rf "$DMS_DOTFILES_DIR/.local/bin/." "$HOME_DIR/.local/bin/"
+
+else
+    log "Kitty not found, skipping Kitty configuration."
+fi
+
+# === mimeapps配置 ===
+section "Shorin DMS" "mimeapps"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mimeapps.list" "$HOME_DIR/.config/"
+
+# === vim 配置 ===
+section "Shorin DMS" "vim"
+log "Configuring Vim for Shorin DMS..."
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.vimrc" "$HOME_DIR/"
+
+# === flatpak 配置 ===
+section "Shorin DMS" "flatpak"
+log "Configuring Flatpak for Shorin DMS..."
+
+
+if command -v flatpak &>/dev/null; then
+exe as_user yay -S --noconfirm --needed bazaar
+as_user flatpak override --user --filesystem=xdg-data/themes
+as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
+as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
+as_user flatpak override --user --filesystem=xdg-config/gtk-3.0
+as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
+as_user flatpak override --user --filesystem=xdg-config/fontconfig
+ln -sf /usr/share/themes "$HOME_DIR/.local/share/themes"
+fi
+
+# === matugen 配置  ===
+section "Shorin DMS" "matugen"
+log "Configuring Matugen for Shorin DMS..."
+# 安装依赖
+exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme 
+# 复制配置文件
+# matugen
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
+# btop
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
+# cava 
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
+# yazi
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/yazi" "$HOME_DIR/.config/"
+# fcitx5
+rm -rf "$HOME_DIR/.config/fcitx5"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fcitx5" "$HOME_DIR/.config/"
+# fcitx5 快捷键冲突配置
+sed -i '/Mod+Space hotkey-overlay-title="Application Launcher" {/,/}/d' "$HOME_DIR/.config/niri/dms/binds.kdl"
+
+# firefox插件
+log "Configuring Firefox Policies..."
+POL_DIR="/etc/firefox/policies"
+exe mkdir -p "$POL_DIR"
+echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' >"$POL_DIR/policies.json"
+exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
+
+# === 壁纸 ===
+section "Shorin DMS" "wallpaper"
+WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
+WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
+
+chown -R "$TARGET_USER:" "$WALLPAPER_SOURCE_DIR"
+as_user mkdir -p "$WALLPAPER_DIR"
+exe as_user cp -rf "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
+
+# === 主题 ===
+section "Shorin DMS" "theme"
+log "Configuring themes for Shorin DMS..."
+
+if ! grep -q 'QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"; then
+    log "QT/Icon variables missing. Injecting into environment block..."
+    
+    sed -i '/^[[:space:]]*environment[[:space:]]*{/a \
+// qt theme\
+QT_QPA_PLATFORMTHEME "gtk3"\
+QT_QPA_PLATFORMTHEME_QT6 "gtk3"\
+// fix quickshell icon theme missing\
+QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"
+    
+else
+    log "QT/Icon variables already exist in environment block."
+fi
+
+# === font configuration字体配置  ===
+section "Shorin DMS" "fonts"
+log "Configuring fonts for Shorin DMS..."
+# 依赖
+exe as_user yay -S --noconfirm --needed ttf-jetbrains-maple-mono-nf-xx-xx
+# 复制fontconfig
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fontconfig" "$HOME_DIR/.config/"
+
+# === 教程文件 ===
+section "Shorin DMS" "tutorial"
+log "Copying tutorial files for Shorin DMS..."
+exe as_user cp -rf "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
+
+
+# ==============================================================================
+#  tty autologin
+# ==============================================================================
+section "Config" "tty autostart"
+
+SVC_DIR="$HOME_DIR/.config/systemd/user"
+
+# 确保目录存在
+as_user mkdir -p "$SVC_DIR/default.target.wants"
+# tty自动登录
+if [ "$SKIP_AUTOLOGIN" = false ]; then
+    log "Configuring Niri Auto-start (TTY)..."
+    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+fi
+# ===================================================
+#  window manager autostart (if don't have any of dm)
+# ===================================================
+section "Config" "WM autostart"
+# 如果安装了niri
+if [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_NIRI_INSTALLED = true ] &>/dev/null; then
+    SVC_FILE="$SVC_DIR/niri-autostart.service"
+    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+    # 创建niri自动登录服务
+    cat <<EOT >"$SVC_FILE"
+[Unit]
+Description=Niri Session Autostart
+After=graphical-session-pre.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+[Service]
+ExecStart=/usr/bin/niri-session
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+
+EOT
+    # 启用服务
+    as_user ln -sf "$SVC_FILE" "$LINK"
+    # 确保权限
+    chown -R "$TARGET_USER" "$SVC_DIR"
+    success "Niri/DMS auto-start enabled with DMS dependency."
+
+# 如果安装了hyprland
+elif [ "$SKIP_AUTOLOGIN" = false ] && [ $DMS_HYPR_INSTALLED = true ] &>/dev/null; then
+        SVC_FILE="$SVC_DIR/hyprland-autostart.service"
+        LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+    cat <<EOT >"$SVC_FILE"
+[Unit]
+Description=Hyprland Session Autostart
+After=graphical-session-pre.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+[Service]
+ExecStart=/usr/bin/start-hyprland
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+
+EOT
+    # 启用服务
+    as_user ln -sf "$SVC_FILE" "$LINK"
+    # 确保权限
+    chown -R "$TARGET_USER" "$SVC_DIR"
+    success "Hyprland DMS auto-start enabled with DMS dependency."
+
+fi

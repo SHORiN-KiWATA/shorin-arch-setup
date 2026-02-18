@@ -190,8 +190,7 @@ case "$DESKTOP_ENV" in
         BASE_MODULES+=("04c-dms-quickshell.sh")
         ;;
     shorindms)
-        BASE_MODULES+=("04c-dms-quickshell.sh")
-        export SHORIN_DMS=1
+        BASE_MODULES+=("04h-shorin-dms-niir-quickshell.sh")
         ;;
     caelestia)
         BASE_MODULES+=("04g-caelestia-quickshell.sh")
