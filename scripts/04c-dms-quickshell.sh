@@ -276,7 +276,8 @@ exe as_user yay -S --noconfirm --needed satty mpv fuzzel shorinclip-git kitty
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
-exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/"
+as_user mkdir -p "$HOME_DIR/.config/niri/"
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/."
 # shorinclip剪贴板
 if ! grep -q "wl-paste --watch cliphist store" "$DMS_NIRI_CONFIG_FILE"; then
     echo 'spawn-at-startup "wl-paste" "--watch" "cliphist" "store"' >> "$DMS_NIRI_CONFIG_FILE"
