@@ -41,7 +41,7 @@ fi
 
 log "Target user for DMS installation: $TARGET_USER"
 
-exe as_user yay -S --noconfirm --needed dms-shell-git niri kitty xdg-desktop-portal-gnome xwayland-satellite dgop dsearch qt6-multimedia 
+exe as_user yay -S --noconfirm --needed dms-shell-bin niri kitty xdg-desktop-portal-gnome xwayland-satellite dgop dsearch qt6-multimedia matugen accountsservice
 
 # ==============================================================================
 #  dms 随图形化环境自动启动
