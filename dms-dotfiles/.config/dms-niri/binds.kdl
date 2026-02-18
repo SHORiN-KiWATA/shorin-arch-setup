@@ -16,6 +16,7 @@ binds {
     Mod+Y hotkey-overlay-title="Browse Wallpapers" {
         spawn "dms" "ipc" "call" "dankdash" "wallpaper";
     }
+    Mod+Alt+V hotkey-overlay-title="剪贴板 Clipboard" {spawn "dms" "ipc" "call" "clipboard" "toggle";} 
 
     // 记事本 (Mod+Shift+N) -> Shorin 用的是 Mod+N (切换浮动聚焦) 和 Mod+Alt+N，Shift+N 未占用
     Mod+Shift+N hotkey-overlay-title="Notepad" { spawn "dms" "ipc" "call" "notepad" "toggle"; }
