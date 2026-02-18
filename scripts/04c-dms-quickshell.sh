@@ -10,6 +10,78 @@ else
     echo "Error: 00-utils.sh not found."
     exit 1
 fi
+
+# --- 函数定义：静默删除 niri 绑定 ---
+niri_remove_bind() {
+    local target_key="$1"
+    # 确保使用脚本中定义的 HOME_DIR 变量
+    local config_file="$HOME_DIR/.config/niri/dms/binds.kdl"
+
+    if [ ! -f "$config_file" ]; then
+        return 1
+    fi
+
+    # 使用 Python 处理，无日志，无备份
+    python3 -c "
+import sys, re
+
+file_path = '$config_file'
+target_key = sys.argv[1]
+
+try:
+    with open(file_path, 'r') as f:
+        content = f.read()
+
+    # 正则逻辑：
+    # (?m)^\\s* -> 多行模式，匹配行首空白
+    # (?!//)     -> 排除以 // 开头的注释行
+    # .*?        -> 懒惰匹配
+    # (?=\\s|\{) -> 确保 key 后面是空格或左大括号（防止 Mod+T 误删 Mod+Tab）
+    pattern = re.compile(r'(?m)^\s*(?!//).*?' + re.escape(target_key) + r'(?=\s|\{)')
+
+    while True:
+        match = pattern.search(content)
+        if not match:
+            break
+
+        start_idx = match.start()
+        
+        # 找左大括号 {
+        open_brace_idx = content.find('{', start_idx)
+        if open_brace_idx == -1:
+            break 
+        
+        # 找匹配的右大括号 } (处理嵌套)
+        balance = 0
+        end_idx = -1
+        for i in range(open_brace_idx, len(content)):
+            char = content[i]
+            if char == '{':
+                balance += 1
+            elif char == '}':
+                balance -= 1
+                if balance == 0:
+                    end_idx = i + 1
+                    break
+        
+        if end_idx != -1:
+            # 如果块后面紧跟换行符，连换行符一起删，保持整洁
+            if end_idx < len(content) and content[end_idx] == '\n':
+                end_idx += 1
+            
+            content = content[:start_idx] + content[end_idx:]
+        else:
+            break
+
+    with open(file_path, 'w') as f:
+        f.write(content)
+
+except Exception:
+    pass
+" "$target_key"
+}
+
+
 log "installing dms..."
 # ==============================================================================
 #  Identify User & DM Check
@@ -527,6 +599,10 @@ log "Configuring fonts for Shorin DMS..."
 exe as_user yay -S --noconfirm --needed ttf-jetbrains-maple-mono-nf-xx-xx
 # 复制fontconfig
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fontconfig" "$HOME_DIR/.config/"
+
+
+
+
 
 # === 教程文件 ===
 section "Shorin DMS" "tutorial"
