@@ -605,7 +605,7 @@ exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fontconfig" "$HOME_DIR/.config/"
 # 处理dms和shorind的快捷键冲突
 section "Shorin DMS" "keybindings"
 rm -rf "$HOME_DIR/.config/niri/dms/binds.kdl"
-exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/niri/dms/binds.kdl" "$HOME_DIR/.config/niri/dms/."
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/dms-niri/binds.kdl" "$HOME_DIR/.config/niri/dms/."
 
 # niri_remove_bind "Mod+V"
 # niri_remove_bind "Super+X"
