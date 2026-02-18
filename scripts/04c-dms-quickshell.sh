@@ -41,7 +41,33 @@ fi
 
 log "Target user for DMS installation: $TARGET_USER"
 
-exe as_user yay -S --noconfirm --needed dms-shell-bin niri kitty xdg-desktop-portal-gnome xwayland-satellite dgop dsearch qt6-multimedia matugen accountsservice
+# 下载并执行安装脚本
+INSTALLER_SCRIPT="/tmp/dms_install.sh"
+DMS_URL="https://install.danklinux.com"
+
+log "Downloading DMS installer wrapper..."
+if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
+    
+    # 赋予执行权限
+    chmod +x "$INSTALLER_SCRIPT"
+    
+    # 将文件所有权给用户，否则 runuser 可能会因为权限问题读不到 /tmp 下的文件
+    chown "$TARGET_USER" "$INSTALLER_SCRIPT"
+
+    log "Executing DMS installer as user ($TARGET_USER)..."
+    log "NOTE: If the installer asks for input, this script might hang."
+    
+    # --- 关键步骤：切换用户执行 ---
+    if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
+        success "DankMaterialShell installed successfully."
+    else
+        # DMS 安装失败不应该导致整个系统安装退出，所以只警告
+        warn "DMS installer returned an error code. You may need to install it manually."
+    fi
+    rm -f "$INSTALLER_SCRIPT"
+else
+    warn "Failed to download DMS installer script from $DMS_URL."
+fi
 
 # ==============================================================================
 #  dms 随图形化环境自动启动
@@ -276,8 +302,7 @@ exe as_user yay -S --noconfirm --needed satty mpv fuzzel shorinclip-git kitty
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
-as_user mkdir -p "$HOME_DIR/.config/niri/"
-exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/."
+exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/"
 # shorinclip剪贴板
 if ! grep -q "wl-paste --watch cliphist store" "$DMS_NIRI_CONFIG_FILE"; then
     echo 'spawn-at-startup "wl-paste" "--watch" "cliphist" "store"' >> "$DMS_NIRI_CONFIG_FILE"
