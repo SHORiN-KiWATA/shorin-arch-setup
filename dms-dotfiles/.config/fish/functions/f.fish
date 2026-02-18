@@ -164,7 +164,7 @@ function f
         background_job >/dev/null 2>&1
     else
         # 没库存，提示语更改
-        echo "主人，库存不够啦！正在去搬运新的老婆图片，请稍等哦..."
+        echo "库存不够啦！正在去搬运新的图片，请稍等哦..."
         download_one_image
         
         set FILES $CACHE_DIR/*.jpg
@@ -212,7 +212,7 @@ function f
         end
     else
         # 失败提示语更改
-        echo "呜呜... 图片下载失败了，这次只能先显示默认的 Logo 啦 QAQ"
+        echo "图片下载失败了，这次只能先显示默认的 Logo 啦 QAQ"
         fastfetch $ARGS_FOR_FASTFETCH
     end
 end
