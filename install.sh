@@ -141,7 +141,7 @@ sys_dashboard() {
     echo -e "${H_BLUE}╔════ SYSTEM DIAGNOSTICS ══════════════════════════════╗${NC}"
     echo -e "${H_BLUE}║${NC} ${BOLD}Kernel${NC}   : $(uname -r)"
     echo -e "${H_BLUE}║${NC} ${BOLD}User${NC}     : $(whoami)"
-    echo -e "${H_BLUE}║${NC} ${BOLD}Desktop${NC}  : ${H_MAGENTA}${DESKTOP_ENV^^}${NC}"
+    echo -e "${H_BLUE}║${NC} ${BOLD}Desktop${NC}  : ${H_CYAN}${DESKTOP_ENV^^}${NC}"
     
     if [ "$CN_MIRROR" == "1" ]; then
         echo -e "${H_BLUE}║${NC} ${BOLD}Network${NC}  : ${H_YELLOW}CN Optimized (Manual)${NC}"
