@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 export SHELL=$(command -v bash)
 # ==============================================================================
 # Shorin Arch Setup - Main Installer (v1.1))

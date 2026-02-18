@@ -1,6 +1,6 @@
 #!/bin/bash
 # 04c-quickshell-setup.sh
-
+set -euo pipefail
 # 1. 引用工具库
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"

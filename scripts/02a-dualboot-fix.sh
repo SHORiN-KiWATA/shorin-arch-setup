@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -euo pipefail
 # ==============================================================================
 # Script: 02a-dualboot-fix.sh
 # Purpose: Auto-configure for Windows dual-boot (OS-Prober only).
