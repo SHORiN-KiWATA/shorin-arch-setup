@@ -311,7 +311,29 @@ elif [ "$DMS_HYPR_INSTALLED" = true ]; then
         echo 'exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=hyprland & /usr/lib/xdg-desktop-portal-hyprland' >> $DMS_NIRI_CONFIG_FILE
     fi
 fi
+# ==============================================================================
+#  Validation Check: DMS & Core Components
+# ==============================================================================
+section "Config" "components validation"
+log "Verifying DMS and core components installation for autologin..."
 
+MISSING_COMPONENTS=()
+
+if ! command -v dms &>/dev/null ; then
+    MISSING_COMPONENTS+=("dms")
+fi
+
+if ! command -v quickshell &>/dev/null; then
+    MISSING_COMPONENTS+=("quickshell")
+fi
+
+if [ ${#MISSING_COMPONENTS[@]} -gt 0 ]; then
+    warn "Validation failed! Missing components: ${MISSING_COMPONENTS[*]}"
+    warn "Setting SKIP_AUTOLOGIN=true to prevent booting into a broken environment."
+    SKIP_AUTOLOGIN=true
+else
+    success "All core components validated successfully."
+fi
 # ==============================================================================
 #  tty autologin
 # ==============================================================================
