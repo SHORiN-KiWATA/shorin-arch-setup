@@ -326,12 +326,12 @@ if ! runuser -u "$TARGET_USER" -- command -v dms &>/dev/null; then
 fi
 
 # 2. 检测 niri 或 hyprland 命令
-if ! command -v niri &>/dev/null && ! command -v hyprland &>/dev/null; then
+if ! command -v niri &>/dev/null || ! command -v hyprland &>/dev/null; then
     MISSING_COMPONENTS+=("niri/hyprland")
 fi
 
 # 3. 检测 quickshell 或 quickshell-git 是否已安装
-if ! pacman -Q quickshell &>/dev/null && ! pacman -Q quickshell-git &>/dev/null; then
+if ! pacman -Q quickshell &>/dev/null || ! pacman -Q quickshell-git &>/dev/null; then
     MISSING_COMPONENTS+=("quickshell")
 fi
 
