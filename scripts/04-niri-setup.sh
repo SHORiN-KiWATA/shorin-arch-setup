@@ -507,6 +507,8 @@ else
   warn "Dotfiles missing in repo directory."
 fi
 
+
+
 # ==============================================================================
 # STEP 7: Wallpapers
 # ==============================================================================
@@ -536,6 +538,33 @@ if pacman -Q swayosd &>/dev/null; then
   systemctl enable --now swayosd-libinput-backend.service >/dev/null 2>&1
 fi
 success "Tools configured."
+
+section "Config" "Hiding useless .desktop files"
+log "Hiding useless .desktop files"
+hide_desktop_file "/usr/share/applications/avahi-discover.desktop"
+hide_desktop_file "/usr/share/applications/qv4l2.desktop"
+hide_desktop_file "/usr/share/applications/qvidcap.desktop"
+hide_desktop_file "/usr/share/applications/bssh.desktop"
+hide_desktop_file "/usr/share/applications/org.fcitx.Fcitx5.desktop"
+hide_desktop_file "/usr/share/applications/org.fcitx.fcitx5-migrator.desktop"
+hide_desktop_file "/usr/share/applications/xgps.desktop"
+hide_desktop_file "/usr/share/applications/xgpsspeed.desktop"
+hide_desktop_file "/usr/share/applications/gvim.desktop"
+hide_desktop_file "/usr/share/applications/kbd-layout-viewer5.desktop"
+hide_desktop_file "/usr/share/applications/bvnc.desktop"
+hide_desktop_file "/usr/share/applications/yazi.desktop"
+hide_desktop_file "/usr/share/applications/btop.desktop"
+hide_desktop_file "/usr/share/applications/vim.desktop"
+hide_desktop_file "/usr/share/applications/nvim.desktop"
+hide_desktop_file "/usr/share/applications/nvtop.desktop"
+hide_desktop_file "/usr/share/applications/mpv.desktop"
+hide_desktop_file "/usr/share/applications/org.gnome.Settings.desktop"
+hide_desktop_file "/usr/share/applications/thunar-settings.desktop"
+hide_desktop_file "/usr/share/applications/thunar-bulk-rename.desktop"
+hide_desktop_file "/usr/share/applications/thunar-volman-settings.desktop"
+hide_desktop_file "/usr/share/applications/clipse-gui.desktop"
+hide_desktop_file "/usr/share/applications/waypaper.desktop"
+hide_desktop_file "/usr/share/applications/xfce4-about.desktop"
 
 # ==============================================================================
 # STEP 9: Cleanup & Auto-Login

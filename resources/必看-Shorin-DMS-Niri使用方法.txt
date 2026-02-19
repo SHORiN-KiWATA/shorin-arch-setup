@@ -1,4 +1,4 @@
-有一些必要设置需要手动完成
+
 
 【重要按键】
 super+T 打开终端
@@ -8,6 +8,7 @@ super+Q 关闭窗口
 super+R 按预设切换 宽度
 super+F 最大化
 super+G/O 切换overview（在overview的时候可以左键移动窗口，滚轮上下切换工作区）
+super+alt+A 开关剪贴板
 
 Super+alt+F 全屏
 super+H/L 左右切换聚焦
@@ -18,7 +19,7 @@ super+V 切换浮动窗口
 super+右键 调整窗口大小
 super+左键 移动窗口
 
-
+有一些必要设置需要手动完成
 1.【overview壁纸】
 super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，设置一张壁纸。我在Wallpapers里存放了一张，可以直接使用。然后开启“带模糊效果的壁纸复本”，这是overview的模糊壁纸，super+G或者super+O打开overview就可以看到。
 
@@ -36,7 +37,10 @@ super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，�
 【输入法配置】
 super+空格切换输入法
 super
+
 【实用命令】
+pac 安装软件(安装软件还可以用bazaar，这是flatpak软件商城)
+pacr 卸载软件
 mirror-update 更新镜像源
 sysup 更新系统
 clean 系统清理

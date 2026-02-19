@@ -256,7 +256,22 @@ select_flathub_mirror() {
 as_user() {
   runuser -u "$TARGET_USER" -- "$@"
 }
-
+hide_desktop_file() {
+    local source_file="$1"
+    local filename=$(basename "$source_file")
+    local user_dir="$HOME_DIR/.local/share/applications"
+    local target_file="$user_dir/$filename"
+  mkdir -p "$user_dir"
+  if [[ -f "$source_file" ]]; then
+      cp -fv "$source_file" "$target_file"
+      chown "$TARGET_USER" "$target_file"
+        if grep -q "^NoDisplay=" "$target_file"; then
+            sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$target_file"
+        else
+            echo "NoDisplay=true" >> "$target_file"
+        fi
+  fi
+}
 
 configure_nautilus_user() {
   local sys_file="/usr/share/applications/org.gnome.Nautilus.desktop"
