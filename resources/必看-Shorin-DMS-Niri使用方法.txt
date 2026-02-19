@@ -34,6 +34,8 @@ super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，�
 4.【vscode颜色同步】
 在vscode里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
 
+【关于文档管理器】
+有两个，一个是nautius（图标是蓝色柜子的那个）一个是thunar，主要用thunar。装两个是因为Niri的录屏依赖xdg-desktop-portal-gnome，而这个portal会依赖nautilus，装都装了，我就把nautius的功能都补全了，也不占什么硬盘资源。
 
 
 【输入法配置】
