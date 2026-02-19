@@ -446,7 +446,6 @@ exe as_user yay -S --noconfirm --needed satty mpv kitty
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
 exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
-exe as_user cp -rf "$DMS_DOTFILES_DIR/.config/shorin-niri" "$HOME_DIR/.config/niri/"
 
 # 截图音效
 if ! grep -q "screenshot-sound.sh" "$DMS_NIRI_CONFIG_FILE"; then
@@ -455,7 +454,6 @@ fi
 # 用我的快捷键覆盖dms的
 if ! grep -q 'include "shorin-niri/binds.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
     log "Importing Shorin's custom keybindings into niri config..."
-    echo 'include "shorin-niri/binds.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
     echo 'include "shorin-niri/rule.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
     echo 'include "shorin-niri/supertab.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
     # 移除按键冲突
