@@ -683,6 +683,7 @@ hide_desktop_file "/usr/share/applications/thunar-volman-settings.desktop"
 hide_desktop_file "/usr/share/applications/clipse-gui.desktop"
 hide_desktop_file "/usr/share/applications/waypaper.desktop"
 hide_desktop_file "/usr/share/applications/xfce4-about.desktop"
+hide_desktop_file "/usr/share/applications/cmake-gui.desktop"
 
 # === 教程文件 ===
 section "Shorin DMS" "tutorial"
