@@ -313,30 +313,6 @@ elif [ "$DMS_HYPR_INSTALLED" = true ]; then
 fi
 
 # ==============================================================================
-#  Validation Check: DMS & Core Components
-# ==============================================================================
-section "Config" "components validation"
-log "Verifying DMS and core components installation for autologin..."
-
-MISSING_COMPONENTS=()
-
-# 1. 检测 dms 命令 (切换到目标用户环境检测)
-if ! runuser -u "$TARGET_USER" -- command -v dms &>/dev/null; then
-    MISSING_COMPONENTS+=("dms")
-fi
-
-# 评估检测结果并修改 SKIP_AUTOLOGIN 变量
-if [ ${#MISSING_COMPONENTS[@]} -gt 0 ]; then
-    warn "Validation failed! Missing components: ${MISSING_COMPONENTS[*]}"
-    warn "Setting SKIP_AUTOLOGIN=true to prevent booting into a broken environment."
-    # 核心修改：不退出脚本，而是将自动登录开关强制关闭
-    SKIP_AUTOLOGIN=true
-else
-    success "All core components validated successfully."
-fi
-
-
-# ==============================================================================
 #  tty autologin
 # ==============================================================================
 section "Config" "tty autostart"
