@@ -1,32 +1,7 @@
 
+
+
+
 ## 使用方法
 
-1. 安装一个archlinux系统
-
-2. 登录之后从tty运行以下命令
-    
-
-    - 短链接
-
-        ```
-        bash <(curl -L is.gd/shorinsetup)
-        ```
-        
-    - 手动克隆
-
-        ```
-        # 1. 安装 git
-        sudo pacman -Syu git
-
-        # 2. 克隆仓库
-        git clone https://github.com/SHORiN-KiWATA/shorin-arch-setup.git
-
-        # 3. 进入目录并运行
-        cd shorin-arch-setup
-        sudo bash install.sh
-        ```
-        一条命令版
-
-        ```
-        sudo pacman -Syu git && git clone https://github.com/SHORiN-KiWATA/shorin-arch-setup.git && cd shorin-arch-setup && sudo bash install.sh
-        ```
+见：[ShorinWiki_一键安装桌面环境](https://github.com/SHORiN-KiWATA/Shorin-ArchLinux-Guide/wiki/%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AE%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83)
