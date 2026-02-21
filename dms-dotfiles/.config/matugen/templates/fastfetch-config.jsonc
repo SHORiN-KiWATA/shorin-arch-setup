@@ -1,10 +1,14 @@
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
   "logo": {
-    "type": "kitty",
+    //"type": "kitty",
     //"source": "/home/shorin/Pictures/picture.png",
     "width": 25,
     // "height":20,
+    "color":{
+      "1":"{{colors.primary.default.hex}}",
+      "2":"{{colors.primary.default.hex}}"
+    },
     "padding": {
       "top": 1, // Top padding
       "left": 2, // Left padding
