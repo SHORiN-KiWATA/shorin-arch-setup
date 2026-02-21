@@ -306,6 +306,13 @@ run_hide_desktop_file() {
         "waypaper.desktop"
         "xfce4-about.desktop"
         "cmake-gui.desktop"
+        "assistant.desktop"
+        "qdbusviewer.desktop"
+        "linguist.desktop"
+        "designer.desktop"
+        "org.kde.drkonqi.coredump.gui.desktop"
+        
+
     )
 
     echo "正在隐藏不需要的桌面图标..."
