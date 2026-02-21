@@ -311,6 +311,7 @@ run_hide_desktop_file() {
         "linguist.desktop"
         "designer.desktop"
         "org.kde.drkonqi.coredump.gui.desktop"
+        "org.kde.kwrite.desktop"
         
 
     )

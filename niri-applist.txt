@@ -33,7 +33,7 @@ ttf-jetbrains-mono-nerd                  # JetBrains Mono font (Nerd Font patche
 waybar                                   # Highly customizable Wayland bar
 wlsunset                                 # take care of your eyes
 xwayland-satellite                       # XWayland compatibility 
-
+pavucontrol                              # sound config GUI
 # --- AUR Packages ---
 AUR:clipsync-git                         # x11 <--> wayland clipboard sync 
 AUR:shorinclip-git                       # My clipboard tui
