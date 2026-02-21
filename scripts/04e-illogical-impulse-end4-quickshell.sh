@@ -138,6 +138,14 @@ success "End4 input method and environment configured."
 # ==============================================================================
 section "end4" "Screenshare"
 pacman -S --noconfirm --needed xdg-desktop-portal-hyprland
+
+
+
+# === 隐藏多余的 Desktop 图标 ===
+section "Config" "Hiding useless .desktop files"
+log "Hiding useless .desktop files"
+run_hide_desktop_file
+
 # ==============================================================================
 #  autologin
 # ==============================================================================

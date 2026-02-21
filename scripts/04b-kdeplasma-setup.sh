@@ -412,6 +412,10 @@ log "Enabling PLM..."
 exe systemctl enable plasmalogin
 success "PLM enabled. Will start on reboot."
 
+# === 隐藏多余的 Desktop 图标 ===
+section "Config" "Hiding useless .desktop files"
+log "Hiding useless .desktop files"
+run_hide_desktop_file
 # ------------------------------------------------------------------------------
 # Cleanup
 # ------------------------------------------------------------------------------

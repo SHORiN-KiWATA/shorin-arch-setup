@@ -360,5 +360,12 @@ fi
 log "Installing shell tools..."
 pacman -S --noconfirm --needed thefuck starship eza fish zoxide jq
 
+
+# === 隐藏多余的 Desktop 图标 ===
+section "Config" "Hiding useless .desktop files"
+log "Hiding useless .desktop files"
+run_hide_desktop_file
+
+
 log "Installation Complete! Please reboot."
 cleanup_sudo

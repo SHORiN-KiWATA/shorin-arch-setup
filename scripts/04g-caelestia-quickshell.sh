@@ -145,6 +145,11 @@ exe pacman -S --needed --noconfirm thunar tumbler ffmpegthumbnailer poppler-glib
 
 fi
 
+# === 隐藏多余的 Desktop 图标 ===
+section "Config" "Hiding useless .desktop files"
+log "Hiding useless .desktop files"
+run_hide_desktop_file
+
 # ==============================================================================
 #  6. Autostart & Autologin
 # ==============================================================================

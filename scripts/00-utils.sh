@@ -256,21 +256,66 @@ select_flathub_mirror() {
 as_user() {
   runuser -u "$TARGET_USER" -- "$@"
 }
+
+
 hide_desktop_file() {
     local source_file="$1"
     local filename=$(basename "$source_file")
     local user_dir="$HOME_DIR/.local/share/applications"
     local target_file="$user_dir/$filename"
-  mkdir -p "$user_dir"
-  if [[ -f "$source_file" ]]; then
-      cp -fv "$source_file" "$target_file"
-      chown "$TARGET_USER" "$target_file"
+    
+    mkdir -p "$user_dir"
+    
+    if [[ -f "$source_file" ]]; then
+        cp -fv "$source_file" "$target_file"
+        chown "$TARGET_USER" "$target_file"
         if grep -q "^NoDisplay=" "$target_file"; then
             sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$target_file"
         else
             echo "NoDisplay=true" >> "$target_file"
         fi
-  fi
+    fi
+}
+
+# 批量执行
+run_hide_desktop_file() {
+    
+    local apps_to_hide=(
+        "avahi-discover.desktop"
+        "qv4l2.desktop"
+        "qvidcap.desktop"
+        "bssh.desktop"
+        "org.fcitx.Fcitx5.desktop"
+        "org.fcitx.fcitx5-migrator.desktop"
+        "xgps.desktop"
+        "xgpsspeed.desktop"
+        "gvim.desktop"
+        "kbd-layout-viewer5.desktop"
+        "bvnc.desktop"
+        "yazi.desktop"
+        "btop.desktop"
+        "vim.desktop"
+        "nvim.desktop"
+        "nvtop.desktop"
+        "mpv.desktop"
+        "org.gnome.Settings.desktop"
+        "thunar-settings.desktop"
+        "thunar-bulk-rename.desktop"
+        "thunar-volman-settings.desktop"
+        "clipse-gui.desktop"
+        "waypaper.desktop"
+        "xfce4-about.desktop"
+        "cmake-gui.desktop"
+    )
+
+    echo "正在隐藏不需要的桌面图标..."
+    
+    # 用一个 for 循环搞定所有调用
+    for app in "${apps_to_hide[@]}"; do
+        hide_desktop_file "/usr/share/applications/$app"
+    done
+    
+    echo "图标隐藏完成！"
 }
 
 configure_nautilus_user() {

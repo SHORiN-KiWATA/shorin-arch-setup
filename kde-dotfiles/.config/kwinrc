@@ -35,13 +35,13 @@ ActiveSecondOutlineUseCustom=false
 ActiveSecondOutlineUsePalette=true
 DisableOutlineTile=false
 DisableRoundTile=false
-InactiveCornerRadius=12
+InactiveCornerRadius=8
 InactiveOutlineThickness=0
 InactiveOutlineUseCustom=false
 InactiveOutlineUsePalette=true
 InactiveSecondOutlineThickness=0
 OutlineThickness=2
-Size=12
+Size=8
 
 [Script-desktopchangeosd]
 PopupHideDelay=0
