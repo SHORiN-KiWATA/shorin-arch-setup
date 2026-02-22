@@ -264,7 +264,7 @@ hide_desktop_file() {
     local user_dir="$HOME_DIR/.local/share/applications"
     local target_file="$user_dir/$filename"
     
-    as_user mkdir -p "$user_dir"
+    mkdir -p "$user_dir"
     
     if [[ -f "$source_file" ]]; then
         cp -fv "$source_file" "$target_file"
@@ -322,7 +322,7 @@ run_hide_desktop_file() {
     for app in "${apps_to_hide[@]}"; do
         hide_desktop_file "/usr/share/applications/$app"
     done
-    
+    chown -R "$TARGET_USER:" "$HOME_DIR/.local/share/applications"
 
     echo "图标隐藏完成！"
 }
