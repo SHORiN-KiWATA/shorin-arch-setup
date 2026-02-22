@@ -27,7 +27,6 @@ virt-manager                             # KVM qemu virtual machine
 lazyvim                                  # Great preset of neovim 
 neovim                                   # Advanced version of vim 
 mpv                                      # Minimalist High Performance Video Player
-kazumi                                   # Watch anime for free 
 obs-studio                               # OBS Studio (Streaming & Recording)
 upscaler                                 # image upscaler (make it more clear)
 yazi                                     # great tui file manager
