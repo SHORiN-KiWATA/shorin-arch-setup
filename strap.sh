@@ -59,7 +59,6 @@ fi
 # 3. 克隆指定分支 (-b 参数)
 printf "Cloning repository...\n"
 if git clone --depth 1 -b "$TARGET_BRANCH" "$REPO_URL"; then
-    chmod -R 777 "$DIR_NAME"
     printf "%bClone successful.%b\n" "$GREEN" "$NC"
 else
     printf "%bError: Failed to clone branch '%s'. Check if it exists.%b\n" "$RED" "$TARGET_BRANCH" "$NC"
