@@ -69,12 +69,6 @@ if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         exe pacman -Syu --noconfirm --needed grub-btrfs inotify-tools
         exe systemctl enable --now grub-btrfsd
 
-        if ! grep -q "grub-btrfs-overlayfs" /etc/mkinitcpio.conf; then
-            log "Adding overlayfs hook to mkinitcpio..."
-            sed -i 's/^HOOKS=(\(.*\))/HOOKS=(\1 grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-            exe mkinitcpio -P
-        fi
-
         log "Regenerating GRUB..."
         exe grub-mkconfig -o /boot/grub/grub.cfg
     fi
