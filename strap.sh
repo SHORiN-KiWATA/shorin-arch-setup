@@ -67,6 +67,7 @@ fi
 
 # 4. 运行安装
 if [ -d "$DIR_NAME" ]; then
+    chmod -R 777 "$DIR_NAME"
     cd "$DIR_NAME"
     printf "Starting installer...\n"
     sudo bash install.sh
