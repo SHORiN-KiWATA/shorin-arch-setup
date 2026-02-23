@@ -620,6 +620,9 @@ else
     log "QT/Icon variables already exist in environment block."
 fi
 
+# === niri blur ===
+curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+
 # === font configuration字体配置 ===
 section "Shorin DMS" "fonts"
 log "Configuring fonts for Shorin DMS..."

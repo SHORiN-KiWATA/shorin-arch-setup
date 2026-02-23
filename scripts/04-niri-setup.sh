@@ -510,7 +510,8 @@ else
   warn "Dotfiles missing in repo directory."
 fi
 
-
+# === niri blur ====
+curl -L shorin.xyz/niri-blur-toggle | as_user bash 
 
 # ==============================================================================
 # STEP 7: Wallpapers
