@@ -111,7 +111,7 @@ exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-
 exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
+exe as_user "$AUR_HELPER" -S --noconfirm --needed fuzzel wf-recorder ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
 
 log "Configuring default terminal and templates..."
 ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
