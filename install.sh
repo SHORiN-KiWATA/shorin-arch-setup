@@ -443,12 +443,6 @@ clean_intermediate_snapshots "home"
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
 TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
 HOME_DIR="/home/$TARGET_USER"
-# --- 3. Remove Installer Files ---
-if [ -d "/root/shorin-arch-setup" ]; then
-    log "Removing installer from /root..."
-    cd /
-    rm -rfv /root/shorin-arch-setup
-fi
 
 #--- 清理无用的下载残留
 for dir in /var/cache/pacman/pkg/download-*/; do
