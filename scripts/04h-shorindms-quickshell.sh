@@ -158,6 +158,7 @@ run_hide_desktop_file
 log "Copying tutorial files..."
 force_copy "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
 
+# niri blur toggle 脚本
 as_user curl -L shorin.xyz/niri-blur-toggle | bash 
 
 # --- Finalization & Auto-Login ---
