@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# ==============================================================================
+# Video to GIF Converter (CLI Friendly)
+# ==============================================================================
+
+set -u
+
+# --- 用户配置区域 ---
+GIF_WIDTH=720
+GIF_FPS=30
+DITHER_MODE="bayer:bayer_scale=5"
+STATS_MODE="diff"
+# --------------------
+
+# 颜色定义
+BLUE='\033[1;34m'
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+NC='\033[0m'
+
+# --- 帮助函数 ---
+usage() {
+    echo -e "${BLUE}Usage:${NC} $(basename "$0") [OPTIONS] <video_files...>"
+    echo -e "\n${BLUE}Options:${NC}"
+    echo -e "  -h, --help    显示帮助信息"
+    echo -e "\n${BLUE}Current Settings:${NC}"
+    echo -e "  Width:        ${GIF_WIDTH}px"
+    echo -e "  FPS:          ${GIF_FPS}"
+    echo -e "  Dither:       ${DITHER_MODE}"
+}
+
+# --- 1. 参数检查 (修正：直接退出，不暂停) ---
+
+# 如果没有参数
+if [ "$#" -eq 0 ]; then
+    echo -e "${RED}Error: 未提供输入文件。${NC}"
+    usage
+    exit 1  # 直接退出
+fi
+
+# 如果请求帮助
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0  # 直接退出
+fi
+
+# --- 2. 依赖检查 ---
+if ! command -v ffmpeg &> /dev/null; then
+    echo -e "${RED}Error: 未找到 ffmpeg。${NC}"
+    # 依赖缺失属于严重环境问题，这里保留暂停以便在 GUI 中能看清报错
+    # 如果你也希望这里直接退出，可以把下面这行删掉
+    read -n 1 -s -r -p "按任意键退出..."
+    exit 1
+fi
+
+# --- 3. 开始处理 (只有跑到这里才会暂停) ---
+echo -e "${BLUE}=== 批量转换 GIF ===${NC}"
+echo -e "参数: ${GIF_WIDTH}p / ${GIF_FPS}fps / $DITHER_MODE"
+
+count=0
+total=$#
+
+for input_file in "$@"; do
+    ((count++))
+    filename=$(basename "$input_file")
+    output_file="${input_file%.*}.gif"
+
+    echo -e "\n${BLUE}[$count/$total] 处理中: $filename${NC}"
+    
+    filters="fps=$GIF_FPS,scale=$GIF_WIDTH:-1:flags=lanczos,split[s0][s1];[s0]palettegen=stats_mode=$STATS_MODE[p];[s1][p]paletteuse=dither=$DITHER_MODE"
+
+    ffmpeg -y -v error -stats -i "$input_file" -vf "$filters" "$output_file"
+    
+    if [ $? -eq 0 ]; then
+        size=$(du -h "$output_file" | cut -f1)
+        echo -e "${GREEN}✔ 完成: $output_file ($size)${NC}"
+    else
+        echo -e "${RED}✘ 失败: $filename${NC}"
+    fi
+done
+
+echo -e "\n${BLUE}=== 全部完成 ===${NC}"
+
+if command -v notify-send &> /dev/null; then
+    notify-send "GIF 转换完成" "已处理 $total 个文件" -i image-x-generic
+fi
+
+# 仅在处理完成后暂停，方便 Thunar 用户查看结果
+echo -e "\n按 ${GREEN}[任意键]${NC} 关闭..."
+read -n 1 -s -r
