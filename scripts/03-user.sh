@@ -6,6 +6,7 @@
 
 # 1. 加载工具集
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 
 # 2. 检查 Root 权限
@@ -199,6 +200,7 @@ else
     warn "Failed to create profile.d script."
 fi
 
+chown -R "$MY_USERNAME:" "$PARENT_DIR"
 # ==============================================================================
 # 完成
 # ==============================================================================
