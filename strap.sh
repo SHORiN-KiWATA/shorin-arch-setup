@@ -15,12 +15,6 @@ NC='\033[0m' # No Color
 
 # --- [环境检测] ---
 
-# 1. 检查是否为 root 用户 (此脚本内部使用 sudo，因此外层不应以 root 运行)
-if [ "$(id -u)" -eq 0 ]; then
-    printf "%bError: This script must not be run as root. Please run as a normal user with sudo privileges.%b\n" "$RED" "$NC"
-    exit 1
-fi
-
 # 2. 检查是否为 Linux 内核
 if [ "$(uname -s)" != "Linux" ]; then
     printf "%bError: This installer only supports Linux systems.%b\n" "$RED" "$NC"
@@ -32,9 +26,6 @@ ARCH=$(uname -m)
 case "$ARCH" in
     x86_64)
         ARCH_NAME="amd64"
-        ;;
-    aarch64)
-        ARCH_NAME="arm64"
         ;;
     *)
         printf "%bError: Unsupported architecture: %s%b\n" "$RED" "$ARCH" "$NC"
