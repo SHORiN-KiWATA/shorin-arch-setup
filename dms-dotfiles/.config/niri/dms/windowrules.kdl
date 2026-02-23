@@ -24,7 +24,7 @@ window-rule {
     open-floating true
     }
 //shorinclip剪贴板TUI 
-window-rule{
+window-rule {
 	match app-id="shorinclip"
 	default-column-width { fixed 625; }
     default-window-height { fixed 700; }
