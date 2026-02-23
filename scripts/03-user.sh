@@ -96,18 +96,33 @@ fi
 
 # 1. 配置 Sudoers
 log "Configuring sudoers access..."
+
+# A. 确保 wheel 组具备基础 sudo 权限 (需要密码)
 if grep -q "^# %wheel ALL=(ALL:ALL) ALL" /etc/sudoers; then
-    # 使用 sed 去掉注释
     exe sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     success "Uncommented %wheel in /etc/sudoers."
 elif grep -q "^%wheel ALL=(ALL:ALL) ALL" /etc/sudoers; then
     success "Sudo access already enabled."
 else
-    # 如果找不到标准行，则追加
     log "Appending %wheel rule to /etc/sudoers..."
     echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
     success "Sudo access configured."
 fi
+
+# B. 为特定命令配置免密 (pacman, systemctl, sudoedit)
+# 我们将规则写入 /etc/sudoers.d/ 下的一个独立文件
+SUDO_PACMAN_CONF="/etc/sudoers.d/10-pacman-nopasswd"
+log "Configuring NOPASSWD for pacman and essential tools..."
+
+# pacman和systemctl 免密
+cat << EOF > "$SUDO_PACMAN_CONF"
+# Specific NOPASSWD rules for wheel group
+%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/systemctl, /usr/bin/sudoedit
+EOF
+
+# 必须设置 440 权限，否则 sudo 会因为安全原因忽略该文件
+exe chmod 440 "$SUDO_PACMAN_CONF"
+success "Specific NOPASSWD rules installed to $SUDO_PACMAN_CONF"
 
 # 2. 配置 Faillock (防止输错密码锁定) [新增部分]
 log "Configuring password lockout policy (faillock)..."
