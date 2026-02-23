@@ -88,10 +88,11 @@ select_desktop() {
     
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
-        "No Desktop |none"
-        "Shorin's Niri ${H_YELLOW}(Recommended)${NC} |niri"
-        "Shorin's DMS Niri+Kitty ${H_YELLOW}(Recommended)${NC} |shorindms"
-        "KDE Plasma |kde"
+        "No-Desktop |none"
+        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
+        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
+        "Shorin-DMS-Niri |shorindms"
+        "KDE-Plasma |kde"
         "GNOME |gnome"
         "Quickshell: End4--illogical-impulse (Hyprland)|end4"
         "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
@@ -190,9 +191,12 @@ case "$DESKTOP_ENV" in
     dms)
         BASE_MODULES+=("04c-dms-quickshell.sh")
         ;;
+    shorindmsgit)
+    BASE_MODULES+=("04c-dms-quickshell.sh")
+    export SHORIN_DMS=1
+    ;;    
     shorindms)
-        BASE_MODULES+=("04c-dms-quickshell.sh")
-        export SHORIN_DMS=1
+        BASE_MODULES+=("04h-shorindms-quickshell.sh")
         ;;
     caelestia)
         BASE_MODULES+=("04g-caelestia-quickshell.sh")

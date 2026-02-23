@@ -1,0 +1,126 @@
+
+// 全局窗口规则
+window-rule {
+    // 这一行规则可以让niri变成传统桌面那样的堆叠式桌面。
+    //open-floating true
+    // 圆角
+    geometry-corner-radius 8 
+    // 去掉超出圆角的窗口内容
+    clip-to-geometry true
+    // 全局透明度
+    opacity 0.99
+    // 禁止边框画到背景里
+    draw-border-with-background false
+}
+// 放进overview里的壁纸程序
+layer-rule {
+    match namespace="dms:blurwallpaper"
+     place-within-backdrop true
+}
+// 以浮动模式打开imv（一个轻量化图片预览程序）且不自动聚焦
+window-rule {
+    match app-id="imv"
+    open-focused false
+    open-floating true
+    }
+//shorinclip剪贴板TUI 
+window-rule{
+	match app-id="shorinclip"
+	default-column-width { fixed 625; }
+    default-window-height { fixed 700; }
+    //min-height 800
+	open-floating true
+	default-floating-position x=0 y=18 relative-to="top"
+}
+// 以浮动模式打开的软件
+window-rule {
+    // This app-id regular expression will work for both:
+    // - host Firefox (app-id is "firefox")
+    // - Flatpak Firefox (app-id is "org.mozilla.firefox")
+    match app-id="com.gabm.satty"
+    match app-id="media_info"
+    match app-id="video2gif"
+    match app-id="floating-term"
+    match app-id="nm-connection-editor"
+    match app-id="niri-quick-switch"
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id="steam" title="Friends List"
+    match app-id="blueberry.py" title="蓝牙"
+    match app-id="blueman-manager"
+    match app-id="flameshot"
+    match app-id="com.github.hluk.copyq" 
+    match app-id="be.alexandervanhee.gradia"
+    match app-id="org.pulseaudio.pavucontrol" title="音量控制"
+    match app-id="org.gnome.clocks" title="时钟"
+    match app-id="fcitx" title="Fcitx5 Input Window"
+    match app-id="org.gnome.FileRoller"
+    match app-id="thunar" title="文件操作进度"
+    match app-id="waypaper"
+    match app-id="clipse-gui"
+    match title="群聊的聊天记录"
+    match title="聊天记录"
+    match title="日历"
+    match title="重命名"
+    match app-id="btrfs-assistant"
+    match app-id="markpix"
+    match title="Steam 设置" 
+    match title="另存为"
+    match app-id="better_control.py"
+    open-floating true
+}
+//快速终端和笔记
+window-rule {
+    match app-id="quickterminal"
+	open-floating true
+	default-floating-position x=20 y=20 relative-to="top"
+}
+window-rule {
+    match app-id="bluetui"
+    match app-id="impala"
+default-column-width { fixed 800; }
+    default-window-height { fixed 800; }
+	open-floating true
+}
+window-rule {
+	    match app-id="clipse"
+	default-column-width { fixed 625; }
+    default-window-height { fixed 700; }
+	open-floating true
+}
+    // waydroid调整
+window-rule {
+    match title="gsr ui"
+    match app-id="waydroid"
+    open-fullscreen true
+    open-floating true
+    focus-ring {
+        off
+    }
+    shadow {
+    off
+    }
+}
+// 取消图片预览、视频播放器之类的透明度，并且以浮动模式打开
+window-rule {
+    match title="图片查看器"
+    match title="画中画"
+    match title="图片和视频"
+    match title="视频播放器"
+    open-floating true
+    opacity 1.0
+}
+window-rule {
+    match app-id="mpv"
+    match app-id="celluloid"
+    opacity 1.0 
+}
+
+
+window-rule {
+    // This regular expression is intentionally made as specific as possible,
+    // since this is the default config, and we want no false positives.
+    // You can get away with just app-id="wezterm" if you want.
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+

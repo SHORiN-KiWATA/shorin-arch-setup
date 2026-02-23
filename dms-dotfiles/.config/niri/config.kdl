@@ -1,0 +1,165 @@
+//  ██████  ██   ██  ██████  ███████ ██ ███    ██ 
+//  ██      ██   ██ ██    ██ ██   ██    ██ ██  ██ 
+//  ███████ ███████ ██    ██ ██████  ██ ██ ██  ██ 
+//       ██ ██   ██ ██    ██ ██   ██ ██ ██  ██ ██ 
+//  ██████  ██   ██  ██████  ██   ██ ██ ██   ████ 
+
+include "layout.kdl"
+include "animations.kdl"
+// 截图保存位置
+screenshot-path "~/Pictures/Screenshots/Niri-screenshots/%Y-%m-%d_%H-%M-%S.png"
+// 禁用热角
+gestures {
+    hot-corners {
+        off
+    }
+}
+// 环境变量
+
+environment {
+    //LC_CTYPE "zh_CN.UTF-8" 会导致输入法出现漏字
+    //LC_MESSAGES "zh_CN.UTF-8" 让系统全局使用英文，仅主要界面为英文时使用这个环境变量
+    // 设置界面语言
+    LANG "zh_CN.UTF-8"
+    LC_CTYPE "en_US.UTF-8" //这一项可以解决漏字问题，但是也许会导致steam之类的x11应用无法使用中文输入法
+    // 输入法环境变量
+    XMODIFIERS "@im=fcitx"
+    // qt主题
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    // 解决quickshell图标主题缺失问题
+    QS_ICON_THEME "Adwaita"
+    // GTK软件使用的渲染器，可以解决n卡双显卡导致的GTK应用启动缓慢问题，AMD或Intel单显卡不需要这行设置可以注释掉
+    //GSK_RENDERER "gl"
+    // 默认文本编辑器
+    EDITOR "vim"
+    
+}
+
+input {
+    keyboard {
+        xkb {
+        }
+    }
+
+    touchpad {
+        // off
+        tap
+        // dwt
+        // dwtp
+        // drag false
+        // drag-lock
+        // nautural-scroll可以翻转触摸板滚动的方向
+        natural-scroll
+        //accel-speed -0.5
+        // accel-profile "flat"
+        // scroll-method "two-finger"
+        // disabled-on-external-mouse
+    }
+
+    mouse {
+        
+	// off
+        // natural-scroll
+        // 鼠标速度
+        accel-speed -0.15
+        // 禁用鼠标加速 
+        accel-profile "flat"
+	// scroll-method "no-scroll"
+        //speed of scroll,like:
+        //scroll-factor horizontal=2.0 vertical=-5.0 
+    }
+
+    trackpoint {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "on-button-down"
+        // scroll-button 273
+        // scroll-button-lock
+        // middle-emulation
+    }
+}
+// 自动启动
+// 启动dms，同时禁用它自带的polkit
+spawn-sh-at-startup "DMS_DISABLE_POLKIT=1 dms run"
+// 询问管理员权限功能（身份验证）
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri & /usr/lib/xdg-desktop-portal-gnome"
+// GNOME tracker修复
+spawn-sh-at-startup "systemctl --user set-environment XDG_SESSION_CLASS=user"
+// 输入法
+spawn-at-startup "fcitx5" 
+// 截图音效的守护进程
+spawn-at-startup "~/.config/niri/scripts/screenshot-sound.sh"
+
+// 取消启动niri时自动开启快捷键教程
+hotkey-overlay {
+    // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
+     skip-at-startup
+}
+
+// 隐藏窗口标题栏
+prefer-no-csd
+
+// 默认窗口规则
+window-rule {
+    // This regular expression is intentionally made as specific as possible,
+    // since this is the default config, and we want no false positives.
+    // You can get away with just app-id="wezterm" if you want.
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+window-rule {
+    match app-id=r#"^org\.gnome\."#
+    draw-border-with-background false
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+window-rule {
+    match app-id=r#"^gnome-control-center$"#
+    match app-id=r#"^pavucontrol$"#
+    match app-id=r#"^nm-connection-editor$"#
+    default-column-width { proportion 0.5; }
+    open-floating false
+}
+window-rule {
+    match app-id=r#"^gnome-calculator$"#
+    match app-id=r#"^galculator$"#
+    match app-id=r#"^blueman-manager$"#
+    match app-id=r#"^xdg-desktop-portal$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^steam$"# title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+}
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    match app-id="Alacritty"
+    match app-id="zen"
+    match app-id="com.mitchellh.ghostty"
+    match app-id="kitty"
+    draw-border-with-background false
+}
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id="zoom"
+    open-floating true
+}
+// Open dms windows as floating by default
+window-rule {
+    match app-id=r#"org.quickshell$"#
+    open-floating true
+}
+
+include "dms/binds.kdl"
+include "dms/alttab.kdl"
+include "dms/supertab.kdl"
+include "dms/windowrules.kdl"
+include "dms/cursor.kdl"
+include "dms/outputs.kdl"
+include "dms/colors.kdl"
+

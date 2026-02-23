@@ -1,0 +1,10 @@
+
+// 光标配置
+cursor {
+    // 主题，存放路径在~/.local/share/icons
+    xcursor-theme "breeze_cursors"
+    // 大小
+    xcursor-size 30
+    // 闲置多少毫秒自动隐藏光标
+    hide-after-inactive-ms 15000
+}

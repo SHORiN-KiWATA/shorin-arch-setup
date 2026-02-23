@@ -1,0 +1,8 @@
+patch:
+  schema_list:
+    - schema: rime_ice
+    - schema: luna_pinyin_simp
+    - schema: double_pinyin_flypy
+    - schema: wubi86
+    - schema: bopomofo
+  "menu/page_size": 6
