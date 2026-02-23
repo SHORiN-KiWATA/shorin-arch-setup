@@ -5,6 +5,7 @@
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
@@ -140,8 +141,8 @@ fi
 section "Safety Net" "Deploying Rollback Scripts"
 
 BIN_DIR="/usr/local/bin"
-UNDO_SRC="$SCRIPT_DIR/undochange.sh"
-DE_UNDO_SRC="$SCRIPT_DIR/scripts/de-undochange.sh"
+UNDO_SRC="$PARENT_DIR/undochange.sh"
+DE_UNDO_SRC="$SCRIPT_DIR/de-undochange.sh"
 
 log "Installing undo utilities to $BIN_DIR..."
 
