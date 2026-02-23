@@ -2,13 +2,13 @@
 
 SCRIPT_PATH=$(realpath "$0")
 
-# --- 本地化配置 ---
-if env | grep -q "zh_CN"; then
-    TXT_PROMPT="快速读档 > ⚠️会自动重启系统 "
-    TXT_BOTH="全系统恢复"
-    TXT_ROOT="仅恢复root"
-    TXT_HOME="仅恢复home"
-    TXT_CANCEL="取消" 
+# --- 语言检测优化 ---
+if echo "$LANG" | grep -q "zh_CN"; then
+    TXT_PROMPT="快速读档 > ⚠️会自动重启系统"
+    TXT_BOTH="全系统恢复 (both)"
+    TXT_ROOT="仅恢复root (root)"
+    TXT_HOME="仅恢复home (home)"
+    TXT_CANCEL="取消 (cancel)" 
     
     MSG_TITLE="系统恢复"
     MSG_START="正在进行恢复，请勿关闭电脑..."
@@ -17,10 +17,10 @@ if env | grep -q "zh_CN"; then
     MSG_NO_SNAP="未找到 quicksave 快照："
     MSG_MAP_FAIL="无法映射快照 ID："
 else
-    TXT_PROMPT="Quickload > ⚠️ System will reboot "
-    TXT_BOTH="Full Restore"
-    TXT_ROOT="Restore Root Only"
-    TXT_HOME="Restore Home Only"
+    TXT_PROMPT="Quickload > ⚠️ System will reboot"
+    TXT_BOTH="Full Restore (both)"
+    TXT_ROOT="Restore Root Only (root)"
+    TXT_HOME="Restore Home Only (home)"
     TXT_CANCEL="Cancel"
 
     MSG_TITLE="System Restore"
@@ -31,45 +31,146 @@ else
     MSG_MAP_FAIL="Map failed for:"
 fi
 
-# --- Root 执行逻辑 ---
+# ==============================================================================
+# --- Root 执行逻辑 (底层回滚) ---
+# ==============================================================================
 if [ "$1" == "--internal-run-as-root" ]; then
     MODE="$2"
     
-    rollback_subvol() {
-        local subvol=$1
-        local snap_conf=$2
+    # 1. 自动检测是否在快照启动项中
+    IS_SNAPSHOT_BOOT=false
+    REAL_ROOT_MNT="/tmp/btrfs_real_root"
+    
+    # 只要挂载参数包含 snapshots，就是快照启动
+    if findmnt -n -o OPTIONS / | grep -q "snapshots"; then
+        IS_SNAPSHOT_BOOT=true
+        # 过滤掉 [/@] 后缀，拿到纯净的物理设备名 (如 /dev/nvme0n1p2)
+        ROOT_DEV=$(findmnt -n -o SOURCE / | cut -d'[' -f1)
         
-        local snap_id=$(snapper -c "$snap_conf" list --columns number,description | grep "quicksave" | tail -n 1 | awk '{print $1}')
+        mkdir -p "$REAL_ROOT_MNT"
+        if ! mountpoint -q "$REAL_ROOT_MNT"; then
+            # 挂载顶层卷，让脚本能看见真实的 @ 和 @home
+            mount -t btrfs -o subvolid=5 "$ROOT_DEV" "$REAL_ROOT_MNT"
+        fi
+    fi
+
+    # 2. 清理钩子：确保退出时安全卸载临时目录
+    cleanup_mount() {
+        if [ "$IS_SNAPSHOT_BOOT" = true ] && mountpoint -q "$REAL_ROOT_MNT"; then
+            umount "$REAL_ROOT_MNT"
+            rmdir "$REAL_ROOT_MNT"
+        fi
+    }
+    trap cleanup_mount EXIT
+
+    # 3. 执行回滚逻辑
+    rollback_subvol() {
+        local subvol=$1       # 传入 "@" 或 "@home"
+        local snap_conf=$2    # 传入 "root" 或 "home"
+        
+        # 默认使用标准命令
+        local SNAPPER_CMD="snapper -c $snap_conf"
+        
+        # 仅当在快照中启动，且需要操作 root 时，才切换根目录
+        if [ "$IS_SNAPSHOT_BOOT" = true ] && [ "$snap_conf" == "root" ]; then
+            SNAPPER_CMD="snapper --no-dbus --root ${REAL_ROOT_MNT}/@ -c root"
+        fi
+        
+        # 获取快照 ID
+        local snap_id=$($SNAPPER_CMD list --columns number,description | grep "quicksave" | tail -n 1 | awk '{print $1}')
         if [ -z "$snap_id" ]; then echo "$MSG_NO_SNAP $snap_conf"; return 1; fi
 
+        # 映射到 btrfs-assistant 序号
         local ba_index=$(btrfs-assistant -l | awk -v v="$subvol" -v s="$snap_id" '$2==v && $3==s {print $1}')
         if [ -z "$ba_index" ]; then echo "$MSG_MAP_FAIL $subvol (ID: $snap_id)"; return 1; fi
 
+        # 执行回档
         btrfs-assistant -r "$ba_index"
     }
 
+    # 根据选择执行对应的回滚
     if [[ "$MODE" == "both" || "$MODE" == "root" ]]; then rollback_subvol "@" "root" || exit 1; fi
     if [[ "$MODE" == "both" || "$MODE" == "home" ]]; then rollback_subvol "@home" "home" || exit 1; fi
     
     exit 0
 fi
 
-# --- 用户交互逻辑 ---
-SELECTION=$(printf "$TXT_BOTH\n$TXT_ROOT\n$TXT_HOME\n$TXT_CANCEL" | fuzzel -d -p "$TXT_PROMPT")
+# ==============================================================================
+# --- 环境感知与交互逻辑 ---
+# ==============================================================================
 
-case "$SELECTION" in
-    "$TXT_BOTH") TARGET_MODE="both" ;;
-    "$TXT_ROOT") TARGET_MODE="root" ;;
-    "$TXT_HOME") TARGET_MODE="home" ;;
-    *) exit 0 ;; 
-esac
+# 判断是否拥有图形界面 (GUI)
+HAS_GUI=false
+if [[ -n "$WAYLAND_DISPLAY" || -n "$DISPLAY" ]]; then
+    HAS_GUI=true
+fi
 
-notify-send "$MSG_TITLE" "$MSG_START"
+# 智能通知包装函数 (GUI 用 notify-send，TTY 用 echo)
+notify_user() {
+    local level="$1" # normal 或 critical
+    local msg="$2"
+    if [ "$HAS_GUI" = true ] && command -v notify-send >/dev/null; then
+        if [ "$level" == "critical" ]; then
+            notify-send -u critical "$MSG_TITLE" "$msg"
+        else
+            notify-send "$MSG_TITLE" "$msg"
+        fi
+    else
+        echo -e "\n[ $MSG_TITLE ] $msg\n"
+    fi
+}
 
+TARGET_MODE=""
+
+# 1. 优先处理命令行参数 (如: quickload both)
+if [[ "$1" == "both" || "$1" == "root" || "$1" == "home" ]]; then
+    TARGET_MODE="$1"
+else
+    # 2. 如果没有参数，则根据环境显示菜单
+    if [ "$HAS_GUI" = true ] && command -v fuzzel >/dev/null; then
+        # 图形界面：使用 Fuzzel
+        SELECTION=$(printf "$TXT_BOTH\n$TXT_ROOT\n$TXT_HOME\n$TXT_CANCEL" | fuzzel -d -p "$TXT_PROMPT")
+        case "$SELECTION" in
+            "$TXT_BOTH") TARGET_MODE="both" ;;
+            "$TXT_ROOT") TARGET_MODE="root" ;;
+            "$TXT_HOME") TARGET_MODE="home" ;;
+            *) exit 0 ;; 
+        esac
+    else
+        # TTY 黑屏界面：使用纯文字菜单
+        echo "=============================="
+        echo "   $TXT_PROMPT"
+        echo "=============================="
+        echo " 1) $TXT_BOTH"
+        echo " 2) $TXT_ROOT"
+        echo " 3) $TXT_HOME"
+        echo " 4) $TXT_CANCEL"
+        echo "=============================="
+        read -p "请选择 (1-4): " tty_sel
+        case "$tty_sel" in
+            1) TARGET_MODE="both" ;;
+            2) TARGET_MODE="root" ;;
+            3) TARGET_MODE="home" ;;
+            *) exit 0 ;;
+        esac
+    fi
+fi
+
+# 如果到这里还是没有获取到模式，直接退出
+if [ -z "$TARGET_MODE" ]; then
+    exit 0
+fi
+
+# ==============================================================================
+# --- 执行提权与重启 ---
+# ==============================================================================
+notify_user "normal" "$MSG_START"
+
+# 使用 pkexec 嵌套 su - root，保证终端和图形界面下都能正确提权，且透传中英文环境
 if pkexec su - root -c "LANG=\"$LANG\" \"$SCRIPT_PATH\" --internal-run-as-root \"$TARGET_MODE\""; then
-    notify-send -u critical "$MSG_TITLE" "$MSG_SUCCESS"
+    notify_user "critical" "$MSG_SUCCESS"
     sleep 3
     systemctl reboot
 else
-    notify-send -u critical "$MSG_TITLE" "$MSG_FAIL"
+    notify_user "critical" "$MSG_FAIL"
 fi
