@@ -134,4 +134,37 @@ if snapper list-configs | grep -q "home "; then
     fi
 fi
 
+# ------------------------------------------------------------------------------
+# 4. Deploy Rollback Scripts
+# ------------------------------------------------------------------------------
+section "Safety Net" "Deploying Rollback Scripts"
+
+BIN_DIR="/usr/local/bin"
+UNDO_SRC="$SCRIPT_DIR/undochange.sh"
+DE_UNDO_SRC="$SCRIPT_DIR/scripts/de-undochange.sh"
+
+log "Installing undo utilities to $BIN_DIR..."
+
+if [ ! -d "$BIN_DIR" ]; then
+    exe mkdir -p "$BIN_DIR"
+fi
+
+# 部署主撤销脚本
+if [ -f "$UNDO_SRC" ]; then
+    exe cp "$UNDO_SRC" "$BIN_DIR/undochange"
+    exe chmod +x "$BIN_DIR/undochange"
+    success "Installed 'undochange' command."
+else
+    warn "Could not find $UNDO_SRC. Skipping."
+fi
+
+# 部署桌面环境撤销脚本
+if [ -f "$DE_UNDO_SRC" ]; then
+    exe cp "$DE_UNDO_SRC" "$BIN_DIR/de-undochange"
+    exe chmod +x "$BIN_DIR/de-undochange"
+    success "Installed 'de-undochange' command."
+else
+    warn "Could not find $DE_UNDO_SRC. Skipping."
+fi
+
 log "Module 00 completed. Safe to proceed."
