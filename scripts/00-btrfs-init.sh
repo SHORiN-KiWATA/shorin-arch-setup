@@ -152,17 +152,17 @@ fi
 
 # 部署主撤销脚本
 if [ -f "$UNDO_SRC" ]; then
-    exe cp "$UNDO_SRC" "$BIN_DIR/undochange"
-    exe chmod +x "$BIN_DIR/undochange"
-    success "Installed 'undochange' command."
+    exe cp "$UNDO_SRC" "$BIN_DIR/shorin-undochange"
+    exe chmod +x "$BIN_DIR/shorin-undochange"
+    success "Installed 'shorin-undochange' command."
 else
     warn "Could not find $UNDO_SRC. Skipping."
 fi
 
 # 部署桌面环境撤销脚本
 if [ -f "$DE_UNDO_SRC" ]; then
-    exe cp "$DE_UNDO_SRC" "$BIN_DIR/de-undochange"
-    exe chmod +x "$BIN_DIR/de-undochange"
+    exe cp "$DE_UNDO_SRC" "$BIN_DIR/shorin-de-undochange"
+    exe chmod +x "$BIN_DIR/shorin-de-undochange"
     success "Installed 'de-undochange' command."
 else
     warn "Could not find $DE_UNDO_SRC. Skipping."
