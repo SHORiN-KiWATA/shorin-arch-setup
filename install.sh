@@ -89,8 +89,8 @@ select_desktop() {
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
         "No-Desktop |none"
-        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
-        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
+        "Shorin-Niri |niri"
+        "Shorin-DMS-Niri-git  |shorindmsgit"
         "Shorin-DMS-Niri |shorindms"
         "KDE-Plasma |kde"
         "GNOME |gnome"
