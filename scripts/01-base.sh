@@ -137,7 +137,7 @@ if pacman -Qi networkmanager &> /dev/null; then
         mkdir -p /etc/NetworkManager/conf.d
     fi
     echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
-
+    rm -rfv /etc/NetworkManager/system-connections/*
     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
     success "Network backend configured (iwd)."
 else
