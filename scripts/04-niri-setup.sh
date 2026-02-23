@@ -446,7 +446,7 @@ prepare_repository() {
 prepare_repository
 
 # install quickload 
-cp -f "$DOTFILES_REPO/.local/bin/quickload" "/usr/local/bin/quickload"
+cp -f "$DOTFILES_REPO/dotfiles/.local/bin/quickload" "/usr/local/bin/quickload"
 # 2. 执行链接
 if [ -d "$DOTFILES_REPO/dotfiles" ]; then
   EXCLUDE_LIST=""
