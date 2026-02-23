@@ -305,6 +305,9 @@ REPO_GITHUB="https://github.com/SHORiN-KiWATA/Shorin-ArchLinux-Guide.git"
 # 1. 仓库位置：放在 .local/share 下，不污染 home 根目录
 DOTFILES_REPO="$HOME_DIR/.local/share/shorin-niri"
 
+# install quickload 
+cp -f "$DOTFILES_REPO/.local/bin/quickload" "/usr/local/bin/quickload"
+
 # --- Smart Linking Function ---
 # 核心逻辑：只链接“叶子”节点，对于“容器”目录（.config, .local, share）则递归进入
 link_recursive() {

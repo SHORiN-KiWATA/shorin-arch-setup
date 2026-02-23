@@ -546,6 +546,7 @@ if command -v kitty &>/dev/null; then
     
     as_user mkdir -p "$HOME_DIR/.local/bin"
     force_copy "$DMS_DOTFILES_DIR/.local/bin/." "$HOME_DIR/.local/bin/"
+    cp -f "$DMS_DOTFILES_DIR/.local/bin/quickload" "/usr/local/bin"
 else
     log "Kitty not found, skipping Kitty configuration."
 fi
