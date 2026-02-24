@@ -31,6 +31,46 @@ force_copy() {
 
     exe as_user cp -rf "$src" "$target_dir"
 }
+# 专门剥开一层目录打软链接的辅助函数
+link_subdir() {
+    local sub_dir="$1"     # 例如 ".config" 或 ".local/bin"
+    local src_base="$2"    # 仓库里的 dotfiles 路径
+    local target_base="$3" # 用户的 Home 目录
+    
+    local full_src="$src_base/$sub_dir"
+    local full_target="$target_base/$sub_dir"
+    
+    if [[ -d "$full_src" ]]; then
+        # 确保用户的目标容器目录（如 ~/.config）存在
+        as_user mkdir -p "$full_target"
+        
+        # 遍历源目录里的具体项目（如 niri, kitty）
+        shopt -s dotglob
+        for item in "$full_src"/*; do
+            [ -e "$item" ] || continue
+            local item_name=$(basename "$item")
+            
+            # 暴力清除目标位置的旧文件夹或旧软链
+            as_user rm -rf "$full_target/$item_name" 2>/dev/null
+            
+            # 神仙参数组合: -s(建立软链) -n(目标是软链时视为文件直接覆盖) -f(强制)
+            as_user ln -snf "$item" "$full_target/$item_name"
+        done
+        shopt -u dotglob
+    fi
+}
+
+# 聚合管理函数
+link_dotfiles() {
+    local src="$1"
+    local target="$2"
+    
+    # 你可以在这里指定要链接哪些顶层目录，绝不会误伤系统其他配置
+    link_subdir ".config" "$src" "$target"
+    link_subdir ".local/bin" "$src" "$target"
+    link_subdir ".local/share" "$src" "$target"
+}
+
 # --- Identify User & DM Check ---
 log "Identifying target user..."
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
@@ -81,26 +121,47 @@ cleanup_sudo() {
 }
 trap cleanup_sudo EXIT INT TERM
 
-# --- Installation: Core Components ---
-AUR_HELPER="yay"
-section "Shorin DMS" "Core Components"
-log "Installing core shell components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome cava cliphist wl-clipboard dgop dsearch qt5-multimedia polkit-gnome
-
 # --- Dotfiles & Wallpapers ---
 section "Shorin DMS" "Dotfiles & Wallpapers"
-log "Deploying user dotfiles..."
-DOTFILES_SRC="$PARENT_DIR/dms-dotfiles"
-chown -R "$TARGET_USER:" "$DOTFILES_SRC"
-force_copy "$DOTFILES_SRC/." "$HOME_DIR"
+
+SHORIN_DMS_REPO="$HOME_DIR/.local/share/shorin-dms"
+
+log "Setting up Shorin DMS Git Repository..."
+if [[ ! -d "$SHORIN_DMS_REPO/.git" ]]; then
+    as_user mkdir -p "$HOME_DIR/.local/share/shorin-dms"
+    # 直接将包含 .git 的安装仓库完整拷贝过去，免网络克隆
+    exe cp -rf "$PARENT_DIR/." "$SHORIN_DMS_REPO"
+    
+    # 修正所有权，让目标用户接管仓库
+    chown -R "$TARGET_USER:" "$SHORIN_DMS_REPO"
+    as_user git config --global --add safe.directory "$SHORIN_DMS_REPO"
+    log "Repository copied locally to $SHORIN_DMS_REPO"
+else
+    log "Repository already exists at $SHORIN_DMS_REPO, pulling latest..."
+    as_user git -C "$SHORIN_DMS_REPO" pull origin main || true
+fi
+
+log "Deploying user dotfiles via Symlinks..."
+DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
+
+# 核心：调用刚才写的软链函数！
+link_dotfiles "$DOTFILES_SRC" "$HOME_DIR"
+
+# 这个涉及到系统全局命令，依然需要 root 权限物理复制
 cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
 
 log "Deploying wallpapers..."
-WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
+WALLPAPER_SOURCE_DIR="$SHORIN_DMS_REPO/resources/Wallpapers"
 WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
-chown -R "$TARGET_USER:" "$WALLPAPER_SOURCE_DIR"
-as_user mkdir -p "$WALLPAPER_DIR"
-force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
+
+# 壁纸也可以直接整个目录软链过去，以后存新壁纸直接进 Git 仓库
+as_user mkdir -p "$HOME_DIR/Pictures"
+as_user rm -rf "$WALLPAPER_DIR" 2>/dev/null
+as_user ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
+
+
+
+
 
 # --- File Manager & Terminal Setup ---
 section "Shorin DMS" "File Manager & Terminal"
