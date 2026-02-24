@@ -121,6 +121,14 @@ cleanup_sudo() {
 }
 trap cleanup_sudo EXIT INT TERM
 
+
+# === Core Component Installation ===
+AUR_HELPER="paru"
+section "Shorin DMS" "Core Components"
+log "Installing core shell components..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome cava cliphist wl-clipboard dgop dsearch qt5-multimedia polkit-gnome
+
+
 # --- Dotfiles & Wallpapers ---
 section "Shorin DMS" "Dotfiles & Wallpapers"
 
@@ -165,10 +173,6 @@ as_user mkdir -p "$HOME_DIR/Pictures"
 as_user rm -rf "$WALLPAPER_DIR" 2>/dev/null
 as_user ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
 
-
-
-
-AUR_HELPER="paru"
 # --- File Manager & Terminal Setup ---
 section "Shorin DMS" "File Manager & Terminal"
 
