@@ -22,13 +22,7 @@ force_copy() {
         return 1
     fi
 
-    local item_name=$(basename "$src")
-    
-    local clean_target="${target_dir%/}"
-    clean_target="${clean_target%/.}"
-    as_user rm -rf "${clean_target}/${item_name}"
-    
-    exe as_user cp -rf "$src" "$target_dir"
+    exe as_user cp -rf --remove-destination "$src" "$target_dir"
 }
 
 # --- Identify User & DM Check ---
