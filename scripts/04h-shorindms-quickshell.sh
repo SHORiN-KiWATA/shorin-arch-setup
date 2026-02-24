@@ -23,7 +23,6 @@ force_copy() {
     fi
 
     if [[ -d "${src%/}" ]]; then
-
         (cd "$src" && find . -type d) | while read -r d; do
             as_user rm -f "$target_dir/$d" 2>/dev/null
         done
@@ -31,6 +30,7 @@ force_copy() {
 
     exe as_user cp -rf "$src" "$target_dir"
 }
+
 # 专门剥开一层目录打软链接的辅助函数
 link_subdir() {
     local sub_dir="$1"     # 例如 ".config" 或 ".local/bin"
@@ -41,19 +41,14 @@ link_subdir() {
     local full_target="$target_base/$sub_dir"
     
     if [[ -d "$full_src" ]]; then
-        # 确保用户的目标容器目录（如 ~/.config）存在
         as_user mkdir -p "$full_target"
         
-        # 遍历源目录里的具体项目（如 niri, kitty）
         shopt -s dotglob
         for item in "$full_src"/*; do
             [ -e "$item" ] || continue
             local item_name=$(basename "$item")
             
-            # 暴力清除目标位置的旧文件夹或旧软链
             as_user rm -rf "$full_target/$item_name" 2>/dev/null
-            
-            # 神仙参数组合: -s(建立软链) -n(目标是软链时视为文件直接覆盖) -f(强制)
             as_user ln -snf "$item" "$full_target/$item_name"
         done
         shopt -u dotglob
@@ -65,7 +60,6 @@ link_dotfiles() {
     local src="$1"
     local target="$2"
     
-    # 你可以在这里指定要链接哪些顶层目录，绝不会误伤系统其他配置
     link_subdir ".config" "$src" "$target"
     link_subdir ".local/bin" "$src" "$target"
     link_subdir ".local/share" "$src" "$target"
@@ -122,14 +116,36 @@ cleanup_sudo() {
 trap cleanup_sudo EXIT INT TERM
 
 
-# === Core Component Installation ===
+# ==============================================================================
+# 新增：集中式批量软件安装 (Data-Driven App Installation)
+# ==============================================================================
 AUR_HELPER="paru"
-section "Shorin DMS" "Core Components"
-log "Installing core shell components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome cava cliphist wl-clipboard dgop dsearch qt5-multimedia polkit-gnome
+section "Shorin DMS" "Software Installation"
+
+APPLIST_FILE="$PARENT_DIR/dms-applist.txt"
+
+if [[ ! -f "$APPLIST_FILE" ]]; then
+    error "找不到软件列表文件: $APPLIST_FILE"
+    exit 1
+fi
+
+log "正在读取并解析软件列表: $APPLIST_FILE ..."
+# 提取非空行和非注释行，并把换行符替换为空格，生成一个纯净的包名字符串
+PKGS=$(grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr '\n' ' ')
+
+if [[ -n "$PKGS" ]]; then
+    log "开始批量安装所有环境依赖与核心软件..."
+    # 无需加引号，让 Bash 自动把字符串按空格展开为参数列表交给 paru
+    exe as_user "$AUR_HELPER" -S --noconfirm --needed $PKGS
+    success "所有软件安装完毕！"
+else
+    warn "软件列表为空，跳过安装步骤。"
+fi
 
 
+# ==============================================================================
 # --- Dotfiles & Wallpapers ---
+# ==============================================================================
 section "Shorin DMS" "Dotfiles & Wallpapers"
 
 SHORIN_DMS_REPO="$HOME_DIR/.local/share/shorin-dms"
@@ -137,10 +153,8 @@ SHORIN_DMS_REPO="$HOME_DIR/.local/share/shorin-dms"
 log "Setting up Shorin DMS Git Repository..."
 if [[ ! -d "$SHORIN_DMS_REPO/.git" ]]; then
     as_user mkdir -p "$HOME_DIR/.local/share/shorin-dms"
-    # 直接将包含 .git 的安装仓库完整拷贝过去，免网络克隆
     exe cp -rf "$PARENT_DIR/." "$SHORIN_DMS_REPO"
     
-    # 修正所有权，让目标用户接管仓库
     chown -R "$TARGET_USER:" "$SHORIN_DMS_REPO"
     as_user git config --global --add safe.directory "$SHORIN_DMS_REPO"
     log "Repository copied locally to $SHORIN_DMS_REPO"
@@ -155,33 +169,26 @@ fi
 log "Deploying user dotfiles via Symlinks..."
 DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
 
-# 核心：调用刚才写的软链函数！
 link_dotfiles "$DOTFILES_SRC" "$HOME_DIR"
 if !  [ -e "$HOME_DIR/.vimrc" ]; then
     as_user ln -sf "$SHORIN_DMS_REPO/dms-dotfiles/.vimrc" "$HOME_DIR/.vimrc"
 fi 
 
-# 这个涉及到系统全局命令，依然需要 root 权限物理复制
 cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
 
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$SHORIN_DMS_REPO/resources/Wallpapers"
 WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
 
-# 壁纸也可以直接整个目录软链过去，以后存新壁纸直接进 Git 仓库
 as_user mkdir -p "$HOME_DIR/Pictures"
 as_user rm -rf "$WALLPAPER_DIR" 2>/dev/null
 as_user ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
 
-# --- File Manager & Terminal Setup ---
-section "Shorin DMS" "File Manager & Terminal"
 
-log "Installing Nautilus, Thunar and dependencies..."
-exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
-
-log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fuzzel wf-recorder ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
+# ==============================================================================
+# --- File Manager & Terminal Config (仅保留配置逻辑) ---
+# ==============================================================================
+section "Shorin DMS" "System Configuration"
 
 log "Configuring default terminal and templates..."
 ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
@@ -194,12 +201,14 @@ log "Applying Nautilus bugfixes and bookmarks..."
 configure_nautilus_user
 as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
 
-# --- Flatpak & Theme Integration ---
+
+# ==============================================================================
+# --- Flatpak & Theme Integration (仅保留配置逻辑) ---
+# ==============================================================================
 section "Shorin DMS" "Flatpak & Theme Integration"
 
 if command -v flatpak &>/dev/null; then
     log "Configuring Flatpak overrides and themes..."
-    exe as_user "$AUR_HELPER" -S --noconfirm --needed bazaar
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
     as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
@@ -209,9 +218,6 @@ if command -v flatpak &>/dev/null; then
     as_user ln -sf /usr/share/themes "$HOME_DIR/.local/share/themes"
 fi
 
-log "Installing theme components and browser..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox
-
 log "Configuring Firefox Pywalfox policy..."
 POL_DIR="/etc/firefox/policies"
 exe mkdir -p "$POL_DIR"
@@ -219,7 +225,10 @@ echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/fi
 exe chmod 755 "$POL_DIR"
 exe chmod 644 "$POL_DIR/policies.json"
 
+
+# ==============================================================================
 # --- Desktop Cleanup & Tutorials ---
+# ==============================================================================
 section "Config" "Desktop Cleanup"
 log "Hiding unnecessary .desktop icons..."
 run_hide_desktop_file
@@ -228,9 +237,12 @@ log "Copying tutorial files..."
 force_copy "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
 
 # niri blur toggle 脚本
- curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+curl -L shorin.xyz/niri-blur-toggle | as_user bash 
 
+
+# ==============================================================================
 # --- Finalization & Auto-Login ---
+# ==============================================================================
 section "Final" "Auto-Login & Cleanup"
 rm -f "$SUDO_TEMP_FILE"
 

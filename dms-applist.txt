@@ -1,0 +1,64 @@
+# ==========================================
+# Shorin DMS App List
+# ==========================================
+
+# --- 核心桌面与合成器 (Core & Wayland) ---
+niri
+quickshell
+dms-shell-bin
+xwayland-satellite
+xdg-desktop-portal-gnome
+xdg-desktop-portal-gtk
+polkit-gnome
+
+# --- 终端与 Shell 环境 (Terminal & Shell) ---
+kitty
+fish
+starship
+eza
+zoxide
+jq
+ttf-jetbrains-maple-mono-nf-xx-xx
+
+# --- 文件管理器及插件 (File Managers) ---
+nautilus
+nautilus-open-any-terminal
+thunar
+thunar-archive-plugin
+thunar-volman
+tumbler
+ffmpegthumbnailer
+poppler-glib
+webp-pixbuf-loader
+libgsf
+file-roller
+gvfs-smb
+gvfs-mtp
+gvfs-gphoto2
+
+# --- 系统工具与组件 (Utilities & Media) ---
+fuzzel
+wf-recorder
+libnotify
+timg
+imv
+imagemagick
+cava
+cliphist
+wl-clipboard
+gnome-keyring
+gst-plugins-base
+gst-plugins-good
+gst-libav
+qt5-multimedia
+
+# --- 主题、美化与应用 (Themes & Apps) ---
+matugen
+adw-gtk-theme
+python-pywalfox
+firefox
+bazaar
+
+# --- Shorin 专属自定义脚本/工具 ---
+dgop
+dsearch
