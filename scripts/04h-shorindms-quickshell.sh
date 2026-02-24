@@ -149,6 +149,9 @@ DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
 
 # 核心：调用刚才写的软链函数！
 link_dotfiles "$DOTFILES_SRC" "$HOME_DIR"
+if !  [ -e "$HOME_DIR/.vimrc" ]; then
+    as_user ln -sf "$SHORIN_DMS_REPO/.vimrc" "$HOME_DIR/.vimrc"
+fi 
 
 # 这个涉及到系统全局命令，依然需要 root 权限物理复制
 cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
