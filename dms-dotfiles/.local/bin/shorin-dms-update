@@ -1,84 +1,344 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# Shorin DMS Updater (Branch-Aware & Flexible Sync)
+# Shorin DMS Updater (Sync: Install & Remove & Config)
 # ==============================================================================
 
 set -o pipefail
 
-# --- 1. 环境与语言配置 ---
+# --- 1. Pre-Configuration (Language) ---
 ORIGINAL_LANG="${LC_ALL:-${LC_MESSAGES:-${LANG}}}"
-UI_LANG=$([[ "$ORIGINAL_LANG" == *"zh_CN"* ]] && echo "zh" || echo "en")
+SHOW_HELP=false
+
+if [[ "$ORIGINAL_LANG" == *"zh_CN"* ]]; then
+    UI_LANG="zh"
+else
+    UI_LANG="en"
+fi
+
+# 强制使用 C 语言环境以保证 git/find 输出一致性
 export LC_ALL=C
 
-# --- 2. 动态分支检测 ---
+# --- 2. Configuration ---
 DOTFILES_REPO="$HOME/.local/share/shorin-dms"
+BACKUP_ROOT="$HOME/.cache/shorin-dms-update"
+BACKUP_FILE="$BACKUP_ROOT/backup_$(date +%s).tar.gz"
+NEED_REBOOT=false 
 
+# 动态分支检测 (自动识别是 main 还是 symbols)
 if [[ -d "$DOTFILES_REPO/.git" ]]; then
-    # 动态获取当前分支名，例如 symbols
     BRANCH=$(git -C "$DOTFILES_REPO" rev-parse --abbrev-ref HEAD)
 else
     BRANCH="main"
 fi
 
-# 动态构建依赖清单 URL
+# [CONFIG] 远程依赖清单 URL (根据当前分支动态获取)
 APP_LIST_URL="https://raw.githubusercontent.com/SHORiN-KiWATA/shorin-arch-setup/refs/heads/${BRANCH}/dms-applist.txt"
 
-# --- 3. 样式与状态管理 ---
+# [NEW] 状态管理 (用于追踪被移除的软件包)
 STATE_DIR="$HOME/.local/state/shorin-dms"
 LAST_KNOWN_LIST="$STATE_DIR/last_applist.txt"
+
+# --- 3. Styles ---
 H_RED='\033[1;31m'; H_GREEN='\033[1;32m'; H_YELLOW='\033[1;33m'; H_BLUE='\033[1;34m'; NC='\033[0m'
 
-# --- 4. 自动化更新逻辑 (修正版) ---
+# --- 4. Localization Table ---
+LANG_TABLE='
+MSG_DESC          | Update Shorin DMS dotfiles and manage dependencies.          | 更新 Shorin DMS 配置文件并同步系统依赖。
+MSG_FEAT_HEAD     | Features:                                                    | 功能特性：
+MSG_FEAT_1        | - Safe Update: Git auto-commit and shallow rebase            | - 安全更新：自动提交本地修改并执行浅层变基拉取
+MSG_FEAT_2        | - Backup: Optional tarball backup before update              | - 备份机制：更新前可选创建压缩包备份
+MSG_FEAT_3        | - Auto Link: Smart container-level symlinking                | - 自动链接：智能容器级软链接管理
+MSG_FEAT_4        | - Dependency: Sync list (Install New & Remove Old)        | - 依赖管理：同步清单（自动安装新增 & 询问卸载移除）
+MSG_ASK_BACKUP    | [QUERY] Create a backup of current state? [Y/n]:             | [询问] 是否创建当前状态的备份? [Y/n]: 
+MSG_BACKUP_ING    | Creating backup...                                           | 正在创建备份...
+MSG_QUICKSAVE     | Snapper quicksave running...                                 | 正在创建 Snapper 快照存档...
+MSG_BACKUP_DONE   | Backup completed.                                            | 备份完成
+MSG_BACKUP_SKIP   | Backup skipped.                                              | 已跳过备份
+MSG_CHECK_UPDATE  | Checking for updates from branch [%s]...                     | 正在检查分支 [%s] 的更新...
+MSG_LOCAL_CHANGE  | Local changes detected, auto-saving...                       | 检测到本地修改，正在自动打包提交...
+MSG_PULLING       | Downloading and merging (Shallow Rebase)...                 | 正在下载并合并上游代码 (Shallow Rebase)...
+MSG_CORE_OK       | Git repository update successful.                            | Git 仓库更新成功。
+MSG_CONFLICT      | Update conflict. Please check repo manually.                 | 更新冲突，请手动进入仓库处理。
+MSG_LINKING       | Refreshing config symlinks...                                | 正在刷新配置文件软链接...
+MSG_CLEANING      | Cleaning up repository garbage...                            | 清理 Git 仓库缓存...
+MSG_ALL_DONE      | Update Completed Successfully.                               | 所有更新流程执行完毕。
+MSG_BACKUP_PATH   | Backup Path:                                                 | 备份存放路径:
+MSG_ERR_REPO      | Repository not found:                                        | 未找到仓库:
+MSG_FETCH_LIST    | Downloading dependency list from GitHub...                   | 正在从 GitHub 下载最新依赖清单...
+MSG_FETCH_FAIL    | Failed to download dependency list. Skipping check.          | 无法下载依赖清单，跳过依赖同步。
+MSG_INSTALL_DEPS  | Installing missing packages:                                 | 发现新增软件包，准备安装:
+MSG_INSTALL_FAIL  | Installation failed. Please check dependencies manually.     | 自动安装失败，请稍后手动检查依赖。
+MSG_DEPS_OK       | All dependencies are satisfied.                              | 所有系统依赖已满足。
+MSG_CHECK_REMOVE  | Checking for removed packages...                             | 正在检查被上游移除的软件包...
+MSG_ASK_REMOVE    | [QUERY] Package "%s" is removed from list. Uninstall? [Y/n]: | [询问] 软件包 "%s" 已从清单移除。是否卸载? [Y/n]: 
+MSG_REMOVING      | Removing selected packages...                                | 正在卸载选定的软件包...
+MSG_REMOVE_FAIL   | Failed to remove packages.                                   | 卸载失败。
+MSG_REBOOT_TIP    | Note: You may need to reboot for core changes to take effect.| 注意：核心组件可能已更新，建议重启系统生效。
+'
+
+while IFS='|' read -r v e c; do
+    v=$(printf '%s' "$v" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    e=$(printf '%s' "$e" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    c=$(printf '%s' "$c" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    
+    [ -z "$v" ] && continue
+    case "$v" in \#*) continue ;; esac
+    
+    if [ "$UI_LANG" = "zh" ]; then
+        eval "$v=\"$c\""
+    else
+        eval "$v=\"$e\""
+    fi
+done <<EOF
+$LANG_TABLE
+EOF
+
+# --- 5. Helper Functions ---
+log() { echo -e "${H_BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${H_GREEN}[OK]${NC} $1"; }
+warn() { echo -e "${H_YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${H_RED}[ERROR]${NC} $1"; exit 1; }
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [options]
+
+Options:
+  --help, -h      Show this help and exit
+
+Description:
+  $MSG_DESC
+
+$MSG_FEAT_HEAD
+  $MSG_FEAT_1
+  $MSG_FEAT_2
+  $MSG_FEAT_3
+  $MSG_FEAT_4
+EOF
+}
+
+# --- Remote Dependency Manager ---
 check_dependencies() {
-    echo -e "${H_BLUE}[INFO]${NC} 正在从分支 [${BRANCH}] 同步依赖清单..."
+    log "$MSG_FETCH_LIST"
+    
     mkdir -p "$STATE_DIR"
+
+    local raw_temp="/tmp/shorin_dms_deps_raw.txt"
     local new_clean_list="/tmp/shorin_dms_deps_clean.txt"
+    local old_sorted="/tmp/shorin_dms_deps_old_sorted.txt"
+    local new_sorted="/tmp/shorin_dms_deps_new_sorted.txt"
 
     # 下载当前分支对应的依赖列表
-    if ! curl -sL "$APP_LIST_URL" -o "$new_clean_list.raw"; then
-        echo -e "${H_YELLOW}[WARN]${NC} 无法获取清单，请检查网络或分支名称。"
+    if ! curl -sL "$APP_LIST_URL" -o "$raw_temp"; then
+        warn "$MSG_FETCH_FAIL"
         return 0
     fi
 
-    # 清洗数据：过滤注释和空行
-    grep -vE "^\s*#|^\s*$" "$new_clean_list.raw" | sed 's/AUR://' | awk '{print $1}' > "$new_clean_list"
+    rm -f "$new_clean_list"
+    touch "$new_clean_list"
     
-    # 依赖对比逻辑 (略，保持之前的 diff 逻辑)...
-    # 1. 找出本地已安装但在清单中消失的包，询问是否卸载
-    # 2. 找出清单中有但本地未安装的包，自动安装
-    
-    # 安装完成后更新状态
+    # 清洗并解析清单
+    while read -r line; do
+        [ -z "$line" ] && continue
+        local pkg_name=$(echo "$line" | sed 's/#.*//' | sed 's/AUR://' | awk '{print $1}' | tr -cd '[:alnum:]@._+\n-')
+        [ -z "$pkg_name" ] && continue
+        echo "$pkg_name" >> "$new_clean_list"
+    done < "$raw_temp"
+    rm -f "$raw_temp"
+
+    # 对比找出需要移除的包 (基于上次成功安装的清单)
+    if [ -f "$LAST_KNOWN_LIST" ]; then
+        log "$MSG_CHECK_REMOVE"
+        sort "$LAST_KNOWN_LIST" > "$old_sorted"
+        sort "$new_clean_list" > "$new_sorted"
+        local diff_pkgs=$(comm -23 "$old_sorted" "$new_sorted")
+        rm -f "$old_sorted" "$new_sorted"
+
+        local remove_candidates=()
+        if [ -n "$diff_pkgs" ]; then
+            while read -r pkg; do
+                [ -z "$pkg" ] && continue
+                if pacman -Q "$pkg" &> /dev/null; then
+                    local msg_ask=$(printf "$MSG_ASK_REMOVE" "$pkg")
+                    echo -ne "${H_YELLOW}${msg_ask}${NC} "
+                    read -r confirm_rm < /dev/tty
+                    confirm_rm=${confirm_rm:-Y}
+                    if [[ "$confirm_rm" =~ ^[yY] ]]; then
+                        remove_candidates+=("$pkg")
+                    fi
+                fi
+            done <<< "$diff_pkgs"
+        fi
+
+        if [ ${#remove_candidates[@]} -gt 0 ]; then
+            log "$MSG_REMOVING"
+            if sudo pacman -Rns "${remove_candidates[@]}"; then
+                 NEED_REBOOT=true 
+            else
+                 warn "$MSG_REMOVE_FAIL"
+            fi
+        fi
+    fi
+
+    # 确定安装工具
+    local helper=""
+    if command -v paru &> /dev/null; then helper="paru"
+    elif command -v yay &> /dev/null; then helper="yay"
+    else helper="sudo pacman"; fi
+
+    # 找出新增且缺失的包
+    local missing_pkgs=()
+    while read -r pkg_name; do
+        if ! pacman -Q "$pkg_name" &> /dev/null; then
+            missing_pkgs+=("$pkg_name")
+        fi
+    done < "$new_clean_list"
+
+    # 安装缺失包
+    if [ ${#missing_pkgs[@]} -gt 0 ]; then
+        warn "$MSG_INSTALL_DEPS ${missing_pkgs[*]}"
+        if $helper -S --needed --noconfirm "${missing_pkgs[@]}"; then
+            NEED_REBOOT=true 
+        else
+            warn "$MSG_INSTALL_FAIL"
+        fi
+    else
+        success "$MSG_DEPS_OK"
+    fi
+
+    # 保存当前清单快照
     cp "$new_clean_list" "$LAST_KNOWN_LIST"
+    rm -f "$new_clean_list"
 }
 
-# --- 核心更新流程 ---
-log() { echo -e "${H_BLUE}[INFO]${NC} $1"; }
+# --- Link Functions (KISS Container-level Symlinking) ---
+link_subdir() {
+    local sub_dir="$1"     
+    local src_base="$2"    
+    local target_base="$3" 
+    
+    local full_src="$src_base/$sub_dir"
+    local full_target="$target_base/$sub_dir"
+    
+    if [[ -d "$full_src" ]]; then
+        mkdir -p "$full_target"
+        shopt -s dotglob
+        for item in "$full_src"/*; do
+            [ -e "$item" ] || continue
+            local item_name=$(basename "$item")
+            rm -rf "$full_target/$item_name" 2>/dev/null
+            ln -snf "$item" "$full_target/$item_name"
+        done
+        shopt -u dotglob
+    fi
+}
 
-log "检测到当前分支: ${BRANCH}"
+link_dotfiles() {
+    local src="$1"
+    local target="$2"
+    link_subdir ".config" "$src" "$target"
+    link_subdir ".local/bin" "$src" "$target"
+    link_subdir ".local/share" "$src" "$target"
+}
+
+# --- 6. Argument Parsing ---
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|-h) usage; exit 0 ;;
+        *) echo "Unknown option: $1"; usage; exit 1 ;;
+    esac
+done
+
+# ==============================================================================
+# Core Execution Flow
+# ==============================================================================
+
+if [ ! -d "$DOTFILES_REPO/.git" ]; then
+    error "$MSG_ERR_REPO $DOTFILES_REPO"
+fi
 
 cd "$DOTFILES_REPO" || exit 1
 
-# 1. Git 更新 (修正冲突策略)
-# 如果你使用了 Include 模式，这里的 rebase 会非常顺滑
+# 1. Backup
+mkdir -p "$BACKUP_ROOT"
+BACKUP_DONE=false
+echo -ne "${H_YELLOW}${MSG_ASK_BACKUP}${NC} "
+read -r OPT_BACKUP
+OPT_BACKUP=${OPT_BACKUP:-Y}
+
+if [[ "$OPT_BACKUP" =~ ^[yY] ]]; then
+    log "$MSG_BACKUP_ING"
+    if type quicksave &>/dev/null; then
+        log "$MSG_QUICKSAVE"
+        quicksave -d quicksave-shorin-update || warn "Snapper quicksave failed, continuing with tar backup..."
+    fi
+    # 仅备份配置文件和资源目录
+    tar -czf "$BACKUP_FILE" -C "$DOTFILES_REPO" dms-dotfiles resources 2>/dev/null
+    success "$MSG_BACKUP_DONE"
+    BACKUP_DONE=true
+else
+    log "$MSG_BACKUP_SKIP"
+fi
+
+# 2. Update Logic (保持你要求的深度 1 变基逻辑)
+msg_check=$(printf "$MSG_CHECK_UPDATE" "$BRANCH")
+log "$msg_check"
+
+# 自动处理本地修改以防 pull 失败
+log "$MSG_LOCAL_CHANGE"
 git config user.email "updater@shorin.local"
 git config user.name "Shorin Auto Updater"
 git add .
-git commit -m "chore: auto-save local DMS changes" >/dev/null 2>&1 || true
+git commit -m "chore: auto-save local DMS changes before update" >/dev/null 2>&1 || true
 
-log "正在执行浅层变基拉取 (Branch: ${BRANCH})..."
-# 关键改动：移除 -X theirs 
-# 如果你确定上游更新更重要，可以使用 -X ours (在 rebase 中 ours 是远程分支)
-if git pull --depth 1 --rebase origin "$BRANCH"; then
-    echo -e "${H_GREEN}[OK]${NC} 仓库代码同步成功。"
+log "$MSG_PULLING"
+# 核心更新命令：深度 1，变基，强制保留本地冲突内容
+if git pull --depth 1 --rebase origin "$BRANCH" -X theirs; then
+    success "$MSG_CORE_OK"
 else
-    echo -e "${H_RED}[ERROR]${NC} 发现严重冲突，请手动解决后执行 git rebase --continue"
-    exit 1
+    git rebase --abort 2>/dev/null
+    error "$MSG_CONFLICT"
 fi
 
-# 2. 检查并同步依赖
+# 3. Check Dependencies (依赖对比：多了安装，少了删除)
 check_dependencies
 
-# 3. 刷新软链接 (略，保持之前的 link_dotfiles 逻辑)...
+# 4. Refresh Linking
+log "$MSG_LINKING"
+DOTFILES_SRC="$DOTFILES_REPO/dms-dotfiles"
+link_dotfiles "$DOTFILES_SRC" "$HOME"
 
-echo -e "${H_GREEN}更新完成！${NC}"
+# 补充单文件链接 (.vimrc)
+if [ ! -e "$HOME/.vimrc" ] && [ -f "$DOTFILES_SRC/.vimrc" ]; then
+    ln -sf "$DOTFILES_SRC/.vimrc" "$HOME/.vimrc"
+fi 
+
+# 更新全局 quickload 脚本 (需要 sudo 拷贝)
+if [ -f "$DOTFILES_SRC/.local/bin/quickload" ]; then
+    sudo cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
+    sudo chmod +x "/usr/local/bin/quickload"
+fi
+
+# 同步壁纸软链
+WALLPAPER_SOURCE_DIR="$DOTFILES_REPO/resources/Wallpapers"
+WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
+mkdir -p "$HOME/Pictures"
+rm -rf "$WALLPAPER_DIR" 2>/dev/null
+ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
+
+# 5. Cleanup
+log "$MSG_CLEANING"
+git reflog expire --expire=now --all
+git gc --prune=now 2>/dev/null
+
+echo ""
+echo -e "${H_GREEN}${MSG_ALL_DONE}${NC}"
+
+if [ "$NEED_REBOOT" = true ]; then
+    echo -e "${H_YELLOW}${MSG_REBOOT_TIP}${NC}"
+fi
+
+if [ "$BACKUP_DONE" = true ]; then
+    echo -e "${H_BLUE}${MSG_BACKUP_PATH}${NC} $BACKUP_FILE"
+fi
