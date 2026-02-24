@@ -23,53 +23,7 @@ binds {
     // settings
     Mod+F2 hotkey-overlay-title="设置 Settings" { spawn-sh "dms ipc call settings focusOrToggle";}
     Mod+F3 hotkey-overlay-title="录屏 Screen record" { spawn "~/.local/bin/wf-recorder-menu";}
-    // 文档管理器。如果有thunar的话会优先打开thunar，没有的话会打开nautilus
-    Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn-sh "thunar || env GSK_RENDERER=gl GTK_IM_MODULE=fcitx  nautilus"; }
-    // 另一个打开nautilus的快捷键，主要是为了在同时安装thunar和nautilus的情况下打开naultilus
-    Mod+Alt+E hotkey-overlay-title=null {spawn "env" "GSK_RENDERER=gl" "GTK_IM_MODULE=fcitx"  "nautilus" "--new-window";}
-    Mod+Z hotkey-overlay-title="程序菜单 Applauncher" { spawn-sh "dms ipc call spotlight toggle || fuzzel"; }
-    // dms 壁纸选择
-    Mod+Alt+W hotkey-overlay-title="壁纸切换 Wallpaper" { spawn "dms" "ipc" "call" "dankdash" "wallpaper";}
-
-    Mod+O hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
-    Mod+G repeat=false { toggle-overview; }
-    // 关闭聚焦窗口
-    Mod+Q hotkey-overlay-title="关闭聚焦窗口 Close focus window" repeat=false { close-window; }
-    Alt+F4 hotkey-overlay-title=null repeat=false { close-window; }
-    
-    // mod+鼠标中键 关闭窗口
-    Mod+MouseMiddle  { close-window; }
-
-    // 切换聚焦
-    // super+方向键
-    Mod+Left hotkey-overlay-title=null { focus-column-left; }
-    Mod+Down  { focus-window-down; }
-    Mod+Up    { focus-window-up; }
-    Mod+Right { focus-column-right; }
-    // super+vim key
-    Mod+H     { focus-column-left; }
-    Mod+J     { focus-window-down; }
-    Mod+K     { focus-window-up; }
-    Mod+L     { focus-column-right; }
-
-    // 移动colume（列）
-    // super+ctrl+方向键
-    Mod+Ctrl+Left hotkey-overlay-title=null { move-column-left; }
-    Mod+Ctrl+Right hotkey-overlay-title=null { move-column-right; }
-    // super+ctrl+vimkey
-    Mod+Ctrl+H     { move-column-left; }
-    Mod+Ctrl+J     { move-window-down; }
-    Mod+Ctrl+K     { move-window-up; }
-    Mod+Ctrl+L     { move-column-right; }
-    // super+ctrl+a/d 向左/右移动列
-    Mod+Ctrl+A  { move-column-left; }
-    Mod+Ctrl+D { move-column-right; }
-    // mod+S/W 当前列内上下切换聚焦，如果到顶了会切换工作区
-    Mod+S  { focus-window-or-workspace-down; }
-    Mod+W    { focus-window-or-workspace-up; }
-    // mod+ctrl+S/W 上下切换窗口
-    Mod+Ctrl+S  { move-window-down; }
-    Mod+Ctrl+W    { move-window-up; }
+    // 文档管理器。如果有thunar的话会Mod+W    { focus-window-or-workspace-up; }
     
     // 切换到第一个colume
     Mod+Home { focus-column-first; }
@@ -142,6 +96,9 @@ binds {
     // mod+A/D 同效果
     Mod+A hotkey-overlay-title="向左移动窗口 Move window to left between columes" { consume-or-expel-window-left; }
     Mod+D hotkey-overlay-title="向右移动窗口 Move window to right between columes" { consume-or-expel-window-right; }
+    // mod+S/W 上下切换窗口
+    Mod+S { move-window-down; }
+    Mod+W { move-window-up; }
 
     // mod+逗号/句号 把窗口合并或者踢出当前的colume
     Mod+Comma  { consume-window-into-column; }

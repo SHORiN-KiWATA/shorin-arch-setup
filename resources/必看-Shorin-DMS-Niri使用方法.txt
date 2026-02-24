@@ -26,7 +26,7 @@ super+左键 移动窗口
 super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，设置一张壁纸。我在Wallpapers里存放了一张，可以直接使用。然后开启“带模糊效果的壁纸复本”，这是overview的模糊壁纸，super+G或者super+O打开overview就可以看到。
 
 2.【颜色更随壁纸变化】【gtk主题和qt主题】
-选择“主题与配色”，点击auto，然后选择一个自己喜欢的配色方案。然后到该页面底端，点击“应用GTK配色”，然后重启电脑，或者super+shift+E退出niri后重新打开niri。
+选择“主题与配色”，点击auto，然后选择一个自己喜欢的配色方案。然后到该页面底端，点击“应用GTK配色”，然后重启电脑，或者super+shift+E退出niri后重新打开iri。
 
 3.【Firefox颜色同步】
 打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
@@ -137,6 +137,8 @@ Mod + Ctrl + Down  / J  向下移动窗口
 Mod + Ctrl + Up    / K  向上移动窗口
 Mod + A                 向左移动窗口 (列之间)
 Mod + D                 向右移动窗口 (列之间)
+Mod + W                 向上移动窗口 
+Mod + S                 向下移动窗口 
 
 > 列操作 (特殊)
 Mod + Ctrl + A          向左移动列
