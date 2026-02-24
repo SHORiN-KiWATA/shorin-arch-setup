@@ -122,7 +122,7 @@ trap cleanup_sudo EXIT INT TERM
 AUR_HELPER="paru"
 section "Shorin DMS" "Software Installation"
 
-APPLIST_FILE="$SCRIPT_DIR/dms-applist.txt"
+APPLIST_FILE="$PARENT_DIR/dms-applist.txt"
 
 if [[ ! -f "$APPLIST_FILE" ]]; then
     error "找不到软件列表文件: $APPLIST_FILE"
