@@ -90,8 +90,8 @@ select_desktop() {
     local OPTIONS=(
         "No-Desktop |none"
         "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
-        "Shorin-DMS-Niri ${H_YELLOW}(Recommended)${NC} |shorindms"
-        "Shorin-DMS-Niri-git  |shorindmsgit"
+        "Shorin-DMS-Niri |shorindms"
+        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
         "KDE-Plasma |kde"
         "GNOME |gnome"
         "Quickshell: End4--illogical-impulse (Hyprland)|end4"
