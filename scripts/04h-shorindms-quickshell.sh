@@ -141,7 +141,7 @@ else
     as_user git -C "$SHORIN_DMS_REPO" config pull.rebase true
     as_user git -C "$SHORIN_DMS_REPO" add .
     as_user git -C "$SHORIN_DMS_REPO" commit -m "chore: auto-save local DMS changes" >/dev/null 2>&1 || true
-    as_user git -C "$SHORIN_DMS_REPO" pull origin main -X theirs || true
+    as_user git -C "$SHORIN_DMS_REPO" pull --rebase origin main -X theirs || true
 fi
 
 log "Deploying user dotfiles via Symlinks..."
