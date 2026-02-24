@@ -51,15 +51,15 @@ gst-plugins-base
 gst-plugins-good
 gst-libav
 qt5-multimedia
-
-
 # --- 主题、美化与应用 (Themes & Apps) ---
 matugen
 adw-gtk-theme
 python-pywalfox
 firefox
 bazaar
-nano
 # --- Shorin 专属自定义脚本/工具 ---
 dgop
 dsearch
+
+nano
+nano
