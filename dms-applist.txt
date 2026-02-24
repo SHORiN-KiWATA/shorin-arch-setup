@@ -60,8 +60,3 @@ bazaar
 # --- Shorin 专属自定义脚本/工具 ---
 dgop
 dsearch
-
-gvim
-gvim
-
-# 这是
