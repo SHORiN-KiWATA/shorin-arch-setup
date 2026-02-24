@@ -122,7 +122,7 @@ trap cleanup_sudo EXIT INT TERM
 AUR_HELPER="paru"
 section "Shorin DMS" "Software Installation"
 
-APPLIST_FILE="$PARENT_DIR/dms-applist.txt"
+APPLIST_FILE="$SCRIPT_DIR/dms-applist.txt"
 
 if [[ ! -f "$APPLIST_FILE" ]]; then
     error "找不到软件列表文件: $APPLIST_FILE"
@@ -161,6 +161,11 @@ if [[ ! -d "$SHORIN_DMS_REPO/.git" ]]; then
 else
     log "Repository already exists at $SHORIN_DMS_REPO, pulling latest..."
     as_user git -C "$SHORIN_DMS_REPO" config pull.rebase true
+    
+    # 核心修复：临时注入一个自动化身份，防止新系统因为没有 Git 身份导致 commit 失败
+    as_user git -C "$SHORIN_DMS_REPO" config user.name "Shorin Auto Updater"
+    as_user git -C "$SHORIN_DMS_REPO" config user.email "updater@shorin.local"
+    
     as_user git -C "$SHORIN_DMS_REPO" add .
     as_user git -C "$SHORIN_DMS_REPO" commit -m "chore: auto-save local DMS changes" >/dev/null 2>&1 || true
     as_user git -C "$SHORIN_DMS_REPO" pull --rebase origin main -X theirs || true
