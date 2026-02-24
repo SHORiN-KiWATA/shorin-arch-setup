@@ -139,8 +139,9 @@ if [[ ! -d "$SHORIN_DMS_REPO/.git" ]]; then
 else
     log "Repository already exists at $SHORIN_DMS_REPO, pulling latest..."
     as_user git -C "$SHORIN_DMS_REPO" config pull.rebase true
-    
-    as_user git -C "$SHORIN_DMS_REPO" pull origin main --autostash || true
+    as_user git -C "$SHORIN_DMS_REPO" add .
+    as_user git -C "$SHORIN_DMS_REPO" commit -m "chore: auto-save local DMS changes" >/dev/null 2>&1 || true
+    as_user git -C "$SHORIN_DMS_REPO" pull origin main -X theirs || true
 fi
 
 log "Deploying user dotfiles via Symlinks..."
