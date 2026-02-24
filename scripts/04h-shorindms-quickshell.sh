@@ -22,9 +22,16 @@ force_copy() {
         return 1
     fi
 
-    exe as_user cp -rf --remove-destination "$src" "$target_dir"
-}
+    if [[ -d "${src%/}" ]]; then
 
+        (cd "$src" && find . -type d) | while read -r d; do
+            as_user rm -f "$target_dir/$d" 2>/dev/null
+        done
+    fi
+    
+    # 障碍扫清，直接无脑复制
+    exe as_user cp -rf "$src" "$target_dir"
+}
 # --- Identify User & DM Check ---
 log "Identifying target user..."
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
