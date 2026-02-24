@@ -185,7 +185,7 @@ success "Power profiles daemon enabled."
 # ------------------------------------------------------------------------------
 section "Step 7/8" "Fastfetch"
 
-exe pacman -S --noconfirm --needed fastfetch
+exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl 
 success "Fastfetch installed."
 
 log "Module 02 completed."
