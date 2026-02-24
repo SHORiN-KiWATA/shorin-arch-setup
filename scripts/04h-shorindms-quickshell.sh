@@ -162,7 +162,7 @@ as_user ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
 
 
 
-
+AUR_HELPER="paru"
 # --- File Manager & Terminal Setup ---
 section "Shorin DMS" "File Manager & Terminal"
 
