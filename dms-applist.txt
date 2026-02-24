@@ -51,6 +51,7 @@ gst-plugins-base
 gst-plugins-good
 gst-libav
 qt5-multimedia
+nano
 
 # --- 主题、美化与应用 (Themes & Apps) ---
 matugen
