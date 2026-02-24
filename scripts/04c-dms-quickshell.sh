@@ -155,7 +155,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
 
     log "Executing DMS installer as user ($TARGET_USER)..."
     log "NOTE: If the installer asks for input, this script might hang."
-    pacman -S vulkan-headers
+    pacman -S --noconfirm vulkan-headers
     if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
         success "DankMaterialShell installed successfully."
     else
