@@ -28,8 +28,7 @@ force_copy() {
             as_user rm -f "$target_dir/$d" 2>/dev/null
         done
     fi
-    
-    # 障碍扫清，直接无脑复制
+
     exe as_user cp -rf "$src" "$target_dir"
 }
 # --- Identify User & DM Check ---
