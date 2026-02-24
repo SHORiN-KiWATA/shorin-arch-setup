@@ -24,11 +24,9 @@ force_copy() {
 
     local item_name=$(basename "$src")
     
-    if [[ "$src" != */. ]]; then
-        local clean_target="${target_dir%/}"
-        clean_target="${clean_target%/.}"
-        as_user rm -rf "${clean_target}/${item_name}"
-    fi
+    local clean_target="${target_dir%/}"
+    clean_target="${clean_target%/.}"
+    as_user rm -rf "${clean_target}/${item_name}"
     
     exe as_user cp -rf "$src" "$target_dir"
 }
