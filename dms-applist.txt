@@ -61,5 +61,5 @@ bazaar
 dgop
 dsearch
 
-vim
-vim
+gvim
+gvim
