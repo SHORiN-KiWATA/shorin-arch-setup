@@ -58,6 +58,7 @@ adw-gtk-theme
 python-pywalfox
 firefox
 bazaar
+nano
 
 # --- Shorin 专属自定义脚本/工具 ---
 dgop

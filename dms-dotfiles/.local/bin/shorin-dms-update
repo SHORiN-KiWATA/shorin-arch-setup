@@ -27,7 +27,7 @@ BRANCH="main"
 NEED_REBOOT=false  # 重启追踪标志
 
 # [CONFIG] Remote Dependency List URL
-APP_LIST_URL="https://raw.githubusercontent.com/SHORiN-KiWATA/shorin-arch-setup/refs/heads/main/dms-applist.txt"
+APP_LIST_URL="https://raw.githubusercontent.com/SHORiN-KiWATA/shorin-arch-setup/refs/heads/symbols/dms-applist.txt"
 
 # [NEW] State Management (For tracking removals)
 STATE_DIR="$HOME/.local/state/shorin-dms"
