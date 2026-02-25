@@ -147,9 +147,10 @@ SKIP_IDX=$((${#THEME_NAMES[@]} + 2))
 TITLE_TEXT="Select GRUB Theme (60s Timeout)"
 MAX_LEN=${#TITLE_TEXT}
 
-# 计算本地主题名称最大长度
+# 计算本地主题名称最大长度 (动态去掉开头的数字进行计算)
 for name in "${THEME_NAMES[@]:-}"; do
-    ITEM_LEN=$((${#name} + 20))
+    CLEAN_NAME=$(echo "$name" | sed -E 's/^[0-9]+//')
+    ITEM_LEN=$((${#CLEAN_NAME} + 20))
     if (( ITEM_LEN > MAX_LEN )); then MAX_LEN=$ITEM_LEN; fi
 done
 
@@ -174,21 +175,23 @@ echo -e "${H_PURPLE}├${LINE_STR}┤${NC}"
 # 打印本地主题列表
 for i in "${!THEME_NAMES[@]}"; do
     NAME="${THEME_NAMES[$i]}"
+    # 仅用于显示的名称：去掉开头的数字
+    DISPLAY_NAME=$(echo "$NAME" | sed -E 's/^[0-9]+//')
     DISPLAY_IDX=$((i+1))
     
     if [ "$i" -eq 0 ]; then
-        COLOR_STR=" ${H_CYAN}[$DISPLAY_IDX]${NC} ${NAME} - ${H_GREEN}Default${NC}"
-        RAW_STR=" [$DISPLAY_IDX] $NAME - Default"
+        COLOR_STR=" ${H_CYAN}[$DISPLAY_IDX]${NC} ${DISPLAY_NAME} - ${H_GREEN}Default${NC}"
+        RAW_STR=" [$DISPLAY_IDX] $DISPLAY_NAME - Default"
     else
-        COLOR_STR=" ${H_CYAN}[$DISPLAY_IDX]${NC} ${NAME}"
-        RAW_STR=" [$DISPLAY_IDX] $NAME"
+        COLOR_STR=" ${H_CYAN}[$DISPLAY_IDX]${NC} ${DISPLAY_NAME}"
+        RAW_STR=" [$DISPLAY_IDX] $DISPLAY_NAME"
     fi
     PADDING=$((MENU_WIDTH - ${#RAW_STR}))
     PAD_STR=""; if [ "$PADDING" -gt 0 ]; then printf -v PAD_STR "%*s" "$PADDING" ""; fi
     echo -e "${H_PURPLE}│${NC}${COLOR_STR}${PAD_STR}${H_PURPLE}│${NC}"
 done
 
-# 打印 Minegrub 选项 (去掉了高亮色和括号说明，保持普通样式)
+# 打印 Minegrub 选项
 MG_RAW_STR=" [$MINEGRUB_IDX] $MINEGRUB_OPTION_NAME"
 MG_COLOR_STR=" ${H_CYAN}[$MINEGRUB_IDX]${NC} ${MINEGRUB_OPTION_NAME}"
 MG_PADDING=$((MENU_WIDTH - ${#MG_RAW_STR}))
@@ -223,10 +226,10 @@ elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
     info_kv "Selected" "Minegrub (Online Repository)"
 else
     SELECTED_INDEX=$((USER_CHOICE-1))
-    # 再次确认本地数组越界安全
     if [ -n "${THEME_NAMES[$SELECTED_INDEX]:-}" ]; then
         THEME_SOURCE="${THEME_PATHS[$SELECTED_INDEX]}"
         THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
+        # 日志中也可以展示清理后的名字，或者保留原始名字（这里保留原始名字供调试参考）
         info_kv "Selected" "Local: $THEME_NAME"
     else
         warn "Local theme array empty but selected. Defaulting to Minegrub."
@@ -254,7 +257,6 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
         if exe git clone --depth 1 "https://github.com/Lxtharia/double-minegrub-menu.git" "$TEMP_MG_DIR"; then
             if [ -f "$TEMP_MG_DIR/install.sh" ]; then
                 log "Executing Minegrub install.sh..."
-                # 使用 subshell 执行，避免污染当前 shell 环境变量和工作目录
                 (
                     cd "$TEMP_MG_DIR" || exit 1
                     exe chmod +x install.sh
@@ -272,12 +274,10 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
             error "Failed to clone Minegrub repository."
         fi
         
-        # 安全清理临时目录
         [ -n "$TEMP_MG_DIR" ] && rm -rf "$TEMP_MG_DIR"
     fi
 
 else
-    # 原本的本地主题安装逻辑
     if [ ! -d "$DEST_DIR" ]; then exe mkdir -p "$DEST_DIR"; fi
     if [ -d "$DEST_DIR/$THEME_NAME" ]; then
         log "Removing existing version..."
