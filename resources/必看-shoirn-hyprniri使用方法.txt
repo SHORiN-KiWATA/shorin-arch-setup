@@ -8,7 +8,7 @@ systemctl --user disable --now  dms
 systemctl --user disable hyprland-autostart 
 
 一些必要的手动设置
-【主题同步】super+z打开程序菜单选择dms设置。选择一张喜欢的壁纸，然后在“主题与配色”界面选择“自动”，在页面底端点击应用gtk主题。打开GTK Settings，设置使用adw-gtk3-dark主题。
+【主题同步】super+z打开程序菜单选择dms设置。选择一张喜欢的壁纸（壁纸存放在~/Pictures/Wallpapers），然后在“主题与配色”界面选择“自动”，在页面底端点击应用gtk主题。打开GTK Settings，设置使用adw-gtk3-dark主题。
 
 【Firefox颜色同步】
 打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
@@ -28,7 +28,7 @@ super+alt+A 开关剪贴板
 super+右键 调整窗口大小
 super+左键 移动窗口
 super+V 切换浮动窗口
-具体按键可以看~/.config/hypr/hyprlanc.conf中的bind相关内容，重要键位有中文注释。
+具体按键可以看~/.config/hypr/hyprland.conf中的bind相关内容，重要键位有中文注释。
 
 如果出现网络问题可以进行以下操作更换wifi后端：
 sudo rm /etc/NetworkManager/conf.d/iwd.conf
