@@ -92,11 +92,11 @@ for i in "${!THEME_NAMES[@]}"; do
     NAME="${THEME_NAMES[$i]}"
     DISPLAY_NAME=$(echo "$NAME" | sed -E 's/^[0-9]+//')
     IDX=$((i+1))
-    printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} %s\n" "$IDX" "$DISPLAY_NAME"
+    printf "${H_PURPLE}│${NC}  ${H_CYAN}[%d]${NC} %s\n" "$IDX" "$DISPLAY_NAME"
 done
 
-printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} %s\n" "$MINEGRUB_IDX" "$MINEGRUB_OPTION_NAME"
-printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} ${H_YELLOW}%s${NC}\n" "$SKIP_IDX" "$SKIP_OPTION_NAME"
+printf "${H_PURPLE}│${NC}  ${H_CYAN}[%d]${NC} %s\n" "$MINEGRUB_IDX" "$MINEGRUB_OPTION_NAME"
+printf "${H_PURPLE}│${NC}  ${H_CYAN}[%d]${NC} ${H_YELLOW}%s${NC}\n" "$SKIP_IDX" "$SKIP_OPTION_NAME"
 echo -e "${H_PURPLE}╰${LINE_STR}${NC}"
 echo ""
 
