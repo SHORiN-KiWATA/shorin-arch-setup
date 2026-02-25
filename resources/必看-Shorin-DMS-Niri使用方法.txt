@@ -1,9 +1,14 @@
 
 如果出现了两个任务栏可以运行以下命令关掉：
 systemctl --user disable --now  dms
+
 我没有装显示管理器（DM），所以注销之后是纯黑的TTY，运行niri-session命令可以打开niri。
 ！！！如果你要装显示管理器请先取消niri自动启动
 systemctl --user disable niri-autostart 
+
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
 
 【重要按键】
 super+T 打开终端

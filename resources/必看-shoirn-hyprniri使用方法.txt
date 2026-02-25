@@ -30,4 +30,6 @@ super+左键 移动窗口
 super+V 切换浮动窗口
 具体按键可以看~/.config/hypr/hyprlanc.conf中的bind相关内容，重要键位有中文注释。
 
-
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
