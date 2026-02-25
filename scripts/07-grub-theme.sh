@@ -61,7 +61,6 @@ manage_kernel_param() {
     exe sed -i "s,^GRUB_CMDLINE_LINUX_DEFAULT=.*,GRUB_CMDLINE_LINUX_DEFAULT=\"$params\"," "$conf_file"
 }
 
-# 专门用于深度清理 Minegrub 双菜单残留的函数
 cleanup_minegrub() {
     local minegrub_found=false
     
@@ -73,7 +72,6 @@ cleanup_minegrub() {
     fi
     
     if command -v grub-editenv >/dev/null 2>&1; then
-        # 检查是否设置了 config_file 环境变量
         if grub-editenv - list 2>/dev/null | grep -q "^config_file="; then
             minegrub_found=true
             log "Unsetting Minegrub GRUB environment variable..."
@@ -89,7 +87,7 @@ cleanup_minegrub() {
 # ------------------------------------------------------------------------------
 # 1. Advanced GRUB Configuration
 # ------------------------------------------------------------------------------
-section "Step 1/5" "General GRUB Settings"
+section "Step 1/7" "General GRUB Settings"
 
 if [ -L "/boot/grub" ]; then
     LINK_TARGET=$(readlink -f "/boot/grub" || true)
@@ -123,29 +121,47 @@ fi
 success "Kernel parameters updated."
 
 # ------------------------------------------------------------------------------
-# 2. Detect Themes
+# 2. Sync Themes to System
 # ------------------------------------------------------------------------------
-section "Step 2/5" "Theme Detection"
-log "Scanning for themes in 'grub-themes' folder..."
+section "Step 2/7" "Sync Themes to System Directory"
 
 SOURCE_BASE="$PARENT_DIR/grub-themes"
 DEST_DIR="/boot/grub/themes"
 
+if [ ! -d "$DEST_DIR" ]; then 
+    exe mkdir -p "$DEST_DIR"
+fi
+
+if [ -d "$SOURCE_BASE" ]; then
+    log "Syncing repository themes to $DEST_DIR..."
+    # 遍历并复制仓库里带 theme.txt 的文件夹到系统目录
+    for dir in "$SOURCE_BASE"/*; do
+        if [ -d "$dir" ] && [ -f "$dir/theme.txt" ]; then
+            THEME_BASENAME=$(basename "$dir")
+            if [ ! -d "$DEST_DIR/$THEME_BASENAME" ]; then
+                log "Copying $THEME_BASENAME..."
+                exe cp -r "$dir" "$DEST_DIR/"
+            fi
+        fi
+    done
+    success "Local themes synced."
+else
+    warn "Directory 'grub-themes' not found in repo. Only online/existing themes available."
+fi
+
+# 统一从系统目录扫描现有主题
+log "Scanning $DEST_DIR for available themes..."
 THEME_PATHS=()
 THEME_NAMES=()
 
-if [ ! -d "$SOURCE_BASE" ]; then
-    warn "Directory 'grub-themes' not found in repo. Only online themes will be available."
-else
-    mapfile -t FOUND_DIRS < <(find "$SOURCE_BASE" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
-    
-    for dir in "${FOUND_DIRS[@]:-}"; do
-        if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
-            THEME_PATHS+=("$dir")
-            THEME_NAMES+=("$(basename "$dir")")
-        fi
-    done
-fi
+mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
+
+for dir in "${FOUND_DIRS[@]:-}"; do
+    if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
+        THEME_PATHS+=("$dir")
+        THEME_NAMES+=("$(basename "$dir")")
+    fi
+done
 
 if [ ${#THEME_NAMES[@]} -eq 0 ]; then
     log "No valid local theme folders found. Proceeding to online menu."
@@ -154,7 +170,7 @@ fi
 # ------------------------------------------------------------------------------
 # 3. Select Theme (TUI Menu)
 # ------------------------------------------------------------------------------
-section "Step 3/5" "Theme Selection"
+section "Step 3/7" "Theme Selection"
 
 INSTALL_MINEGRUB=false
 SKIP_THEME=false
@@ -241,7 +257,7 @@ elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
 else
     SELECTED_INDEX=$((USER_CHOICE-1))
     if [ -n "${THEME_NAMES[$SELECTED_INDEX]:-}" ]; then
-        THEME_SOURCE="${THEME_PATHS[$SELECTED_INDEX]}"
+        THEME_PATH="${THEME_PATHS[$SELECTED_INDEX]}/theme.txt"
         THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
         info_kv "Selected" "Local: $THEME_NAME"
     else
@@ -253,17 +269,14 @@ fi
 # ------------------------------------------------------------------------------
 # 4. Install & Configure Theme
 # ------------------------------------------------------------------------------
-section "Step 4/5" "Theme Installation"
+section "Step 4/7" "Theme Configuration"
 
 GRUB_CONF="/etc/default/grub"
 
 if [ "$SKIP_THEME" == "true" ]; then
     log "Clearing GRUB theme configuration..."
-    
-    # 彻底清除 Minegrub 环境残留
     cleanup_minegrub
     
-    # 注释掉 GRUB_THEME 恢复默认黑白命令行菜单
     if [ -f "$GRUB_CONF" ]; then
         if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
             exe sed -i 's|^GRUB_THEME=|#GRUB_THEME=|' "$GRUB_CONF"
@@ -280,7 +293,6 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
         error "'git' is required to clone Minegrub but was not found. Skipping."
     else
         TEMP_MG_DIR=$(mktemp -d -t minegrub_install_XXXXXX)
-        
         log "Cloning Lxtharia/double-minegrub-menu..."
         if exe git clone --depth 1 "https://github.com/Lxtharia/double-minegrub-menu.git" "$TEMP_MG_DIR"; then
             if [ -f "$TEMP_MG_DIR/install.sh" ]; then
@@ -301,30 +313,12 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
         else
             error "Failed to clone Minegrub repository."
         fi
-        
         [ -n "$TEMP_MG_DIR" ] && rm -rf "$TEMP_MG_DIR"
     fi
 
 else
-    # 彻底清除 Minegrub 环境残留，防止冲突
+    # 配置普通本地主题
     cleanup_minegrub
-
-    if [ ! -d "$DEST_DIR" ]; then exe mkdir -p "$DEST_DIR"; fi
-    if [ -d "$DEST_DIR/$THEME_NAME" ]; then
-        log "Removing existing version of $THEME_NAME..."
-        exe rm -rf "$DEST_DIR/$THEME_NAME"
-    fi
-
-    exe cp -r "$THEME_SOURCE" "$DEST_DIR/"
-
-    if [ -f "$DEST_DIR/$THEME_NAME/theme.txt" ]; then
-        success "Theme files copied."
-    else
-        error "Failed to copy theme files."
-        exit 1
-    fi
-
-    THEME_PATH="$DEST_DIR/$THEME_NAME/theme.txt"
 
     if [ -f "$GRUB_CONF" ]; then
         if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
@@ -342,7 +336,7 @@ else
         if ! grep -q "^GRUB_GFXMODE=" "$GRUB_CONF"; then
             echo 'GRUB_GFXMODE=auto' >> "$GRUB_CONF"
         fi
-        success "Configured GRUB to use local theme: $THEME_NAME"
+        success "Configured GRUB to use theme: $THEME_NAME"
     else
         error "$GRUB_CONF not found."
         exit 1
@@ -352,7 +346,7 @@ fi
 # ------------------------------------------------------------------------------
 # 5. Add Shutdown/Reboot Menu Entries
 # ------------------------------------------------------------------------------
-section "Step 5/5" "Menu Entries & Apply"
+section "Step 5/7" "Menu Entries"
 log "Adding Power Options to GRUB menu..."
 
 cp /etc/grub.d/40_custom /etc/grub.d/99_custom
@@ -362,8 +356,159 @@ echo 'menuentry "Shutdown"' {halt} >> /etc/grub.d/99_custom
 success "Added grub menuentry 99-shutdown"
 
 # ------------------------------------------------------------------------------
-# 6. Apply Changes
+# 6. Generate Standalone Switcher Script
 # ------------------------------------------------------------------------------
+section "Step 6/7" "Install 'change-grub-theme' Utility"
+log "Generating standalone theme switcher in /usr/local/bin/change-grub-theme..."
+
+cat << 'EOF' > /usr/local/bin/change-grub-theme
+#!/bin/bash
+# Standalone GRUB Theme Switcher (Generated by Shorin Arch Setup)
+
+[ "$EUID" -ne 0 ] && echo "Please run as root (sudo change-grub-theme)" && exit 1
+
+# Minimal TUI Engine
+NC='\033[0m'
+BOLD='\033[1m'
+H_GREEN='\033[1;32m'
+H_YELLOW='\033[1;33m'
+H_PURPLE='\033[1;35m'
+H_CYAN='\033[1;36m'
+H_RED='\033[1;31m'
+
+log()     { echo -e "   ➜ $1"; }
+success() { echo -e "   ✔ ${H_GREEN}$1${NC}"; }
+warn()    { echo -e "   ⚠ ${H_YELLOW}WARNING: $1${NC}"; }
+error()   { echo -e "   ✘ ${H_RED}ERROR: $1${NC}"; }
+info()    { echo -e "   ● $1 : ${BOLD}$2${NC}"; }
+exe()     { echo -e "   $ ${H_CYAN}$*${NC}"; "$@"; }
+
+cleanup_minegrub() {
+    local minegrub_found=false
+    if [ -f "/etc/grub.d/05_twomenus" ] || [ -f "/boot/grub/mainmenu.cfg" ]; then
+        minegrub_found=true
+        [ -f "/etc/grub.d/05_twomenus" ] && rm -f /etc/grub.d/05_twomenus
+        [ -f "/boot/grub/mainmenu.cfg" ] && rm -f /boot/grub/mainmenu.cfg
+    fi
+    if command -v grub-editenv >/dev/null 2>&1; then
+        if grub-editenv - list 2>/dev/null | grep -q "^config_file="; then
+            minegrub_found=true
+            grub-editenv - unset config_file
+        fi
+    fi
+    [ "$minegrub_found" == "true" ] && log "Minegrub double-menu configuration completely removed."
+}
+
+DEST_DIR="/boot/grub/themes"
+THEME_PATHS=()
+THEME_NAMES=()
+
+mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
+for dir in "${FOUND_DIRS[@]:-}"; do
+    if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
+        THEME_PATHS+=("$dir")
+        THEME_NAMES+=("$(basename "$dir")")
+    fi
+done
+
+MINEGRUB_IDX=$((${#THEME_NAMES[@]} + 1))
+SKIP_IDX=$((${#THEME_NAMES[@]} + 2))
+MINEGRUB_OPTION_NAME="Minegrub"
+SKIP_OPTION_NAME="No theme (Clear Theme)"
+
+TITLE_TEXT=" GRUB Theme Switcher "
+echo ""
+echo -e "${H_PURPLE}╭────────────────────────────────────────────────────────╮${NC}"
+echo -e "${H_PURPLE}│${NC} ${BOLD}${H_CYAN}$TITLE_TEXT${NC}                            ${H_PURPLE}│${NC}"
+echo -e "${H_PURPLE}├────────────────────────────────────────────────────────┤${NC}"
+
+for i in "${!THEME_NAMES[@]}"; do
+    NAME="${THEME_NAMES[$i]}"
+    DISPLAY_NAME=$(echo "$NAME" | sed -E 's/^[0-9]+//')
+    IDX=$((i+1))
+    printf "${H_PURPLE}│${NC} ${H_CYAN}[%2d]${NC} %-45s ${H_PURPLE}│${NC}\n" "$IDX" "$DISPLAY_NAME"
+done
+
+printf "${H_PURPLE}│${NC} ${H_CYAN}[%2d]${NC} %-45s ${H_PURPLE}│${NC}\n" "$MINEGRUB_IDX" "$MINEGRUB_OPTION_NAME"
+printf "${H_PURPLE}│${NC} ${H_CYAN}[%2d]${NC} ${H_YELLOW}%-45s${NC} ${H_PURPLE}│${NC}\n" "$SKIP_IDX" "$SKIP_OPTION_NAME"
+echo -e "${H_PURPLE}╰────────────────────────────────────────────────────────╯${NC}"
+echo ""
+
+read -p "   Select an option [1-$SKIP_IDX]: " USER_CHOICE || true
+USER_CHOICE=${USER_CHOICE:-}
+
+if ! [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] || [ "$USER_CHOICE" -lt 1 ] || [ "$USER_CHOICE" -gt "$SKIP_IDX" ]; then
+    error "Invalid choice. Exiting."
+    exit 1
+fi
+
+GRUB_CONF="/etc/default/grub"
+INSTALL_MINEGRUB=false
+SKIP_THEME=false
+
+if [ "$USER_CHOICE" -eq "$SKIP_IDX" ]; then
+    SKIP_THEME=true
+    info "Selected" "Clear Theme"
+elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
+    INSTALL_MINEGRUB=true
+    info "Selected" "Minegrub"
+else
+    SELECTED_INDEX=$((USER_CHOICE-1))
+    THEME_PATH="${THEME_PATHS[$SELECTED_INDEX]}/theme.txt"
+    THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
+    info "Selected" "Local: $THEME_NAME"
+fi
+
+echo "--------------------------------------------------------"
+
+if [ "$SKIP_THEME" == "true" ]; then
+    cleanup_minegrub
+    if [ -f "$GRUB_CONF" ] && grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+        exe sed -i 's|^GRUB_THEME=|#GRUB_THEME=|' "$GRUB_CONF"
+    fi
+    success "Theme cleared."
+    
+elif [ "$INSTALL_MINEGRUB" == "true" ]; then
+    TEMP_MG_DIR=$(mktemp -d -t minegrub_install_XXXXXX)
+    log "Cloning Lxtharia/double-minegrub-menu..."
+    if exe git clone --depth 1 "https://github.com/Lxtharia/double-minegrub-menu.git" "$TEMP_MG_DIR"; then
+        ( cd "$TEMP_MG_DIR" || exit 1; chmod +x install.sh; ./install.sh )
+        [ $? -eq 0 ] && success "Minegrub installed." || error "Minegrub install failed."
+    else
+        error "Failed to clone repository."
+    fi
+    [ -n "$TEMP_MG_DIR" ] && rm -rf "$TEMP_MG_DIR"
+    
+else
+    cleanup_minegrub
+    if [ -f "$GRUB_CONF" ]; then
+        if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^#GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        else
+            echo "GRUB_THEME=\"$THEME_PATH\"" >> "$GRUB_CONF"
+        fi
+        
+        grep -q "^GRUB_TERMINAL_OUTPUT=\"console\"" "$GRUB_CONF" && exe sed -i 's/^GRUB_TERMINAL_OUTPUT="console"/#GRUB_TERMINAL_OUTPUT="console"/' "$GRUB_CONF"
+        grep -q "^GRUB_GFXMODE=" "$GRUB_CONF" || echo 'GRUB_GFXMODE=auto' >> "$GRUB_CONF"
+        
+        success "Theme set to $THEME_NAME."
+    fi
+fi
+
+log "Regenerating GRUB configuration..."
+exe grub-mkconfig -o /boot/grub/grub.cfg
+success "All done!"
+EOF
+
+chmod +x /usr/local/bin/change-grub-theme
+success "Installed 'change-grub-theme' to /usr/local/bin/"
+
+# ------------------------------------------------------------------------------
+# 7. Apply Changes
+# ------------------------------------------------------------------------------
+section "Step 7/7" "Apply Changes"
 log "Generating new GRUB configuration..."
 
 if exe grub-mkconfig -o /boot/grub/grub.cfg; then
