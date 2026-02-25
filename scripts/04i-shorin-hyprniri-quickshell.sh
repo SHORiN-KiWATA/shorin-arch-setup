@@ -91,7 +91,7 @@ AUR_HELPER="paru"
 section "Shorin Hyprniri" "Core Components & Utilities"
 
 log "Installing Hyprland core components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme breeze-cursors wl-clipboard cliphist
+exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
 
 log "Installing terminal utilities..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide imagemagick zoxia starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel
