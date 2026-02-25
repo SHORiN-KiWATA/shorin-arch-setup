@@ -92,6 +92,7 @@ select_desktop() {
         "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
         "Shorin-DMS-Niri |shorindms"
         "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
+        "Shorin-DMS-hyprland-scrolling |hyprniri"
         "KDE-Plasma |kde"
         "GNOME |gnome"
         "Quickshell: End4--illogical-impulse (Hyprland)|end4"
@@ -197,6 +198,9 @@ case "$DESKTOP_ENV" in
     ;;    
     shorindms)
         BASE_MODULES+=("04h-shorindms-quickshell.sh")
+        ;;
+    hyprniri)
+        BASE_MODULES+=("04i-shorin-hyprniri-quickshell.sh")
         ;;
     caelestia)
         BASE_MODULES+=("04g-caelestia-quickshell.sh")
