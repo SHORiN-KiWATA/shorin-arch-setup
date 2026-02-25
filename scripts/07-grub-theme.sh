@@ -47,7 +47,6 @@ manage_kernel_param() {
     local conf_file="/etc/default/grub"
     local line
     
-    # 增加对 grep 失败的宽容度，防止无默认值时报错
     line=$(grep "^GRUB_CMDLINE_LINUX_DEFAULT=" "$conf_file" || true)
     
     local params
@@ -60,6 +59,31 @@ manage_kernel_param() {
 
     params=$(echo "$params" | tr -s ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     exe sed -i "s,^GRUB_CMDLINE_LINUX_DEFAULT=.*,GRUB_CMDLINE_LINUX_DEFAULT=\"$params\"," "$conf_file"
+}
+
+# 专门用于深度清理 Minegrub 双菜单残留的函数
+cleanup_minegrub() {
+    local minegrub_found=false
+    
+    if [ -f "/etc/grub.d/05_twomenus" ] || [ -f "/boot/grub/mainmenu.cfg" ]; then
+        minegrub_found=true
+        log "Found Minegrub artifacts. Cleaning up..."
+        [ -f "/etc/grub.d/05_twomenus" ] && exe rm -f /etc/grub.d/05_twomenus
+        [ -f "/boot/grub/mainmenu.cfg" ] && exe rm -f /boot/grub/mainmenu.cfg
+    fi
+    
+    if command -v grub-editenv >/dev/null 2>&1; then
+        # 检查是否设置了 config_file 环境变量
+        if grub-editenv - list 2>/dev/null | grep -q "^config_file="; then
+            minegrub_found=true
+            log "Unsetting Minegrub GRUB environment variable..."
+            exe grub-editenv - unset config_file
+        fi
+    fi
+    
+    if [ "$minegrub_found" == "true" ]; then
+        success "Minegrub double-menu configuration completely removed."
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -87,7 +111,6 @@ manage_kernel_param "remove" "splash"
 manage_kernel_param "add" "loglevel=5"
 manage_kernel_param "add" "nowatchdog"
 
-# CPU Watchdog Logic (Safely handled via awk to prevent pipe failures)
 CPU_VENDOR=$(LC_ALL=C lscpu 2>/dev/null | awk '/Vendor ID:/ {print $3}' || true)
 if [ "${CPU_VENDOR:-}" == "GenuineIntel" ]; then
     log "Intel CPU detected. Disabling iTCO_wdt watchdog."
@@ -108,7 +131,6 @@ log "Scanning for themes in 'grub-themes' folder..."
 SOURCE_BASE="$PARENT_DIR/grub-themes"
 DEST_DIR="/boot/grub/themes"
 
-# 初始化数组，确保即使目录不存在也不会引发未绑定变量错误
 THEME_PATHS=()
 THEME_NAMES=()
 
@@ -138,23 +160,20 @@ INSTALL_MINEGRUB=false
 SKIP_THEME=false
 
 MINEGRUB_OPTION_NAME="Minegrub"
-SKIP_OPTION_NAME="No theme (Skip)"
+SKIP_OPTION_NAME="No theme (Skip/Clear)"
 
-# 动态计算菜单选项数量和索引
 MINEGRUB_IDX=$((${#THEME_NAMES[@]} + 1))
 SKIP_IDX=$((${#THEME_NAMES[@]} + 2))
 
 TITLE_TEXT="Select GRUB Theme (60s Timeout)"
 MAX_LEN=${#TITLE_TEXT}
 
-# 计算本地主题名称最大长度 (动态去掉开头的数字进行计算)
 for name in "${THEME_NAMES[@]:-}"; do
     CLEAN_NAME=$(echo "$name" | sed -E 's/^[0-9]+//')
     ITEM_LEN=$((${#CLEAN_NAME} + 20))
     if (( ITEM_LEN > MAX_LEN )); then MAX_LEN=$ITEM_LEN; fi
 done
 
-# 计算新增选项长度
 MINEGRUB_LEN=$((${#MINEGRUB_OPTION_NAME} + 10))
 if (( MINEGRUB_LEN > MAX_LEN )); then MAX_LEN=$MINEGRUB_LEN; fi
 
@@ -172,10 +191,8 @@ T_PAD_R=""; printf -v T_PAD_R "%*s" "$RIGHT_PADDING_LEN" ""
 echo -e "${H_PURPLE}│${NC}${T_PAD_L}${BOLD}${TITLE_TEXT}${NC}${T_PAD_R}${H_PURPLE}│${NC}"
 echo -e "${H_PURPLE}├${LINE_STR}┤${NC}"
 
-# 打印本地主题列表
 for i in "${!THEME_NAMES[@]}"; do
     NAME="${THEME_NAMES[$i]}"
-    # 仅用于显示的名称：去掉开头的数字
     DISPLAY_NAME=$(echo "$NAME" | sed -E 's/^[0-9]+//')
     DISPLAY_IDX=$((i+1))
     
@@ -191,14 +208,12 @@ for i in "${!THEME_NAMES[@]}"; do
     echo -e "${H_PURPLE}│${NC}${COLOR_STR}${PAD_STR}${H_PURPLE}│${NC}"
 done
 
-# 打印 Minegrub 选项
 MG_RAW_STR=" [$MINEGRUB_IDX] $MINEGRUB_OPTION_NAME"
 MG_COLOR_STR=" ${H_CYAN}[$MINEGRUB_IDX]${NC} ${MINEGRUB_OPTION_NAME}"
 MG_PADDING=$((MENU_WIDTH - ${#MG_RAW_STR}))
 MG_PAD_STR=""; if [ "$MG_PADDING" -gt 0 ]; then printf -v MG_PAD_STR "%*s" "$MG_PADDING" ""; fi
 echo -e "${H_PURPLE}│${NC}${MG_COLOR_STR}${MG_PAD_STR}${H_PURPLE}│${NC}"
 
-# 打印“不安装”选项
 SKIP_RAW_STR=" [$SKIP_IDX] $SKIP_OPTION_NAME"
 SKIP_COLOR_STR=" ${H_CYAN}[$SKIP_IDX]${NC} ${H_YELLOW}${SKIP_OPTION_NAME}${NC}"
 SKIP_PADDING=$((MENU_WIDTH - ${#SKIP_RAW_STR}))
@@ -212,7 +227,6 @@ read -t 60 USER_CHOICE || true
 if [ -z "${USER_CHOICE:-}" ]; then echo ""; fi
 USER_CHOICE=${USER_CHOICE:-1}
 
-# 验证输入逻辑
 if ! [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] || [ "$USER_CHOICE" -lt 1 ] || [ "$USER_CHOICE" -gt "$SKIP_IDX" ]; then
     log "Invalid choice or timeout. Defaulting to first option..."
     USER_CHOICE=1
@@ -220,7 +234,7 @@ fi
 
 if [ "$USER_CHOICE" -eq "$SKIP_IDX" ]; then
     SKIP_THEME=true
-    info_kv "Selected" "None (Skip Theme Installation)"
+    info_kv "Selected" "None (Clear Theme)"
 elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
     INSTALL_MINEGRUB=true
     info_kv "Selected" "Minegrub (Online Repository)"
@@ -229,7 +243,6 @@ else
     if [ -n "${THEME_NAMES[$SELECTED_INDEX]:-}" ]; then
         THEME_SOURCE="${THEME_PATHS[$SELECTED_INDEX]}"
         THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
-        # 日志中也可以展示清理后的名字，或者保留原始名字（这里保留原始名字供调试参考）
         info_kv "Selected" "Local: $THEME_NAME"
     else
         warn "Local theme array empty but selected. Defaulting to Minegrub."
@@ -242,8 +255,23 @@ fi
 # ------------------------------------------------------------------------------
 section "Step 4/5" "Theme Installation"
 
+GRUB_CONF="/etc/default/grub"
+
 if [ "$SKIP_THEME" == "true" ]; then
-    log "Skipping theme copy and configuration as requested."
+    log "Clearing GRUB theme configuration..."
+    
+    # 彻底清除 Minegrub 环境残留
+    cleanup_minegrub
+    
+    # 注释掉 GRUB_THEME 恢复默认黑白命令行菜单
+    if [ -f "$GRUB_CONF" ]; then
+        if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i 's|^GRUB_THEME=|#GRUB_THEME=|' "$GRUB_CONF"
+            success "Disabled existing GRUB_THEME in configuration."
+        else
+            log "No active GRUB_THEME found to disable."
+        fi
+    fi
 
 elif [ "$INSTALL_MINEGRUB" == "true" ]; then
     log "Preparing to install Minegrub theme..."
@@ -278,22 +306,24 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
     fi
 
 else
+    # 彻底清除 Minegrub 环境残留，防止冲突
+    cleanup_minegrub
+
     if [ ! -d "$DEST_DIR" ]; then exe mkdir -p "$DEST_DIR"; fi
     if [ -d "$DEST_DIR/$THEME_NAME" ]; then
-        log "Removing existing version..."
+        log "Removing existing version of $THEME_NAME..."
         exe rm -rf "$DEST_DIR/$THEME_NAME"
     fi
 
     exe cp -r "$THEME_SOURCE" "$DEST_DIR/"
 
     if [ -f "$DEST_DIR/$THEME_NAME/theme.txt" ]; then
-        success "Theme installed."
+        success "Theme files copied."
     else
         error "Failed to copy theme files."
         exit 1
     fi
 
-    GRUB_CONF="/etc/default/grub"
     THEME_PATH="$DEST_DIR/$THEME_NAME/theme.txt"
 
     if [ -f "$GRUB_CONF" ]; then
