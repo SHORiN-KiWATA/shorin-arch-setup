@@ -134,7 +134,6 @@ fi
 
 if [ -d "$SOURCE_BASE" ]; then
     log "Syncing repository themes to $DEST_DIR..."
-    # 遍历并复制仓库里带 theme.txt 的文件夹到系统目录
     for dir in "$SOURCE_BASE"/*; do
         if [ -d "$dir" ] && [ -f "$dir/theme.txt" ]; then
             THEME_BASENAME=$(basename "$dir")
@@ -158,8 +157,12 @@ mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sor
 
 for dir in "${FOUND_DIRS[@]:-}"; do
     if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
-        THEME_PATHS+=("$dir")
-        THEME_NAMES+=("$(basename "$dir")")
+        DIR_NAME=$(basename "$dir")
+        # 核心修复：屏蔽由于之前安装 Minegrub 而残留在系统目录的同名文件夹
+        if [[ "$DIR_NAME" != "minegrub" && "$DIR_NAME" != "minegrub-world-selection" ]]; then
+            THEME_PATHS+=("$dir")
+            THEME_NAMES+=("$DIR_NAME")
+        fi
     fi
 done
 
@@ -406,8 +409,12 @@ THEME_NAMES=()
 mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
 for dir in "${FOUND_DIRS[@]:-}"; do
     if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
-        THEME_PATHS+=("$dir")
-        THEME_NAMES+=("$(basename "$dir")")
+        DIR_NAME=$(basename "$dir")
+        # 核心修复：独立脚本中同样屏蔽 minegrub 残留
+        if [[ "$DIR_NAME" != "minegrub" && "$DIR_NAME" != "minegrub-world-selection" ]]; then
+            THEME_PATHS+=("$dir")
+            THEME_NAMES+=("$DIR_NAME")
+        fi
     fi
 done
 
