@@ -1,0 +1,168 @@
+#!/bin/bash
+# Standalone GRUB Theme Switcher (Part of Shorin Arch Setup)
+
+show_help() {
+    echo "Usage: sudo change-grub-theme [OPTIONS]"
+    echo ""
+    echo "A utility to easily switch, install, or clear GRUB themes."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message and exit."
+    echo ""
+    echo "Theme Directory:"
+    echo "  Local themes are automatically scanned from: /boot/grub/themes/"
+    echo "  To add a custom theme, place its folder (which must contain a 'theme.txt' file)"
+    echo "  into this directory. It will then automatically appear in the selection menu."
+    echo ""
+    echo "Special Handling (Minegrub):"
+    echo "  The 'Minegrub' option triggers a dedicated installation script."
+    echo "  It clones the latest double-menu setup from the official GitHub repository,"
+    echo "  configures the GRUB environment variables, and bypasses standard theme rules."
+    echo ""
+    exit 0
+}
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    show_help
+fi
+
+[ "$EUID" -ne 0 ] && echo "Please run as root (sudo change-grub-theme)" && exit 1
+
+# Minimal TUI Engine
+NC='\033[0m'
+BOLD='\033[1m'
+H_GREEN='\033[1;32m'
+H_YELLOW='\033[1;33m'
+H_PURPLE='\033[1;35m'
+H_CYAN='\033[1;36m'
+H_RED='\033[1;31m'
+
+log()     { echo -e "   ➜ $1"; }
+success() { echo -e "   ✔ ${H_GREEN}$1${NC}"; }
+warn()    { echo -e "   ⚠ ${H_YELLOW}WARNING: $1${NC}"; }
+error()   { echo -e "   ✘ ${H_RED}ERROR: $1${NC}"; }
+info()    { echo -e "   ● $1 : ${BOLD}$2${NC}"; }
+exe()     { echo -e "   $ ${H_CYAN}$*${NC}"; "$@"; }
+
+cleanup_minegrub() {
+    local minegrub_found=false
+    if [ -f "/etc/grub.d/05_twomenus" ] || [ -f "/boot/grub/mainmenu.cfg" ]; then
+        minegrub_found=true
+        [ -f "/etc/grub.d/05_twomenus" ] && rm -f /etc/grub.d/05_twomenus
+        [ -f "/boot/grub/mainmenu.cfg" ] && rm -f /boot/grub/mainmenu.cfg
+    fi
+    if command -v grub-editenv >/dev/null 2>&1; then
+        if grub-editenv - list 2>/dev/null | grep -q "^config_file="; then
+            minegrub_found=true
+            grub-editenv - unset config_file
+        fi
+    fi
+    [ "$minegrub_found" == "true" ] && log "Minegrub double-menu configuration completely removed."
+}
+
+DEST_DIR="/boot/grub/themes"
+THEME_PATHS=()
+THEME_NAMES=()
+
+mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
+for dir in "${FOUND_DIRS[@]:-}"; do
+    if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
+        DIR_NAME=$(basename "$dir")
+        if [[ "$DIR_NAME" != "minegrub" && "$DIR_NAME" != "minegrub-world-selection" ]]; then
+            THEME_PATHS+=("$dir")
+            THEME_NAMES+=("$DIR_NAME")
+        fi
+    fi
+done
+
+MINEGRUB_IDX=$((${#THEME_NAMES[@]} + 1))
+SKIP_IDX=$((${#THEME_NAMES[@]} + 2))
+MINEGRUB_OPTION_NAME="Minegrub"
+SKIP_OPTION_NAME="No theme (Clear Theme)"
+
+TITLE_TEXT=" GRUB Theme Switcher "
+LINE_STR="───────────────────────────────────────────────────────"
+
+echo ""
+echo -e "${H_PURPLE}╭${LINE_STR}${NC}"
+echo -e "${H_PURPLE}│${NC}   ${BOLD}${H_CYAN}$TITLE_TEXT${NC}"
+echo -e "${H_PURPLE}├${LINE_STR}${NC}"
+
+for i in "${!THEME_NAMES[@]}"; do
+    NAME="${THEME_NAMES[$i]}"
+    DISPLAY_NAME=$(echo "$NAME" | sed -E 's/^[0-9]+//')
+    IDX=$((i+1))
+    printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} %s\n" "$IDX" "$DISPLAY_NAME"
+done
+
+printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} %s\n" "$MINEGRUB_IDX" "$MINEGRUB_OPTION_NAME"
+printf "${H_PURPLE}│${NC}  ${H_CYAN}[%2d]${NC} ${H_YELLOW}%s${NC}\n" "$SKIP_IDX" "$SKIP_OPTION_NAME"
+echo -e "${H_PURPLE}╰${LINE_STR}${NC}"
+echo ""
+
+read -p "   Select an option [1-$SKIP_IDX]: " USER_CHOICE || true
+USER_CHOICE=${USER_CHOICE:-}
+
+if ! [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] || [ "$USER_CHOICE" -lt 1 ] || [ "$USER_CHOICE" -gt "$SKIP_IDX" ]; then
+    error "Invalid choice. Exiting."
+    exit 1
+fi
+
+GRUB_CONF="/etc/default/grub"
+INSTALL_MINEGRUB=false
+SKIP_THEME=false
+
+if [ "$USER_CHOICE" -eq "$SKIP_IDX" ]; then
+    SKIP_THEME=true
+    info "Selected" "Clear Theme"
+elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
+    INSTALL_MINEGRUB=true
+    info "Selected" "Minegrub"
+else
+    SELECTED_INDEX=$((USER_CHOICE-1))
+    THEME_PATH="${THEME_PATHS[$SELECTED_INDEX]}/theme.txt"
+    THEME_NAME="${THEME_NAMES[$SELECTED_INDEX]}"
+    info "Selected" "Local: $THEME_NAME"
+fi
+
+echo "--------------------------------------------------------"
+
+if [ "$SKIP_THEME" == "true" ]; then
+    cleanup_minegrub
+    if [ -f "$GRUB_CONF" ] && grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+        exe sed -i 's|^GRUB_THEME=|#GRUB_THEME=|' "$GRUB_CONF"
+    fi
+    success "Theme cleared."
+    
+elif [ "$INSTALL_MINEGRUB" == "true" ]; then
+    TEMP_MG_DIR=$(mktemp -d -t minegrub_install_XXXXXX)
+    log "Cloning Lxtharia/double-minegrub-menu..."
+    if exe git clone --depth 1 "https://github.com/Lxtharia/double-minegrub-menu.git" "$TEMP_MG_DIR"; then
+        ( cd "$TEMP_MG_DIR" || exit 1; chmod +x install.sh; ./install.sh )
+        [ $? -eq 0 ] && success "Minegrub installed." || error "Minegrub install failed."
+    else
+        error "Failed to clone repository."
+    fi
+    [ -n "$TEMP_MG_DIR" ] && rm -rf "$TEMP_MG_DIR"
+    
+else
+    cleanup_minegrub
+    if [ -f "$GRUB_CONF" ]; then
+        if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
+            exe sed -i "s|^#GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
+        else
+            echo "GRUB_THEME=\"$THEME_PATH\"" >> "$GRUB_CONF"
+        fi
+        
+        grep -q "^GRUB_TERMINAL_OUTPUT=\"console\"" "$GRUB_CONF" && exe sed -i 's/^GRUB_TERMINAL_OUTPUT="console"/#GRUB_TERMINAL_OUTPUT="console"/' "$GRUB_CONF"
+        grep -q "^GRUB_GFXMODE=" "$GRUB_CONF" || echo 'GRUB_GFXMODE=auto' >> "$GRUB_CONF"
+        
+        success "Theme set to $THEME_NAME."
+    fi
+fi
+
+log "Regenerating GRUB configuration..."
+exe grub-mkconfig -o /boot/grub/grub.cfg
+success "All done!"
