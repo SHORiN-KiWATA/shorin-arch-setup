@@ -123,26 +123,26 @@ success "Helpers installed."
 # ------------------------------------------------------------------------------
 # 6. Configure NetworkManager Backend (iwd)
 # ------------------------------------------------------------------------------
-section "Step 6/6" "Network Backend (iwd)"
+# section "Step 6/6" "Network Backend (iwd)"
 
-# Check if NetworkManager is installed before attempting configuration
-if pacman -Qi networkmanager &> /dev/null; then
-    log "NetworkManager detected. Proceeding with iwd backend configuration..."
+# # Check if NetworkManager is installed before attempting configuration
+# if pacman -Qi networkmanager &> /dev/null; then
+#     log "NetworkManager detected. Proceeding with iwd backend configuration..."
 
-    log "Configuring NetworkManager to use iwd backend..."
-    exe pacman -S --noconfirm --needed iwd impala
-    exe systemctl enable iwd
-    # Ensure directory exists
-    if [ ! -d /etc/NetworkManager/conf.d ]; then
-        mkdir -p /etc/NetworkManager/conf.d
-    fi
-    echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
-    rm -rfv /etc/NetworkManager/system-connections/*
-    log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
-    success "Network backend configured (iwd)."
-else
-    log "NetworkManager not found. Skipping iwd configuration."
-fi
+#     log "Configuring NetworkManager to use iwd backend..."
+#     exe pacman -S --noconfirm --needed iwd impala
+#     exe systemctl enable iwd
+#     # Ensure directory exists
+#     if [ ! -d /etc/NetworkManager/conf.d ]; then
+#         mkdir -p /etc/NetworkManager/conf.d
+#     fi
+#     echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
+#     rm -rfv /etc/NetworkManager/system-connections/*
+#     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
+#     success "Network backend configured (iwd)."
+# else
+#     log "NetworkManager not found. Skipping iwd configuration."
+# fi
 
 # ------------------------------------------------------------------------------
 
