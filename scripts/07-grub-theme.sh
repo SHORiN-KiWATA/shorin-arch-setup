@@ -137,7 +137,7 @@ section "Step 3/5" "Theme Selection"
 INSTALL_MINEGRUB=false
 SKIP_THEME=false
 
-MINEGRUB_OPTION_NAME="Minegrub (Clone & Auto-install from GitHub)"
+MINEGRUB_OPTION_NAME="Minegrub"
 SKIP_OPTION_NAME="No theme (Skip)"
 
 # 动态计算菜单选项数量和索引
@@ -188,9 +188,9 @@ for i in "${!THEME_NAMES[@]}"; do
     echo -e "${H_PURPLE}│${NC}${COLOR_STR}${PAD_STR}${H_PURPLE}│${NC}"
 done
 
-# 打印 Minegrub 选项
+# 打印 Minegrub 选项 (去掉了高亮色和括号说明，保持普通样式)
 MG_RAW_STR=" [$MINEGRUB_IDX] $MINEGRUB_OPTION_NAME"
-MG_COLOR_STR=" ${H_CYAN}[$MINEGRUB_IDX]${NC} ${H_GREEN}${MINEGRUB_OPTION_NAME}${NC}"
+MG_COLOR_STR=" ${H_CYAN}[$MINEGRUB_IDX]${NC} ${MINEGRUB_OPTION_NAME}"
 MG_PADDING=$((MENU_WIDTH - ${#MG_RAW_STR}))
 MG_PAD_STR=""; if [ "$MG_PADDING" -gt 0 ]; then printf -v MG_PAD_STR "%*s" "$MG_PADDING" ""; fi
 echo -e "${H_PURPLE}│${NC}${MG_COLOR_STR}${MG_PAD_STR}${H_PURPLE}│${NC}"
