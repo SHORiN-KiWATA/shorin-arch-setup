@@ -162,7 +162,7 @@ if [ "$BT_FOUND" = true ]; then
     info_kv "Hardware" "Detected"
 
     log "Installing Bluez "
-    exe pacman -S --noconfirm --needed bluez
+    exe pacman -S --noconfirm --needed bluez bluetui
 
     exe systemctl enable --now bluetooth
     success "Bluetooth service enabled."
