@@ -536,7 +536,7 @@ if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
     
-    exe pacman -S --noconfirm --needed fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
+    exe pacman -S --noconfirm --needed cups-pk-helper kimageformats dsearch-bin fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
     
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
     as_user mkdir -p "$HOME_DIR/.config"

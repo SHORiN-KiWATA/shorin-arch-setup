@@ -85,7 +85,7 @@ trap cleanup_sudo EXIT INT TERM
 AUR_HELPER="yay"
 section "Shorin DMS" "Core Components"
 log "Installing core shell components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome cava cliphist wl-clipboard dgop dsearch qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats
+exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats
 
 # --- Dotfiles & Wallpapers ---
 section "Shorin DMS" "Dotfiles & Wallpapers"
