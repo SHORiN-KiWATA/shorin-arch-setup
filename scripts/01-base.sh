@@ -73,19 +73,19 @@ log "Installing terminus-font..."
 exe pacman -S --noconfirm --needed terminus-font
 
 log "Setting font for current session..."
-exe setfont ter-v20n
+exe setfont ter-v28n
 
 log "Configuring permanent vconsole font..."
 if [ -f /etc/vconsole.conf ] && grep -q "^FONT=" /etc/vconsole.conf; then
-    exe sed -i 's/^FONT=.*/FONT=ter-v20n/' /etc/vconsole.conf
+    exe sed -i 's/^FONT=.*/FONT=ter-v28n/' /etc/vconsole.conf
 else
-    echo "FONT=ter-v20n" >> /etc/vconsole.conf
+    echo "FONT=ter-v28n" >> /etc/vconsole.conf
 fi
 
 log "Restarting systemd-vconsole-setup..."
 exe systemctl restart systemd-vconsole-setup
 
-success "TTY font configured (ter-v20n)."
+success "TTY font configured (ter-v28n)."
 # ------------------------------------------------------------------------------
 # 4. Configure archlinuxcn Repository
 # ------------------------------------------------------------------------------
