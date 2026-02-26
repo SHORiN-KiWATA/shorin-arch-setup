@@ -15,5 +15,5 @@ plasma-login-manager                     # new DM for KDE Plasma
 ttf-jetbrains-mono-nerd                  # JetBrains Mono Font (Nerd Font Patched)
 
 # --- KDE Visual Effects (AUR) ---
-AUR:kwin-effect-rounded-corners-git      # Force rounded corners on all windows (Shader based)
+#AUR:kwin-effect-rounded-corners-git      # Force rounded corners on all windows (Shader based)
 AUR:kwin-effects-geometry-change         # KWin animation for window resizing/geometry changes
