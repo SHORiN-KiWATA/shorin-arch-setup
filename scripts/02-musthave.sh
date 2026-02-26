@@ -19,7 +19,7 @@ ROOT_FSTYPE=$(findmnt -n -o FSTYPE /)
 
 if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     log "Btrfs filesystem detected."
-    exe pacman -S --noconfirm --needed snapper btrfs-assistant xhost
+    exe pacman -S --noconfirm --needed snapper btrfs-assistant xorg-xhost
     success "Snapper tools installed."
 
     # GRUB Integration
