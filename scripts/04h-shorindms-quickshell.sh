@@ -139,7 +139,7 @@ if command -v flatpak &>/dev/null; then
 fi
 
 log "Installing theme components and browser..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox
+exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox nwg-look
 
 log "Configuring Firefox Pywalfox policy..."
 POL_DIR="/etc/firefox/policies"

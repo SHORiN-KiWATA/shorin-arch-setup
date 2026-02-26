@@ -578,7 +578,7 @@ fi
 # === matugen 配置 ===
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
-exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme 
+exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme nwg-look
 
 force_copy "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
