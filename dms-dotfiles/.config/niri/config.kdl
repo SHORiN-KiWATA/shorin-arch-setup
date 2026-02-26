@@ -20,6 +20,7 @@ environment {
     //LC_CTYPE "zh_CN.UTF-8" 会导致输入法出现漏字
     //LC_MESSAGES "zh_CN.UTF-8" 让系统全局使用英文，仅主要界面为英文时使用这个环境变量
     // 设置界面语言
+    LANGUAGE "zh_CN.UTF-8"
     LANG "zh_CN.UTF-8"
     LC_CTYPE "en_US.UTF-8" //这一项可以解决漏字问题，但是也许会导致steam之类的x11应用无法使用中文输入法
     // 输入法环境变量

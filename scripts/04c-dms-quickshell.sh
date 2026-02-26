@@ -235,6 +235,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
 environment {
     LC_CTYPE "en_US.UTF-8"
     XMODIFIERS "@im=fcitx"
+    LANGUAGE "zh_CN.UTF-8"
     LANG "zh_CN.UTF-8"
 }
 EOT
