@@ -94,6 +94,8 @@ spawn-sh-at-startup "systemctl --user set-environment XDG_SESSION_CLASS=user"
 spawn-at-startup "fcitx5" 
 // 截图音效的守护进程
 spawn-at-startup "~/.config/niri/scripts/screenshot-sound.sh"
+// 允许root通过用户的xwayland打开窗口
+spawn-at-startup "xhost" "+si:localuser:root"
 
 // 取消启动niri时自动开启快捷键教程
 hotkey-overlay {

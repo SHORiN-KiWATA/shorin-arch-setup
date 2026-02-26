@@ -194,6 +194,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     if ! grep -E -q "^[[:space:]]*spawn-at-startup.*dms.*run" "$DMS_NIRI_CONFIG_FILE"; then
         log "Enabling DMS autostart in niri config.kdl..." 
         echo 'spawn-at-startup "dms" "run"' >> "$DMS_NIRI_CONFIG_FILE"
+        echo 'spawn-at-startup "xhost" "+si:localuser:root"' >> "$DMS_NIRI_CONFIG_FILE"
     else
         log "DMS autostart already exists in niri config.kdl, skipping."
     fi
@@ -203,6 +204,7 @@ elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     if ! grep -q "exec-once.*dms run" "$DMS_HYPR_CONFIG_FILE"; then
         log "Adding DMS autostart to hyprland.conf"
         echo 'exec-once = dms run' >> "$DMS_HYPR_CONFIG_FILE"
+        echo 'exec-once = xhost +si:localuser:root'>> "$DMS_HYPR_CONFIG_FILE"
     else
         log "DMS autostart already exists in Hyprland config, skipping."
     fi
