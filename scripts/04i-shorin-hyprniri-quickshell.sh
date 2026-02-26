@@ -94,7 +94,7 @@ log "Installing Hyprland core components..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide imagemagick imv zoxia starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel
+exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv zoxia starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel
 
 log "Installing file manager and dependencies..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader
