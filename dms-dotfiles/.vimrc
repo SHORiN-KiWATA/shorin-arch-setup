@@ -32,4 +32,3 @@ set clipboard=unnamedplus
 
 " 接管鼠标事件
 set mouse=a
-" 设置tab为4个空格
