@@ -59,11 +59,17 @@ create_checkpoint() {
     fi
 }
 
+
+
+
 # ==============================================================================
 # 执行
 # ==============================================================================
 
 log "Preparing to create restore point..."
 create_checkpoint
+rm -fv $HOME_DIR/.config/systemd/user/default.target.wants/hyprland-autostart.service
+rm -fv $HOME_DIR/.config/systemd/user/default.target.wants/niri-autostart.service
+
 
 log "Module 03c completed."
