@@ -97,7 +97,7 @@ log "Installing Hyprland core components..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel
+exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg 
 
 log "Installing file manager and dependencies..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader
@@ -131,7 +131,7 @@ DOTFILES_REPO_LINK="https://github.com/SHORiN-KiWATA/shorin-dms-hyprniri.git"
 exe git clone --depth 1 "$DOTFILES_REPO_LINK" "$PARENT_DIR/shorin-dms-hyprniri-dotfiles"
 chown -R "$TARGET_USER:" "$PARENT_DIR/shorin-dms-hyprniri-dotfiles"
 force_copy "$PARENT_DIR/shorin-dms-hyprniri-dotfiles/dotfiles/." "$HOME_DIR"
-exe cp -f "$PARENT_DIR/shorin-dms-hyprniri-dotfiles/dotfiles/.local/bin/quickload" "/usr/local/bin/quickload"
+as_user shorin link
 
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"

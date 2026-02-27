@@ -93,7 +93,6 @@ log "Deploying user dotfiles..."
 DOTFILES_SRC="$PARENT_DIR/dms-dotfiles"
 chown -R "$TARGET_USER:" "$DOTFILES_SRC"
 force_copy "$DOTFILES_SRC/." "$HOME_DIR"
-cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
 
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
