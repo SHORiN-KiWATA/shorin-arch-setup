@@ -173,7 +173,7 @@ fi
 
 # === update module ===
 if command -v kitty &>/dev/null; then 
-exe ln -sf /usr/bin/kitty /usr/bin/xterm
+exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
 fi
 
 # --- Desktop Cleanup & Tutorials ---
