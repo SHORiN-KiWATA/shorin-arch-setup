@@ -167,6 +167,12 @@ else
     warn "Flatpak is not installed. Skipping overrides."
 fi
 
+
+# === update module ===
+if command -v kitty &>/dev/null; then 
+exe ln -sf /usr/bin/kitty /usr/bin/xterm
+fi
+
 # --- Desktop Cleanup & Tutorials ---
 section "Config" "Desktop Cleanup"
 log "Hiding unnecessary .desktop icons..."

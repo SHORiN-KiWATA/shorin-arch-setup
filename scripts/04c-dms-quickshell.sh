@@ -167,6 +167,7 @@ else
     warn "Failed to download DMS installer script from $DMS_URL."
 fi
 
+
 # ==============================================================================
 #  dms 随图形化环境自动启动
 # ==============================================================================
@@ -512,6 +513,12 @@ if ! grep -q 'include "shorin-niri/rule.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
     echo 'include "shorin-niri/rule.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
     echo 'include "shorin-niri/supertab.kdl"' >> "$DMS_NIRI_CONFIG_FILE"
     sed -i '/Mod+Tab repeat=false { toggle-overview; }/d' "$HOME_DIR/.config/niri/dms/binds.kdl"
+fi
+
+
+# === update module ===
+if command -v kitty &>/dev/null; then 
+exe ln -sf /usr/bin/kitty /usr/bin/xterm
 fi
 
 # === 光标配置 ===

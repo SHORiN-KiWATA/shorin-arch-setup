@@ -138,6 +138,12 @@ if command -v flatpak &>/dev/null; then
     as_user ln -sf /usr/share/themes "$HOME_DIR/.local/share/themes"
 fi
 
+
+# === update module ===
+if command -v kitty &>/dev/null; then 
+exe ln -sf /usr/bin/kitty /usr/bin/xterm
+fi
+
 log "Installing theme components and browser..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox nwg-look
 
