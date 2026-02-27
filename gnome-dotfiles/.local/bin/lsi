@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# =============================================================================
+# lsi v8.0 - Configurable Edition
+# =============================================================================
+
+# --- 1. 定义默认值 (Fallback Defaults) ---
+# 这些是当配置文件不存在时的“兜底”设置
+CFG_GRID=4             # 默认每行 5 张
+CFG_PROTOCOL="k"        # k=Kitty, i=iTerm2, s=Sixel
+CFG_FRAMES=1            # GIF 默认只读第 1 帧 (静态)
+CFG_TITLE="%b"          # 标题格式: %b=文件名, %f=全路径, %w=宽... (留空则不显示)
+
+# 配置文件路径
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/lsi/config"
+
+# --- 2. 加载配置文件 (User Config) ---
+if [ -f "$CONFIG_FILE" ]; then
+    # 使用 source 读取配置 (key=value 格式)
+    source "$CONFIG_FILE"
+fi
+
+# --- 3. 帮助与初始化功能 ---
+show_help() {
+    echo "Usage: lsi [OPTIONS] [FILE/DIR...]"
+    echo ""
+    echo "Options:"
+    echo "  -g, --grid N      Set grid size (current: $CFG_GRID)"
+    echo "  -f, --frames N    Set GIF frames (current: $CFG_FRAMES)"
+    echo "  -p, --protocol P  Set protocol [k/i/s] (current: $CFG_PROTOCOL)"
+    echo "  --init            Generate default config file at ~/.config/lsi/config"
+    echo "  -h, --help        Show this help"
+    echo ""
+    echo "  All other options are passed to 'eza'."
+}
+
+init_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        echo "Config file already exists: $CONFIG_FILE"
+        exit 1
+    fi
+    mkdir -p "$(dirname "$CONFIG_FILE")"
+    cat <<EOF > "$CONFIG_FILE"
+# ========================
+# lsi Configuration File
+# ========================
+
+# Grid size for directory preview (number of images per row)
+CFG_GRID=5
+
+# Terminal Graphics Protocol
+# k = Kitty (Recommended for Kitty terminal)
+# i = iTerm2
+# s = Sixel
+CFG_PROTOCOL="k"
+
+# GIF Animation Frames
+# 1 = Static cover (Fastest)
+# 3 = Micro-motion
+# 0 = Full animation (Slow loading)
+CFG_FRAMES=1
+
+# Title Format
+# %b = Filename only
+# %f = Full path
+# Leave empty "" to hide titles
+CFG_TITLE="%b"
+EOF
+    echo "Config generated at: $CONFIG_FILE"
+    echo "You can edit it to change default behaviors."
+    exit 0
+}
+
+# --- 4. 参数解析 (Command Line Args Override) ---
+# 优先级：命令行 > 配置文件 > 默认值
+
+EZA_ARGS=()
+TARGET_FILES=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        --init)
+            init_config
+            ;;
+        -g|--grid)
+            if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+                CFG_GRID="$2"
+                shift 2
+            else
+                echo "Error: --grid requires a number."
+                exit 1
+            fi
+            ;;
+        -f|--frames)
+            # 允许传入新的 --frames 参数
+            if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+                CFG_FRAMES="$2"
+                shift 2
+            else
+                echo "Error: --frames requires a number."
+                exit 1
+            fi
+            ;;
+        -p|--protocol)
+            CFG_PROTOCOL="$2"
+            shift 2
+            ;;
+        -*)
+            # 透传参数给 eza
+            EZA_ARGS+=("$1")
+            shift
+            ;;
+        *)
+            TARGET_FILES+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [ ${#TARGET_FILES[@]} -eq 0 ]; then
+    TARGET_FILES=(".")
+fi
+
+# --- 5. 执行逻辑 ---
+
+# A. 运行 Eza
+eza --icons "${EZA_ARGS[@]}" "${TARGET_FILES[@]}"
+
+# B. 智能预览逻辑
+IMAGES_TO_SHOW=()
+MODE="GRID" 
+
+if [ ${#TARGET_FILES[@]} -eq 1 ]; then
+    TARGET="${TARGET_FILES[0]}"
+    if [ -f "$TARGET" ] && [[ "$TARGET" =~ \.(jpg|jpeg|png|gif|webp|bmp|svg)$ ]]; then
+        IMAGES_TO_SHOW+=("$TARGET")
+        MODE="SINGLE" 
+    elif [ -d "$TARGET" ]; then
+        shopt -s nullglob
+        IMAGES_TO_SHOW=("${TARGET}"/*.{jpg,jpeg,png,gif,webp,bmp,svg})
+        shopt -u nullglob
+    fi
+else
+    for f in "${TARGET_FILES[@]}"; do
+        if [[ -f "$f" && "$f" =~ \.(jpg|jpeg|png|gif|webp|bmp|svg)$ ]]; then
+            IMAGES_TO_SHOW+=("$f")
+        fi
+    done
+fi
+
+# C. 调用 timg
+if [ ${#IMAGES_TO_SHOW[@]} -gt 0 ]; then
+    echo "" 
+    
+    if [ "$MODE" == "SINGLE" ]; then
+        # === 单图模式 ===
+        # 强制全宽，不限制帧数（单图就是要看细节）
+        timg -p "$CFG_PROTOCOL" -W --center --title="%f" "${IMAGES_TO_SHOW[0]}"
+    else
+        # === 网格模式 ===
+        # 使用配置好的变量
+        echo -e "\033[0;36m--- 󰋩 Gallery Preview (${#IMAGES_TO_SHOW[@]} images) ---\033[0m"
+        
+        # 构建命令参数
+        TIMG_CMD=(timg -p "$CFG_PROTOCOL" --grid="$CFG_GRID" -W --center --upscale=i)
+        
+        # 只有当 CFG_TITLE 不为空时才添加 --title
+        if [ -n "$CFG_TITLE" ]; then
+            TIMG_CMD+=(--title="$CFG_TITLE")
+        fi
+
+        # 处理 GIF 帧数
+        if [ "$CFG_FRAMES" -gt 0 ]; then
+            TIMG_CMD+=(--frames="$CFG_FRAMES")
+        fi
+        
+        # 执行
+        "${TIMG_CMD[@]}" "${IMAGES_TO_SHOW[@]}"
+    fi
+fi

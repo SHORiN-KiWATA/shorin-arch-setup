@@ -1,0 +1,172 @@
+#!/bin/bash
+
+# ==============================================================================
+# pac - Fuzzy search and install packages (Localized & Non-blocking)
+# ==============================================================================
+set -o pipefail
+# --- 1. Pre-Configuration ---
+ORIGINAL_LANG="${LC_ALL:-${LC_MESSAGES:-${LANG}}}"
+SHOW_HELP=false
+QUERY_ARGS=""
+
+# --- 2. Argument Parsing ---
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|-h)
+            SHOW_HELP=true
+            shift
+            ;;
+        *)
+            # Collect search terms
+            QUERY_ARGS="$QUERY_ARGS $1"
+            shift
+            ;;
+    esac
+done
+# Trim leading space
+QUERY_ARGS="${QUERY_ARGS# }"
+
+# --- 3. Auto-Detect Language ---
+if [[ "$ORIGINAL_LANG" == *"zh_CN"* ]]; then
+    UI_LANG="zh"
+else
+    UI_LANG="en"
+fi
+
+# --- 4. Environment Setup ---
+# Force C locale for consistent pacman/awk parsing
+export LC_ALL=C
+
+# --- 5. Colors ---
+COLOR_OFF='\033[34m'
+COLOR_AUR='\033[35m'
+COLOR_INST='\033[32m'
+COLOR_RESET='\033[0m'
+
+# --- 6. Localization Table ---
+LANG_TABLE='
+MSG_USAGE_DESC    | Fuzzy search & install packages (Repo + AUR).              | 模糊搜索并安装软件包 (支持官方源和 AUR)。
+MSG_USAGE_FEAT    | Features:                                                  | 功能特性：
+MSG_FEAT_1        | - Accurate status: [Installed] tag                         | - 准确状态：显示 [已安装] 标记
+MSG_FEAT_2        | - Visuals: Blue(Repo) Purple(AUR)                          | - 视觉区分：蓝色(官方) 紫色(AUR)
+MSG_FEAT_3        | - Batch: Tab to select multiple                            | - 批量操作：Tab 多选，Enter 安装
+MSG_USAGE_EX      | Example:                                                   | 示例：
+MSG_ERR_FZF       | Error: fzf not found.                                      | 错误：未找到 fzf。
+MSG_ERR_YAY       | Error: yay not found.                                      | 错误：未找到 yay。
+MSG_INSTALLED     | [Installed]                                                | [已安装]
+MSG_INSTALLING    | >> Installing:                                             | >> 准备安装：
+FZF_HEADER        | Tab:Multi-Select | Enter:Install | Esc:Exit                | Tab:多选 | Enter:安装 | Esc:退出
+'
+
+while IFS='|' read -r v e c; do
+    v=$(printf '%s' "$v" | sed 's/^ *//;s/ *$//')
+    e=$(printf '%s' "$e" | sed 's/^ *//;s/ *$//')
+    c=$(printf '%s' "$c" | sed 's/^ *//;s/ *$//')
+    [ -z "$v" ] && continue
+    case "$v" in \#*) continue ;; esac
+    
+    if [ "$UI_LANG" = "zh" ]; then
+        eval "$v=\"$c\""
+    else
+        eval "$v=\"$e\""
+    fi
+done <<EOF
+$LANG_TABLE
+EOF
+
+# --- 7. Help Function ---
+if [ "$SHOW_HELP" = true ]; then
+    cat <<EOF
+Usage: pac [options] [query]
+
+Options:
+  --help, -h    Show this help and exit
+
+Description:
+  $MSG_USAGE_DESC
+
+$MSG_USAGE_FEAT
+  $MSG_FEAT_1
+  $MSG_FEAT_2
+  $MSG_FEAT_3
+
+$MSG_USAGE_EX
+  pac firefox        # Search for 'firefox'
+  pac                # List all packages
+EOF
+    exit 0
+fi
+
+# --- 8. Dependency Check ---
+command -v fzf >/dev/null 2>&1 || { echo "$MSG_ERR_FZF" >&2; exit 1; }
+command -v yay >/dev/null 2>&1 || { echo "$MSG_ERR_YAY" >&2; exit 1; }
+
+# --- 9. Async Logic Setup ---
+
+AUR_FILTER='^(mingw-|lib32-|cross-|.*-debug$)'
+PREVIEW_CMD='yay -Si {2}'
+
+# Temp files & FIFO
+TARGET_FILE=$(mktemp -t pac_fzf.XXXXXX)
+INSTALLED_LIST=$(mktemp -t pac_installed.XXXXXX)
+PIPE_FIFO=$(mktemp -u)
+mkfifo "$PIPE_FIFO"
+
+# Cache installed list
+pacman -Qq > "$INSTALLED_LIST"
+
+# Cleanup trap (Kill background process on exit)
+cleanup() {
+    if [ -n "$PID_GEN" ]; then kill "$PID_GEN" 2>/dev/null; fi
+    rm -f "$TARGET_FILE" "$INSTALLED_LIST" "$PIPE_FIFO"
+}
+trap cleanup EXIT INT TERM
+
+# --- 10. Data Generation (Background) ---
+
+AWK_CMD='
+    FNR==NR { installed[$1]=1; next }
+    {
+        status = ($2 in installed) ? ci " ✔ " label r : ""
+        printf "%s%-10s%s %-30s %-20s %s\n", c, $1, r, $2, $3, status
+    }
+'
+
+(
+    # Official
+    pacman -Sl | awk -v c="$COLOR_OFF" -v ci="$COLOR_INST" -v r="$COLOR_RESET" \
+        -v label="$MSG_INSTALLED" \
+        "$AWK_CMD" "$INSTALLED_LIST" -
+
+    # AUR
+    yay -Sl aur | grep -vE "$AUR_FILTER" | \
+        awk -v c="$COLOR_AUR" -v ci="$COLOR_INST" -v r="$COLOR_RESET" \
+        -v label="$MSG_INSTALLED" \
+        "$AWK_CMD" "$INSTALLED_LIST" -
+) > "$PIPE_FIFO" 2>/dev/null &
+
+PID_GEN=$!
+
+# --- 11. Interactive FZF ---
+fzf --multi --ansi \
+    --preview "$PREVIEW_CMD" \
+    --preview-window=right:50%:wrap \
+    --height=95% --layout=reverse --border \
+    --tiebreak=index \
+    --nth=2 \
+    --header "$FZF_HEADER" \
+    --query "$QUERY_ARGS" \
+    < "$PIPE_FIFO" \
+    > "$TARGET_FILE"
+
+# --- 12. Execution ---
+if [ -s "$TARGET_FILE" ]; then
+    PACKAGES=$(awk '{print $2}' "$TARGET_FILE" | tr '\n' ' ')
+    
+    if [ -n "$PACKAGES" ]; then
+        echo -e "\n${COLOR_INST}${MSG_INSTALLING}${COLOR_RESET}"
+        echo "$PACKAGES"
+        echo "----------------------------------------"
+        yay -S $PACKAGES
+    fi
+fi

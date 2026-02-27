@@ -1,0 +1,131 @@
+#!/bin/bash
+#=============================
+#一个简单的终端预览文件脚本
+#支持终端预览视频、图片、压缩包数据、文字、音频等等
+#=============================
+
+# 检查是否传入了参数
+if [ -z "$1" ]; then
+  echo "Usage: preview <file>"
+  exit 1
+fi
+
+FILE="$1"
+
+# 检查文件是否存在
+if [ ! -e "$FILE" ]; then
+  echo "Error: File '$FILE' not found."
+  exit 1
+fi
+
+# 0. 如果是目录，显示树状结构
+if [ -d "$FILE" ]; then
+  if command -v eza &>/dev/null; then
+    eza --tree --level=2 --icons "$FILE"
+  elif command -v tree &>/dev/null; then
+    tree -L 2 "$FILE"
+  else
+    ls -lh "$FILE"
+  fi
+  exit 0
+fi
+
+# 获取 Mime Type
+MIME=$(file -bL --mime-type "$FILE")
+CATEGORY="${MIME%%/*}"
+
+echo -e "\x1b[1;36m[Type: $MIME]\x1b[0m"
+
+# === 分类处理 ===
+
+case "$CATEGORY" in
+# 1. 图片：Kitty icat
+image)
+  chafa "$FILE"
+  ;;
+# 2. 视频：MPV 终端播放
+video)
+  mpv --hwdec=auto --vo=kitty --quiet "$FILE"
+  ;;
+# 3. 音频
+audio)
+  # 1. 检查 Cava 是否存在
+  if command -v cava &>/dev/null; then
+    # 2. 【关键】在后台启动 mpv
+    # --no-video: 纯音频
+    # --no-terminal: 彻底禁止 mpv 输出任何字符到终端，防止破坏 cava 画面
+    mpv --no-video --hwdec=auto "$FILE" >/dev/null &
+    MPV_PID=$! # 立即记录 mpv 的进程 ID
+
+    # 3. 设置陷阱 (Trap) - 确保同生共死
+    # 这里的逻辑是：只要脚本退出（无论是正常跑完还是被强杀），都必须把 mpv 杀了
+    trap "kill $MPV_PID 2>/dev/null" EXIT
+
+    # 4. 在前台启动 Cava
+    # 这时候你的终端会被 cava 占满
+    # 脚本会“卡”在这里，直到你按 'q' 退出 cava
+    cava
+
+    # 5. 收尾
+    # 当你退出 cava 后，脚本继续向下执行
+    # 此时 trap EXIT 会自动触发，杀掉 mpv。
+    # 但为了保险（比如你只想切歌），我们在逻辑上也显式杀一次
+    kill $MPV_PID 2>/dev/null
+
+  else
+    # 降级方案：没装 cava 就普通播放
+    echo "Playing audio..."
+    mpv --no-video "$FILE"
+  fi
+  ;;
+
+# 4. 文本：使用 bat 高亮显示
+text)
+  # 特殊处理 JSON
+  if [[ "$MIME" == "application/json" ]] || [[ "$FILE" == *.json ]]; then
+    jq -C . "$FILE" | less -R
+  # 默认文本
+  elif command -v bat &>/dev/null; then
+    bat --color=always --style=header,grid "$FILE"
+  else
+    cat "$FILE"
+  fi
+  ;;
+
+# 5. 其他特殊类型
+application)
+  case "$MIME" in
+  # PDF: 提取文本前 1000 字符预览
+  *pdf)
+    if command -v pdftotext &>/dev/null; then
+      pdftotext -l 1 "$FILE" - | head -n 30
+      echo -e "\n\x1b[33m[...PDF text preview...]\x1b[0m"
+    else
+      echo "PDF Document. (Install 'poppler' to preview text)"
+    fi
+    ;;
+  # 压缩包: 列出内容
+  *zip | *rar | *7z | *tar* | *x-bzip* | *x-gzip*)
+    if command -v als &>/dev/null; then # atool
+      als "$FILE"
+    elif command -v 7z &>/dev/null; then
+      7z l "$FILE"
+    elif command -v tar &>/dev/null; then
+      tar -tf "$FILE"
+    else
+      echo "Archive file."
+    fi
+    ;;
+  # 二进制/未知: Hex 视图，防止炸终端
+  *)
+    echo "Binary file detected. Showing Hex dump:"
+    xxd "$FILE" | head -n 20
+    ;;
+  esac
+  ;;
+
+# 兜底
+*)
+  echo "Unknown file type."
+  ;;
+esac
