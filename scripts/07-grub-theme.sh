@@ -327,22 +327,6 @@ echo 'menuentry "Shutdown"' {halt} >> /etc/grub.d/99_custom
 success "Added grub menuentry 99-shutdown"
 
 # ------------------------------------------------------------------------------
-# 6. Install Standalone Switcher Script
-# ------------------------------------------------------------------------------
-section "Step 6/7" "Install 'change-grub-theme' Utility"
-log "Installing standalone theme switcher to /usr/local/bin/..."
-
-SRC_THEME_SWITCHER="$PARENT_DIR/resources/change-grub-theme"
-
-if [ -f "$SRC_THEME_SWITCHER" ]; then
-    exe cp "$SRC_THEME_SWITCHER" /usr/local/bin/change-grub-theme
-    exe chmod +x /usr/local/bin/change-grub-theme
-    success "Installed 'change-grub-theme' to /usr/local/bin/"
-else
-    warn "Could not find $SRC_THEME_SWITCHER. Skipping standalone switcher installation."
-fi
-
-# ------------------------------------------------------------------------------
 # 7. Apply Changes
 # ------------------------------------------------------------------------------
 section "Step 7/7" "Apply Changes"
