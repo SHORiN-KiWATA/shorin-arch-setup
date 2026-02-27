@@ -90,6 +90,9 @@ AUR_HELPER="paru"
 # --- Installation: Core Components ---
 section "Shorin Hyprniri" "Core Components & Utilities"
 
+exe as_user "$AUR_HELPER" -Rns --noconfirm --needed hyprcursor hyprgraphics hyprland hyprland-guiutils hyprlang hyprlock hyprpicker hyprtoolkit hyprutils
+
+
 log "Installing Hyprland core components..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
 
