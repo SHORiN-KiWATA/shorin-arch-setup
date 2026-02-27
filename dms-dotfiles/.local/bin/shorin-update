@@ -1,43 +1,36 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# shorin-update - Shorin DMS 独立同步引擎 (Standalone & Robust)
+# shorin-update - Shorin DMS 强健状态同步引擎 (v2.0)
 # ==============================================================================
 
-# --- 1. 视觉引擎 (硬编码实现，不再依赖外部 utils) ---
-NC='\033[0m'
-BOLD='\033[1m'
-H_GREEN='\033[1;32m'
-H_CYAN='\033[1;36m'
-H_PURPLE='\033[1;35m'
-H_MAGENTA='\033[1;35m'
-H_GRAY='\033[1;90m'
-TICK="${H_GREEN}✔${NC}"
-ARROW="${H_CYAN}➜${NC}"
+# --- 1. 视觉引擎 ---
+NC='\033[0m'; BOLD='\033[1m'; H_GREEN='\033[1;32m'; H_CYAN='\033[1;36m'
+H_PURPLE='\033[1;35m'; H_MAGENTA='\033[1;35m'; H_RED='\033[1;31m'; H_GRAY='\033[1;90m'
+TICK="${H_GREEN}✔${NC}"; ARROW="${H_CYAN}➜${NC}"; CROSS="${H_RED}✘${NC}"
 
 section() {
     echo -e "\n${H_PURPLE}╭──────────────────────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${H_PURPLE}│${NC} ${BOLD}${H_WHITE}$1${NC}"
-    echo -e "${H_PURPLE}│${NC} ${H_CYAN}$2${NC}"
+    echo -e "${H_PURPLE}│${NC} ${BOLD}${H_WHITE}$1${NC}\n${H_PURPLE}│${NC} ${H_CYAN}$2${NC}"
     echo -e "${H_PURPLE}╰──────────────────────────────────────────────────────────────────────────────╯${NC}"
 }
 log() { echo -e "   $ARROW $1"; }
 success() { echo -e "   $TICK ${H_GREEN}$1${NC}"; }
+error() { echo -e "   $CROSS ${H_RED}ERROR: $1${NC}"; exit 1; }
 exe() { echo -e "   ${H_GRAY}───[ ${H_MAGENTA}EXEC${H_GRAY} ] ${BOLD}$*${NC}"; "$@"; }
 
 # --- 2. 路径配置 ---
 SHORIN_DMS_REPO="$HOME/.local/share/shorin-dms"
 APPLIST_FILE="$SHORIN_DMS_REPO/dms-applist.txt"
 DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
+# 持久化状态文件：记录系统“实际已同步”的软件列表
+STATE_DIR="$HOME/.cache/shorin-dms"
+LAST_SYNC_LIST="$STATE_DIR/last_synced_apps.txt"
 
 # --- 3. 辅助函数 ---
 link_subdir() {
-    local sub_dir="$1"
-    local src_base="$2"
-    local target_base="$3"
-    local full_src="$src_base/$sub_dir"
-    local full_target="$target_base/$sub_dir"
-    
+    local sub_dir="$1"; local src_base="$2"; local target_base="$3"
+    local full_src="$src_base/$sub_dir"; local full_target="$target_base/$sub_dir"
     if [[ -d "$full_src" ]]; then
         mkdir -p "$full_target"
         shopt -s dotglob
@@ -56,65 +49,70 @@ link_subdir() {
 # ==============================================================================
 section "Shorin DMS" "Declarative Sync & Update"
 
-# 1. 检查并记录软件快照
-OLD_LIST_TMP="/tmp/shorin_old_list.txt"
-NEW_LIST_TMP="/tmp/shorin_new_list.txt"
-[[ -f "$APPLIST_FILE" ]] && grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$OLD_LIST_TMP" || touch "$OLD_LIST_TMP"
+mkdir -p "$STATE_DIR"
 
-# 2. 稳健的 Git 同步
+# 1. 稳健的 Git 同步
 cd "$SHORIN_DMS_REPO" || exit 1
-CURRENT_BRANCH=$(git branch --show-current)
-CURRENT_BRANCH=${CURRENT_BRANCH:-"main"}
+CURRENT_BRANCH=$(git branch --show-current); CURRENT_BRANCH=${CURRENT_BRANCH:-"main"}
 
 log "当前分支: ${H_CYAN}$CURRENT_BRANCH${NC}"
 log "正在自动保存本地修改..."
 git config user.name "Shorin Auto Updater" >/dev/null 2>&1
 git config user.email "updater@shorin.local" >/dev/null 2>&1
 git add . >/dev/null 2>&1
-# 只有在确有变动时才提交，避免 Git 报错
+# 只有有变动时才提交
 git diff-index --quiet HEAD || git commit -m "chore: auto-save local changes $(date +%F)" >/dev/null 2>&1
 
-log "正在同步远程更新..."
-if ! git pull --rebase origin "$CURRENT_BRANCH" -X theirs; then
-    echo -e "${H_RED}   ✘ 同步失败！检测到严重的合并冲突。${NC}"
-    echo -e "     请手动进入 $SHORIN_DMS_REPO 解决冲突。"
+log "正在同步远程更新 (Rebase)..."
+# 使用 rebase 保持提交历史整洁
+if ! git pull --rebase origin "$CURRENT_BRANCH"; then
+    echo -e "\n${H_RED}   $CROSS 同步冲突！Git 无法自动合并。${NC}"
+    echo -e "     请手动解决冲突后运行 'git rebase --continue'，再重新执行此脚本。"
     exit 1
 fi
 success "Git 仓库同步成功。"
 
-# 3. 声明式软件核对 (核对软件列表的部分)
-log "核对软件列表差异..."
+# 2. 声明式软件同步 (状态对比版)
+log "核对软件列表差异 (对比本地缓存状态)..."
 if [[ -f "$APPLIST_FILE" ]]; then
-    grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$NEW_LIST_TMP"
+    # 提取当前文件的最新状态
+    CUR_LIST_TMP="/tmp/shorin_cur_list.txt"
+    grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$CUR_LIST_TMP"
     
-    # 核心逻辑：comm 对比新旧列表
-    # comm -13: 找出现在有但以前没有的 (安装)
-    TO_INSTALL=$(comm -13 "$OLD_LIST_TMP" "$NEW_LIST_TMP" | tr '\n' ' ')
-    # comm -23: 找出以前有但现在删掉的 (卸载)
-    TO_REMOVE=$(comm -23 "$OLD_LIST_TMP" "$NEW_LIST_TMP" | tr '\n' ' ')
+    # 如果没有上次同步记录，则创建一个空的
+    [[ ! -f "$LAST_SYNC_LIST" ]] && touch "$LAST_SYNC_LIST"
+
+    # 对比：当前文件 vs 上次同步记录
+    TO_INSTALL=$(comm -13 "$LAST_SYNC_LIST" "$CUR_LIST_TMP" | tr '\n' ' ')
+    TO_REMOVE=$(comm -23 "$LAST_SYNC_LIST" "$CUR_LIST_TMP" | tr '\n' ' ')
 
     [[ -n "$TO_INSTALL" ]] && { log "安装新依赖: $TO_INSTALL"; exe paru -S --noconfirm --needed $TO_INSTALL; }
     [[ -n "$TO_REMOVE" ]] && { log "移除旧依赖: $TO_REMOVE"; exe paru -Rns --noconfirm $TO_REMOVE || true; }
-    [[ -z "$TO_INSTALL" && -z "$TO_REMOVE" ]] && success "软件列表已是最新，无需操作。"
+    
+    # 同步成功后，更新持久化状态文件
+    cp "$CUR_LIST_TMP" "$LAST_SYNC_LIST"
+    
+    if [[ -z "$TO_INSTALL" && -z "$TO_REMOVE" ]]; then
+        success "系统软件环境已是最新，无需操作。"
+    fi
+else
+    warn "未找到 applist.txt，跳过包管理同步。"
 fi
 
-# 4. 重新部署软链接 (不再手动 cp quickload)
-log "刷新 Dotfiles 软链接..."
+# 3. 刷新 Dotfiles 与工具箱
+log "刷新 Dotfiles 与 shorin-contrib 链接..."
 link_subdir ".config" "$DOTFILES_SRC" "$HOME"
 link_subdir ".local/bin" "$DOTFILES_SRC" "$HOME"
 link_subdir ".local/share" "$DOTFILES_SRC" "$HOME"
 [[ ! -e "$HOME/.vimrc" ]] && ln -sf "$DOTFILES_SRC/.vimrc" "$HOME/.vimrc"
 
-# 5. 调用 shorin-contrib 刷新工具箱 (这里解决 quickload 路径问题)
 if command -v shorin &>/dev/null; then
-    log "刷新 shorin-contrib 链接..."
+    # 这一步会解决你之前的 cp 报错，因为 quickload 链接归它管
     shorin link >/dev/null
-else
-    warn "未检测到 shorin 命令。请确保已安装 shorin-contrib-git AUR 包。"
 fi
 
-# 6. 同步壁纸
-log "刷新壁纸..."
+# 4. 同步壁纸
+log "刷新壁纸链接..."
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 mkdir -p "$HOME/Pictures"
 rm -rf "$WALLPAPER_DIR" 2>/dev/null
