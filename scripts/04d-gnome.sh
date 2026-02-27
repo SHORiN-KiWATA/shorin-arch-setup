@@ -358,8 +358,9 @@ if command -v flatpak &>/dev/null; then
 fi
 
 log "Installing shell tools..."
-pacman -S --noconfirm --needed thefuck starship eza fish zoxide jq
+pacman -S --noconfirm --needed thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git
 
+as_user shorin link
 
 # === 隐藏多余的 Desktop 图标 ===
 section "Config" "Hiding useless .desktop files"

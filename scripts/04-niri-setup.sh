@@ -445,8 +445,6 @@ prepare_repository() {
 
 prepare_repository
 
-# install quickload 
-cp -f "$DOTFILES_REPO/dotfiles/.local/bin/quickload" "/usr/local/bin/quickload"
 # 2. 执行链接
 if [ -d "$DOTFILES_REPO/dotfiles" ]; then
   EXCLUDE_LIST=""
@@ -466,6 +464,9 @@ if [ -d "$DOTFILES_REPO/dotfiles" ]; then
 
   as_user chmod -R +x $HOME_DIR/.local/bin
 
+  # 创建shorin工具的链接
+  as_user shorin link
+  
   # --- Post-Process (防止污染 git 的修正) ---
   OUTPUT_EXAMPLE_KDL="$HOME_DIR/.config/niri/output-example.kdl"
   OUTPUT_KDL="$HOME_DIR/.config/niri/output.kdl"

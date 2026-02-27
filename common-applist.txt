@@ -1,10 +1,6 @@
 # --- Standard Packages ---
 baobab                                   # Disk Usage Analyzer
-gdu                                      # tui disk usage manager
-btop                                     # great tui mission center / system info
 mission-center                           # System Monitor (Task Manager style)
-dosfstools                               # Tools for FAT12/16/32 filesystems
-exfat-utils                              # exFAT filesystem utilities
 gnome-disk-utility                       # Disk Management Utility (Disks)
 gnome-calendar                           # calendar
 gnome-clocks                             # clocks

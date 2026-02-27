@@ -155,7 +155,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
 
     log "Executing DMS installer as user ($TARGET_USER)..."
     log "NOTE: If the installer asks for input, this script might hang."
-    
+    pacman -S --noconfirm vulkan-headers
     if runuser -u "$TARGET_USER" -- bash -c "cd ~ && $INSTALLER_SCRIPT"; then
         success "DankMaterialShell installed successfully."
     else
@@ -166,6 +166,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
 else
     warn "Failed to download DMS installer script from $DMS_URL."
 fi
+
 
 # ==============================================================================
 #  dms 随图形化环境自动启动
@@ -194,6 +195,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     if ! grep -E -q "^[[:space:]]*spawn-at-startup.*dms.*run" "$DMS_NIRI_CONFIG_FILE"; then
         log "Enabling DMS autostart in niri config.kdl..." 
         echo 'spawn-at-startup "dms" "run"' >> "$DMS_NIRI_CONFIG_FILE"
+        echo 'spawn-at-startup "xhost" "+si:localuser:root"' >> "$DMS_NIRI_CONFIG_FILE"
     else
         log "DMS autostart already exists in niri config.kdl, skipping."
     fi
@@ -203,6 +205,7 @@ elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     if ! grep -q "exec-once.*dms run" "$DMS_HYPR_CONFIG_FILE"; then
         log "Adding DMS autostart to hyprland.conf"
         echo 'exec-once = dms run' >> "$DMS_HYPR_CONFIG_FILE"
+        echo 'exec-once = xhost +si:localuser:root'>> "$DMS_HYPR_CONFIG_FILE"
     else
         log "DMS autostart already exists in Hyprland config, skipping."
     fi
@@ -235,6 +238,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
 environment {
     LC_CTYPE "en_US.UTF-8"
     XMODIFIERS "@im=fcitx"
+    LANGUAGE "zh_CN.UTF-8"
     LANG "zh_CN.UTF-8"
 }
 EOT
@@ -511,6 +515,12 @@ if ! grep -q 'include "shorin-niri/rule.kdl"' "$DMS_NIRI_CONFIG_FILE"; then
     sed -i '/Mod+Tab repeat=false { toggle-overview; }/d' "$HOME_DIR/.config/niri/dms/binds.kdl"
 fi
 
+
+# === update module ===
+if command -v kitty &>/dev/null; then 
+exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
+fi
+
 # === 光标配置 ===
 section "Shorin DMS" "cursor"
 as_user mkdir -p "$HOME_DIR/.local/share/icons"
@@ -536,7 +546,7 @@ if command -v kitty &>/dev/null; then
     section "Shorin DMS" "terminal and shell"
     log "Applying Shorin DMS custom configurations for Terminal..."
     
-    exe pacman -S --noconfirm --needed fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist 
+    exe as_user yay -S --noconfirm --needed cups-pk-helper kimageformats dsearch-bin fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git
     
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
     as_user mkdir -p "$HOME_DIR/.config"
@@ -546,7 +556,7 @@ if command -v kitty &>/dev/null; then
     
     as_user mkdir -p "$HOME_DIR/.local/bin"
     force_copy "$DMS_DOTFILES_DIR/.local/bin/." "$HOME_DIR/.local/bin/"
-    cp -f "$DMS_DOTFILES_DIR/.local/bin/quickload" "/usr/local/bin"
+    as_user shorin link
 else
     log "Kitty not found, skipping Kitty configuration."
 fi
@@ -578,7 +588,7 @@ fi
 # === matugen 配置 ===
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
-exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme 
+exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme nwg-look
 
 force_copy "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"

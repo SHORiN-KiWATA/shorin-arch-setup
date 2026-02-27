@@ -71,7 +71,7 @@ function f
             # === NSFW API ===
             switch $RAND
                 case 1
-                    curl -s $TIMEOUT "https://api.waifu.im/search?included_tags=waifu&is_nsfw=true" | jq -r '.images[0].url'
+                    curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=true" | jq -r '.images[0].url'
                 case 2
                     curl -s $TIMEOUT "https://api.waifu.pics/nsfw/waifu" | jq -r '.url'
                 case 3
@@ -81,7 +81,7 @@ function f
             # === SFW (正常) API ===
             switch $RAND
                 case 1
-                    curl -s $TIMEOUT "https://api.waifu.im/search?included_tags=waifu&is_nsfw=false" | jq -r '.images[0].url'
+                    curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfwfalse" | jq -r '.images[0].url'
                 case 2
                     curl -s $TIMEOUT "https://nekos.best/api/v2/waifu" | jq -r '.results[0].url'
                 case 3

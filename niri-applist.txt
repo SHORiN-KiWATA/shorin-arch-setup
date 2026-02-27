@@ -35,6 +35,7 @@ wlsunset                                 # take care of your eyes
 xwayland-satellite                       # XWayland compatibility 
 pavucontrol                              # sound config GUI
 # --- AUR Packages ---
+AUR:shorin-contrib-git                   # shorin-utils
 AUR:clipsync-git                         # x11 <--> wayland clipboard sync 
 AUR:shorinclip-git                       # My clipboard tui
 AUR:ddcutil-service                      # Monitor hardware brightness control service

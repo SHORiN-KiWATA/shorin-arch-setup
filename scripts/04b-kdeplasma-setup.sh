@@ -416,6 +416,7 @@ success "PLM enabled. Will start on reboot."
 section "Config" "Hiding useless .desktop files"
 log "Hiding useless .desktop files"
 run_hide_desktop_file
+as_user shorin link
 # ------------------------------------------------------------------------------
 # Cleanup
 # ------------------------------------------------------------------------------

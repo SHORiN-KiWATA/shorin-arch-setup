@@ -19,7 +19,7 @@ ROOT_FSTYPE=$(findmnt -n -o FSTYPE /)
 
 if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     log "Btrfs filesystem detected."
-    exe pacman -S --noconfirm --needed snapper btrfs-assistant
+    exe pacman -S --noconfirm --needed snapper btrfs-assistant xorg-xhost
     success "Snapper tools installed."
 
     # GRUB Integration
@@ -162,7 +162,7 @@ if [ "$BT_FOUND" = true ]; then
     info_kv "Hardware" "Detected"
 
     log "Installing Bluez "
-    exe pacman -S --noconfirm --needed bluez
+    exe pacman -S --noconfirm --needed bluez bluetui
 
     exe systemctl enable --now bluetooth
     success "Bluetooth service enabled."
@@ -185,7 +185,7 @@ success "Power profiles daemon enabled."
 # ------------------------------------------------------------------------------
 section "Step 7/8" "Fastfetch"
 
-exe pacman -S --noconfirm --needed fastfetch
+exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl 
 success "Fastfetch installed."
 
 log "Module 02 completed."
