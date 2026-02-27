@@ -10,6 +10,8 @@ xwayland-satellite
 xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
 polkit-gnome
+dgop
+dsearch
 
 # --- 终端与 Shell 环境 (Terminal & Shell) ---
 kitty
@@ -58,5 +60,4 @@ python-pywalfox
 firefox
 bazaar
 # --- Shorin 专属自定义脚本/工具 ---
-dgop
-dsearch
+shorin-contrib-git
