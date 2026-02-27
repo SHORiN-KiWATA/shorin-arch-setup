@@ -438,7 +438,7 @@ log "Backing up old configs to archive (Overwrite previous)..."
 
 BACKUP_LIST=(
     "Thunar" "xfce4" "gtk-3.0" "mpv" "satty" "fuzzel" 
-    "niri/shorin-niri" "fish" "kitty" "starship.toml" 
+    "niri/shorin-niri" "fish" "kitty"  
     "mimeapps.list" "matugen" "btop" "cava" "yazi" 
     "fcitx5" "fontconfig"
 )
@@ -551,9 +551,7 @@ if command -v kitty &>/dev/null; then
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
     as_user mkdir -p "$HOME_DIR/.config"
     force_copy "$DMS_DOTFILES_DIR/.config/fish" "$HOME_DIR/.config/"
-    force_copy "$DMS_DOTFILES_DIR/.config/kitty" "$HOME_DIR/.config/"
-    force_copy "$DMS_DOTFILES_DIR/.config/starship.toml" "$HOME_DIR/.config/"
-    
+    force_copy "$DMS_DOTFILES_DIR/.config/kitty" "$HOME_DIR/.config/"    
     as_user mkdir -p "$HOME_DIR/.local/bin"
     force_copy "$DMS_DOTFILES_DIR/.local/bin/." "$HOME_DIR/.local/bin/"
     as_user shorin link
