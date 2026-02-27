@@ -1,32 +1,50 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# shorin-update - Shorin DMS 自动化更新与同步脚本
+# shorin-update - Shorin DMS 声明式同步与更新引擎 (独立运行版)
 # ==============================================================================
 
-# --- 1. 定位本地仓库与加载 Utilities ---
+# --- 1. 视觉引擎 (由 utils 启发，硬编码以消除依赖) ---
+NC='\033[0m'
+BOLD='\033[1m'
+H_RED='\033[1;31m'
+H_GREEN='\033[1;32m'
+H_YELLOW='\033[1;33m'
+H_BLUE='\033[1;34m'
+H_PURPLE='\033[1;35m'
+H_CYAN='\033[1;36m'
+H_GRAY='\033[1;90m'
+
+TICK="${H_GREEN}✔${NC}"
+ARROW="${H_CYAN}➜${NC}"
+
+section() {
+    echo -e "\n${H_PURPLE}╭──────────────────────────────────────────────────────────────────────────────╮${NC}"
+    echo -e "${H_PURPLE}│${NC} ${BOLD}${H_WHITE}$1${NC}"
+    echo -e "${H_PURPLE}│${NC} ${H_CYAN}$2${NC}"
+    echo -e "${H_PURPLE}╰──────────────────────────────────────────────────────────────────────────────╯${NC}"
+}
+
+log() { echo -e "   $ARROW $1"; }
+success() { echo -e "   $TICK ${H_GREEN}$1${NC}"; }
+warn() { echo -e "   ${H_YELLOW}⚠  WARNING: $1${NC}"; }
+error() { echo -e "\n${H_RED}   ✘  ERROR: $1${NC}\n"; exit 1; }
+
+exe() {
+    echo -e "   ${H_GRAY}───[ ${H_MAGENTA}EXEC${H_GRAY} ] ${BOLD}$*${NC}"
+    "$@"
+}
+
+# --- 2. 路径配置 ---
 SHORIN_DMS_REPO="$HOME/.local/share/shorin-dms"
-UTILS_FILE="$SHORIN_DMS_REPO/00-utils.sh"
+APPLIST_FILE="$SHORIN_DMS_REPO/dms-applist.txt"
+DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
 
-if [[ -f "$UTILS_FILE" ]]; then
-    source "$UTILS_FILE"
-else
-    echo -e "\033[1;31m✘ CRITICAL ERROR: 找不到 00-utils.sh。请检查 Shorin DMS 是否正确安装。\033[0m"
-    exit 1
-fi
-
-# --- 2. 运行环境动态适配 ---
-export TARGET_USER="$USER"
-export HOME_DIR="$HOME"
-
-check_root() { :; }
-as_user() { "$@"; }
-
+# --- 3. 功能辅助函数 ---
 link_subdir() {
     local sub_dir="$1"
     local src_base="$2"
     local target_base="$3"
-    
     local full_src="$src_base/$sub_dir"
     local full_target="$target_base/$sub_dir"
     
@@ -43,129 +61,72 @@ link_subdir() {
     fi
 }
 
-link_dotfiles() {
-    local src="$1"
-    local target="$2"
-    link_subdir ".config" "$src" "$target"
-    link_subdir ".local/bin" "$src" "$target"
-    link_subdir ".local/share" "$src" "$target"
-}
-
-
 # ==============================================================================
-# 开始执行更新流程
+# 核心同步逻辑
 # ==============================================================================
-section "Shorin DMS" "System Update & Sync"
+section "Shorin DMS" "Declarative Sync & Update"
 
-APPLIST_FILE="$SHORIN_DMS_REPO/dms-applist.txt"
-OLD_LIST_TMP="/tmp/shorin_old_applist.txt"
-NEW_LIST_TMP="/tmp/shorin_new_applist.txt"
+# 检查仓库
+[[ ! -d "$SHORIN_DMS_REPO/.git" ]] && error "找不到 DMS 仓库: $SHORIN_DMS_REPO"
 
-# --- Step 1: 记录更新前的软件状态 (Before Pull) ---
-if [[ -f "$APPLIST_FILE" ]]; then
-    grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$OLD_LIST_TMP"
-else
-    touch "$OLD_LIST_TMP"
+# 1. 记录旧软件列表快照
+OLD_LIST_TMP="/tmp/shorin_old_list.txt"
+NEW_LIST_TMP="/tmp/shorin_new_list.txt"
+[ -f "$APPLIST_FILE" ] && grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$OLD_LIST_TMP" || touch "$OLD_LIST_TMP"
+
+# 2. 自动保存本地修改并同步 GitHub
+cd "$SHORIN_DMS_REPO" || exit 1
+log "检测当前分支并保存本地状态..."
+
+CURRENT_BRANCH=$(git branch --show-current)
+CURRENT_BRANCH=${CURRENT_BRANCH:-"main"}
+
+git config user.name "Shorin Auto Updater" >/dev/null 2>&1
+git config user.email "updater@shorin.local" >/dev/null 2>&1
+git add . >/dev/null 2>&1
+git commit -m "chore: auto-save local changes $(date +%F)" >/dev/null 2>&1 || true
+
+log "从远程同步分支: ${H_CYAN}$CURRENT_BRANCH${NC}"
+if ! git pull --depth 1 --rebase origin "$CURRENT_BRANCH" -X theirs; then
+    error "同步失败，请检查网络或 Git 状态。"
 fi
+success "仓库同步完成。"
 
-
-# --- Step 2: 动态检测分支并同步 Git 仓库 ---
-log "正在从 GitHub 同步最新配置..."
-if [[ -d "$SHORIN_DMS_REPO/.git" ]]; then
-    cd "$SHORIN_DMS_REPO" || exit 1
-    
-    # 【核心修改点】动态获取当前分支
-    CURRENT_BRANCH=$(git branch --show-current)
-    
-    # 防呆机制：如果因为某些原因处于游离状态，默认回退到 main
-    if [[ -z "$CURRENT_BRANCH" ]]; then
-        CURRENT_BRANCH="main"
-        warn "无法检测到当前激活的分支，默认回退使用: $CURRENT_BRANCH"
-    else
-        log "当前追踪的分支为: ${H_CYAN}$CURRENT_BRANCH${NC}"
-    fi
-    
-    git config user.name "Shorin Auto Updater"
-    git config user.email "updater@shorin.local"
-    git add .
-    git commit -m "chore: auto-save local DMS changes before update" >/dev/null 2>&1 || true
-    
-    # 动态将分支变量传入拉取命令
-    if exe git pull --depth 1 --rebase origin "$CURRENT_BRANCH" -X theirs; then
-        success "DMS 仓库已同步至最新版本 ($CURRENT_BRANCH)。"
-    else
-        error "从 GitHub 拉取更新失败，请检查网络连接或分支状态。"
-        exit 1
-    fi
-else
-    error "未检测到有效的 Git 仓库: $SHORIN_DMS_REPO"
-    exit 1
-fi
-
-
-# --- Step 3: 解析软件列表差异并执行同步 (Declarative Package Sync) ---
-log "开始进行声明式软件依赖核对..."
-if [[ -f "$APPLIST_FILE" ]]; then
+# 3. 声明式软件列表同步
+log "核对软件列表 (Applist Sync)..."
+if [ -f "$APPLIST_FILE" ]; then
     grep -vE "^\s*#|^\s*$" "$APPLIST_FILE" | tr -s ' \t' '\n' | sort -u > "$NEW_LIST_TMP"
-
+    
     TO_INSTALL=$(comm -13 "$OLD_LIST_TMP" "$NEW_LIST_TMP" | tr '\n' ' ')
     TO_REMOVE=$(comm -23 "$OLD_LIST_TMP" "$NEW_LIST_TMP" | tr '\n' ' ')
 
-    if [[ -n "$TO_INSTALL" ]]; then
-        log "发现新增的依赖软件，准备安装: ${H_GREEN}$TO_INSTALL${NC}"
-        exe paru -S --noconfirm --needed $TO_INSTALL
-    fi
-
-    if [[ -n "$TO_REMOVE" ]]; then
-        warn "发现被移除的依赖软件，准备清理: ${H_RED}$TO_REMOVE${NC}"
-        exe paru -Rns --noconfirm $TO_REMOVE || warn "部分软件可能被强依赖，已安全跳过卸载。"
-    fi
-
-    if [[ -z "$TO_INSTALL" && -z "$TO_REMOVE" ]]; then
-        success "软件列表无变化，环境保持一致。"
-    fi
+    [[ -n "$TO_INSTALL" ]] && { log "安装新依赖: ${H_GREEN}$TO_INSTALL${NC}"; exe paru -S --noconfirm --needed $TO_INSTALL; }
+    [[ -n "$TO_REMOVE" ]] && { warn "移除旧依赖: ${H_RED}$TO_REMOVE${NC}"; exe paru -Rns --noconfirm $TO_REMOVE || true; }
+    [[ -z "$TO_INSTALL" && -z "$TO_REMOVE" ]] && success "软件列表一致，无需变动。"
 fi
 
+# 4. 重新部署链接 (Dotfiles & Wallpapers)
+log "正在刷新 Dotfiles 软链接..."
+link_subdir ".config" "$DOTFILES_SRC" "$HOME"
+link_subdir ".local/bin" "$DOTFILES_SRC" "$HOME"
+link_subdir ".local/share" "$DOTFILES_SRC" "$HOME"
+[ ! -e "$HOME/.vimrc" ] && ln -sf "$DOTFILES_SRC/.vimrc" "$HOME/.vimrc"
 
-# --- Step 4: 重新部署 Dotfiles 与壁纸 ---
-log "重新链接 Dotfiles 与壁纸..."
-DOTFILES_SRC="$SHORIN_DMS_REPO/dms-dotfiles"
-link_dotfiles "$DOTFILES_SRC" "$HOME_DIR"
+log "正在同步灾备命令 (需密码)..."
+sudo cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload" && sudo chmod +x "/usr/local/bin/quickload"
 
-if ! [ -e "$HOME_DIR/.vimrc" ]; then
-    ln -sf "$DOTFILES_SRC/.vimrc" "$HOME_DIR/.vimrc"
-fi 
-
-if [ -f "$DOTFILES_SRC/.local/bin/quickload" ]; then
-    sudo cp -f "$DOTFILES_SRC/.local/bin/quickload" "/usr/local/bin/quickload"
-    sudo chmod +x "/usr/local/bin/quickload"
-fi
-
-WALLPAPER_SOURCE_DIR="$SHORIN_DMS_REPO/resources/Wallpapers"
-WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
-mkdir -p "$HOME_DIR/Pictures"
+log "正在同步壁纸..."
+WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
+mkdir -p "$HOME/Pictures"
 rm -rf "$WALLPAPER_DIR" 2>/dev/null
-ln -snf "$WALLPAPER_SOURCE_DIR" "$WALLPAPER_DIR"
+ln -snf "$SHORIN_DMS_REPO/resources/Wallpapers" "$WALLPAPER_DIR"
 
-
-# --- Step 5: 刷新系统级配置与修复项 ---
-log "刷新系统级 UI 配置与应用修复..."
-
-if type run_hide_desktop_file >/dev/null 2>&1; then
-    run_hide_desktop_file >/dev/null
-fi
-
-if type configure_nautilus_user >/dev/null 2>&1; then
-    configure_nautilus_user >/dev/null
-fi
-
+# 5. 刷新工具箱
 if command -v shorin &>/dev/null; then
-    log "刷新 shorin-contrib 本地软链接..."
+    log "正在刷新 shorin-contrib 链接..."
     shorin link >/dev/null
 fi
 
-
-# --- 结束 ---
 echo ""
-success "Shorin DMS 更新与同步完毕！"
+success "Shorin DMS 更新流程圆满结束！"
 echo ""
