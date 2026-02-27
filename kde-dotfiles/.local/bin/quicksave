@@ -1,92 +1,272 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# quicksave - Btrfs Snapshot Quick Save Utility
+# (Companion to quickload)
+#
 
-# ==============================================================================
-# 1. 本地化配置
-# ==============================================================================
-if env | grep -q "zh_CN"; then
-    MSG_NO_ROOT="错误：未找到针对根目录 / 的 Snapper 配置"
-    MSG_CONF_MISSING="配置文件丢失："
-    MSG_CLEAN_OK="旧存档已清理"
-    MSG_CLEAN_FAIL="错误：清理失败"
-    MSG_SAVE_OK="已快速存档"
-    MSG_SAVE_FAIL="错误：存档失败"
+set -euo pipefail
+
+# ==========================================
+# 1. 多语言支持 (i18n) 初始化
+# ==========================================
+if [[ "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" =~ zh_CN ]]; then
+    MSG_HELP_DESC="快速创建或管理 Btrfs 快照 (无需 Root 权限即可运行)。"
+    MSG_HELP_OPT="选项:"
+    MSG_HELP_C="  -c, --config <配置名>     指定操作的快照配置 (默认: 检测到的所有配置)"
+    MSG_HELP_D="  -d, --description <描述>  指定快照描述 (默认: quicksave)"
+    MSG_HELP_LC="  -lc, --list-configs       列出系统中可用的快照配置"
+    MSG_HELP_L="  -l, --list                列出指定配置下的现有快照列表 (未指定 -c 时默认仅显示 root)"
+    MSG_HELP_DEL="  -del, --delete <ID>       删除指定 ID 的快照 (建议配合 -c 使用，默认 root)"
+    MSG_HELP_X="  -x, --debug               开启调试模式"
+    MSG_HELP_H="  -h, --help                显示此帮助信息"
+    
+    MSG_ERR_DEP="错误: 未找到依赖命令 '%s'，请确保已安装。\n"
+    MSG_ERR_NOCONF="错误: 未检测到任何 snapper 配置。"
+    MSG_ERR_BADCONF="错误: 找不到指定的快照配置 [%s]。"
+    
+    MSG_FIX_PERM_TITLE="修复权限中"
+    MSG_FIX_PERM_BODY="检测到配置 [%s] 缺少普通用户操作权限，\n正在请求提权以自动修复 (添加 wheel 组)..."
+    MSG_FIX_PERM_FAIL="自动修复权限失败，请检查密码或手动配置。"
+    
+    MSG_CLEAN_OK="旧快照清理完成"
+    MSG_SAVE_OK="存档成功"
+    MSG_SAVE_FAIL="存档失败，请检查环境或权限"
+    
+    MSG_DEL_OK="快照删除成功"
+    MSG_DEL_BODY="已删除配置 [%s] 中的快照 #%s"
+    MSG_DEL_FAIL="快照删除失败"
 else
-    MSG_NO_ROOT="ERROR: Snapper config for '/' not found."
-    MSG_CONF_MISSING="Config file missing: "
-    MSG_CLEAN_OK="Old save files cleaned."
-    MSG_CLEAN_FAIL="ERROR: Clean process failed."
-    MSG_SAVE_OK="Quicksaved."
-    MSG_SAVE_FAIL="ERROR: Quicksave failed."
+    MSG_HELP_DESC="Quickly create or manage Btrfs snapshots (Runs without Root)."
+    MSG_HELP_OPT="Options:"
+    MSG_HELP_C="  -c, --config <config>     Target specific config (Default: all detected)"
+    MSG_HELP_D="  -d, --desc <description>  Specify snapshot description (Default: quicksave)"
+    MSG_HELP_LC="  -lc, --list-configs       List available snapshot configurations"
+    MSG_HELP_L="  -l, --list                List existing snapshots for targeted config (Defaults to 'root' if no -c)"
+    MSG_HELP_DEL="  -del, --delete <ID>       Delete snapshot by ID (Recommend using with -c)"
+    MSG_HELP_X="  -x, --debug               Enable debug mode"
+    MSG_HELP_H="  -h, --help                Show this help message"
+    
+    MSG_ERR_DEP="Error: Dependency command '%s' not found.\n"
+    MSG_ERR_NOCONF="Error: No snapper configs detected."
+    MSG_ERR_BADCONF="Error: Specified config [%s] not found."
+    
+    MSG_FIX_PERM_TITLE="Fixing Permissions"
+    MSG_FIX_PERM_BODY="Config [%s] lacks user permissions.\nRequesting elevation to auto-fix (add wheel group)..."
+    MSG_FIX_PERM_FAIL="Failed to auto-fix permissions. Check password or configure manually."
+    
+    MSG_CLEAN_OK="Old snapshots cleaned"
+    MSG_SAVE_OK="Quicksave successful"
+    MSG_SAVE_FAIL="Quicksave failed. Check environment or permissions."
+    
+    MSG_DEL_OK="Snapshot Deleted"
+    MSG_DEL_BODY="Deleted snapshot #%s from config [%s]"
+    MSG_DEL_FAIL="Failed to delete snapshot"
 fi
 
-# ==============================================================================
-# 2. 动态检测 Snapper 配置名
-# ==============================================================================
-# $3 是挂载点。普通用户有权执行 list-configs。
-ROOT_CONF_NAME=$(snapper list-configs | awk '$3 == "/" {print $1}')
-HOME_CONF_NAME=$(snapper list-configs | awk '$3 == "/home" {print $1}')
+print_help() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
 
-# 如果连根目录的配置都找不到，直接报错退出
-if [ -z "$ROOT_CONF_NAME" ]; then
-    notify-send -u critical "$MSG_NO_ROOT"
-    exit 1
-fi
+${MSG_HELP_DESC}
 
-# ==============================================================================
-# 3. 智能权限检查与修复 (使用原生 set-config)
-# ==============================================================================
-ROOT_CONF_FILE="/etc/snapper/configs/$ROOT_CONF_NAME"
+${MSG_HELP_OPT}
+${MSG_HELP_C}
+${MSG_HELP_D}
+${MSG_HELP_LC}
+${MSG_HELP_L}
+${MSG_HELP_DEL}
+${MSG_HELP_X}
+${MSG_HELP_H}
+EOF
+}
 
-# 先检查文件是否存在，防止对空目标操作
-if [ -f "$ROOT_CONF_FILE" ]; then
-    # 尝试读取配置。
-    # 如果成功 (返回0)，说明权限足够，跳过 if。
-    # 如果失败 (返回非0)，说明权限不足，进入 if 修复。
-    if ! snapper -c "$ROOT_CONF_NAME" get-config >/dev/null 2>&1; then
-        # 使用 pkexec 提权，并调用 snapper 原生命令修改配置
-        # 这比 sed 更安全，且 pkexec 会处理 GUI 密码弹窗
-        pkexec snapper -c "$ROOT_CONF_NAME" set-config ALLOW_GROUPS="wheel"
+# ==========================================
+# 2. 通知与日志引擎
+# ==========================================
+notify_err() {
+    local msg
+    msg=$(printf "$@")
+    echo -e "$msg" >&2
+    if [[ ! -t 0 || ! -t 1 ]] && command -v notify-send >/dev/null 2>&1; then
+        notify-send -u critical -a "Quicksave" "Error" "$msg" 2>/dev/null || true
     fi
-else
-    # 配置文件物理丢失的极端情况
-    notify-send -u critical "$MSG_CONF_MISSING $ROOT_CONF_FILE"
-    exit 1
+}
+
+notify_ok() {
+    local title="$1"
+    local body="${2:-}"
+    echo -e "$title: $body"
+    if [[ ! -t 0 || ! -t 1 ]] && command -v notify-send >/dev/null 2>&1; then
+        notify-send -u normal -a "Quicksave" "$title" "$body" 2>/dev/null || true
+    fi
+}
+
+# ==========================================
+# 3. 参数解析
+# ==========================================
+OPT_CONFIG=""
+OPT_DESC="quicksave"
+OPT_LIST_CONFIGS=0
+OPT_LIST=0
+OPT_DELETE=()
+OPT_DEBUG=0
+
+while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+        -c|--config)
+            if [[ $# -lt 2 ]]; then notify_err "Missing arg for %s" "$1"; exit 1; fi
+            OPT_CONFIG="$2"; shift 2 ;;
+        -d|--description)
+            if [[ $# -lt 2 ]]; then notify_err "Missing arg for %s" "$1"; exit 1; fi
+            OPT_DESC="$2"; shift 2 ;;
+        -del|--delete)
+            if [[ $# -lt 2 ]]; then notify_err "Missing arg for %s" "$1"; exit 1; fi
+            OPT_DELETE+=("$2"); shift 2 ;;
+        -lc|--list-configs) OPT_LIST_CONFIGS=1; shift 1 ;;
+        -l|--list) OPT_LIST=1; shift 1 ;;
+        -x|--debug) OPT_DEBUG=1; shift 1 ;;
+        -h|--help) print_help; exit 0 ;;
+        *) notify_err "Unknown option: %s" "${1:-}"; exit 1 ;;
+    esac
+done
+
+if [[ $OPT_DEBUG -eq 1 ]]; then
+    set -x
+    echo "=== 调试模式启动 ===" >&2
 fi
 
-# ==============================================================================
-# 4. 执行清理
-# ==============================================================================
-TARGETS=("$ROOT_CONF_NAME")
-[ -n "$HOME_CONF_NAME" ] && TARGETS+=("$HOME_CONF_NAME")
-
-CLEAN_SUCCESS=true
-
-for conf in "${TARGETS[@]}"; do
-    if ! snapper -c "$conf" cleanup number; then
-        CLEAN_SUCCESS=false
+# ==========================================
+# 4. 依赖检查与配置发现
+# ==========================================
+for cmd in btrfs snapper awk; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        notify_err "$MSG_ERR_DEP" "$cmd"
+        exit 1
     fi
 done
 
-if [ "$CLEAN_SUCCESS" = true ]; then
-    notify-send "$MSG_CLEAN_OK"
-else
-    notify-send -u critical "$MSG_CLEAN_FAIL"
+declare -A CONFIG_MAP
+CONFIG_COUNT=0
+
+# 解析所有的 Snapper 配置
+while IFS= read -r line; do
+    if [[ "$line" =~ ^[[:space:]]*([^[:space:]│|]+)[[:space:]]*[│|][[:space:]]*([^[:space:]]+) ]]; then
+        conf="${BASH_REMATCH[1]}"
+        subvol="${BASH_REMATCH[2]}"
+        CONFIG_MAP["$conf"]="$subvol"
+        CONFIG_COUNT=$((CONFIG_COUNT + 1))
+    fi
+done < <(snapper list-configs 2>/dev/null | tail -n +3 || true)
+
+if [[ $CONFIG_COUNT -eq 0 ]]; then
+    notify_err "$MSG_ERR_NOCONF"
+    exit 1
 fi
 
-# ==============================================================================
-# 5. 执行存档
-# ==============================================================================
-SAVE_SUCCESS=true
+# 处理 -lc: 仅仅列出配置名称
+if [[ $OPT_LIST_CONFIGS -eq 1 ]]; then
+    for conf in "${!CONFIG_MAP[@]}"; do
+        echo "$conf"
+    done
+    exit 0
+fi
 
+# 确定要操作的目标配置
+TARGETS=()
+if [[ -n "$OPT_CONFIG" ]]; then
+    if [[ -z "${CONFIG_MAP[$OPT_CONFIG]:-}" ]]; then
+        notify_err "$MSG_ERR_BADCONF" "$OPT_CONFIG"
+        exit 1
+    fi
+    TARGETS=("$OPT_CONFIG")
+else
+    # 如果没指定配置，默认操作所有的配置
+    TARGETS=("${!CONFIG_MAP[@]}")
+fi
+
+# ==========================================
+# 5. 权限校验与自动修复 (延迟提权)
+# ==========================================
 for conf in "${TARGETS[@]}"; do
-    if ! snapper -c "$conf" create --description "quicksave" --cleanup-algorithm number; then
-        SAVE_SUCCESS=false
+    # 尝试不用 root 获取一次 config 信息
+    if ! snapper -c "$conf" get-config >/dev/null 2>&1; then
+        notify_ok "$MSG_FIX_PERM_TITLE" "$(printf "$MSG_FIX_PERM_BODY" "$conf")"
+        if command -v pkexec >/dev/null 2>&1; then
+            # 自动提权修改 snapper 配置，允许 wheel 组免密操作快照
+            if ! pkexec snapper -c "$conf" set-config ALLOW_GROUPS="wheel" NUMBER_LIMIT=10 NUMBER_MIN_AGE=0 SYNC_ACL="yes"; then
+                notify_err "$MSG_FIX_PERM_FAIL"
+                exit 1
+            fi
+        else
+            notify_err "需要提权修复权限，但未找到 pkexec。"
+            exit 1
+        fi
     fi
 done
 
-if [ "$SAVE_SUCCESS" = true ]; then
-    notify-send "$MSG_SAVE_OK"
-else
-    notify-send -u critical "$MSG_SAVE_FAIL"
+# ==========================================
+# 6. 处理特殊动作：列表与删除
+# ==========================================
+# 动作: 列出快照
+if [[ $OPT_LIST -eq 1 ]]; then
+    LIST_TARGETS=("${TARGETS[@]}")
+    # 如果没有指定 -c，为了防止刷屏，默认只列出 root 配置（如果存在）
+    if [[ -z "$OPT_CONFIG" && -n "${CONFIG_MAP["root"]:-}" ]]; then
+        LIST_TARGETS=("root")
+    fi
+    
+    for conf in "${LIST_TARGETS[@]}"; do
+        echo "=== Snapshots in config: [$conf] ==="
+        snapper -c "$conf" list || true
+        echo ""
+    done
+    exit 0
 fi
 
+# 动作: 删除指定快照
+if [[ ${#OPT_DELETE[@]} -gt 0 ]]; then
+    # 删除快照时，如果没指定 -c，为了安全起见默认只操作 root 配置
+    DEL_TARGET="${OPT_CONFIG:-root}"
+    if [[ -z "${CONFIG_MAP[$DEL_TARGET]:-}" ]]; then
+        notify_err "$MSG_ERR_BADCONF" "$DEL_TARGET"
+        exit 1
+    fi
+    
+    for snap_id in "${OPT_DELETE[@]}"; do
+        if snapper -c "$DEL_TARGET" delete "$snap_id"; then
+            notify_ok "$MSG_DEL_OK" "$(printf "$MSG_DEL_BODY" "$snap_id" "$DEL_TARGET")"
+        else
+            notify_err "$MSG_DEL_FAIL (ID: $snap_id)"
+        fi
+    done
+    exit 0
+fi
+
+# ==========================================
+# 7. 核心动作：生成快照并清理
+# ==========================================
+SAVE_SUCCESS=1
+CLEAN_SUCCESS=1
+
+for conf in "${TARGETS[@]}"; do
+    # 1. 创建快照 (交由 dbus 通信，不需要 sudo)
+    if ! snapper -c "$conf" create --description "$OPT_DESC" --cleanup-algorithm number; then
+        SAVE_SUCCESS=0
+    fi
+    
+    # 2. 清理旧快照
+    if ! snapper -c "$conf" cleanup number >/dev/null 2>&1; then
+        CLEAN_SUCCESS=0
+    fi
+done
+
+if [[ $SAVE_SUCCESS -eq 1 ]]; then
+    notify_ok "$MSG_SAVE_OK" "[$OPT_DESC]"
+else
+    notify_err "$MSG_SAVE_FAIL"
+    exit 1
+fi
+
+if [[ $CLEAN_SUCCESS -eq 1 ]]; then
+    echo "$MSG_CLEAN_OK"
+fi
