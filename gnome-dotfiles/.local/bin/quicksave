@@ -16,7 +16,7 @@ if [[ "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" =~ zh_CN ]]; then
     MSG_HELP_D="  -d, --description <描述>  指定快照描述 (默认: quicksave)"
     MSG_HELP_LC="  -lc, --list-configs       列出系统中可用的快照配置"
     MSG_HELP_L="  -l, --list                列出指定配置下的现有快照列表 (未指定 -c 时默认仅显示 root)"
-    MSG_HELP_DEL="  -del, --delete <ID>       删除指定 ID 的快照 (建议配合 -c 使用，默认 root)"
+    MSG_HELP_DEL="  -del, --delete <ID|all>   删除指定 ID 的快照或全部删除 (建议配合 -c 使用，默认 root)"
     MSG_HELP_X="  -x, --debug               开启调试模式"
     MSG_HELP_H="  -h, --help                显示此帮助信息"
     
@@ -34,7 +34,9 @@ if [[ "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" =~ zh_CN ]]; then
     
     MSG_DEL_OK="快照删除成功"
     MSG_DEL_BODY="已删除配置 [%s] 中的快照 #%s"
+    MSG_DEL_ALL_BODY="已清空配置 [%s] 中的所有快照"
     MSG_DEL_FAIL="快照删除失败"
+    MSG_DEL_EMPTY="配置 [%s] 中没有可供删除的快照"
 else
     MSG_HELP_DESC="Quickly create or manage Btrfs snapshots (Runs without Root)."
     MSG_HELP_OPT="Options:"
@@ -42,7 +44,7 @@ else
     MSG_HELP_D="  -d, --desc <description>  Specify snapshot description (Default: quicksave)"
     MSG_HELP_LC="  -lc, --list-configs       List available snapshot configurations"
     MSG_HELP_L="  -l, --list                List existing snapshots for targeted config (Defaults to 'root' if no -c)"
-    MSG_HELP_DEL="  -del, --delete <ID>       Delete snapshot by ID (Recommend using with -c)"
+    MSG_HELP_DEL="  -del, --delete <ID|all>   Delete snapshot by ID or 'all' (Recommend using with -c)"
     MSG_HELP_X="  -x, --debug               Enable debug mode"
     MSG_HELP_H="  -h, --help                Show this help message"
     
@@ -60,7 +62,9 @@ else
     
     MSG_DEL_OK="Snapshot Deleted"
     MSG_DEL_BODY="Deleted snapshot #%s from config [%s]"
+    MSG_DEL_ALL_BODY="Deleted ALL snapshots from config [%s]"
     MSG_DEL_FAIL="Failed to delete snapshot"
+    MSG_DEL_EMPTY="No snapshots to delete in config [%s]"
 fi
 
 print_help() {
@@ -163,7 +167,6 @@ if [[ $CONFIG_COUNT -eq 0 ]]; then
     exit 1
 fi
 
-# 处理 -lc: 仅仅列出配置名称
 if [[ $OPT_LIST_CONFIGS -eq 1 ]]; then
     for conf in "${!CONFIG_MAP[@]}"; do
         echo "$conf"
@@ -171,7 +174,6 @@ if [[ $OPT_LIST_CONFIGS -eq 1 ]]; then
     exit 0
 fi
 
-# 确定要操作的目标配置
 TARGETS=()
 if [[ -n "$OPT_CONFIG" ]]; then
     if [[ -z "${CONFIG_MAP[$OPT_CONFIG]:-}" ]]; then
@@ -180,7 +182,6 @@ if [[ -n "$OPT_CONFIG" ]]; then
     fi
     TARGETS=("$OPT_CONFIG")
 else
-    # 如果没指定配置，默认操作所有的配置
     TARGETS=("${!CONFIG_MAP[@]}")
 fi
 
@@ -188,11 +189,9 @@ fi
 # 5. 权限校验与自动修复 (延迟提权)
 # ==========================================
 for conf in "${TARGETS[@]}"; do
-    # 尝试不用 root 获取一次 config 信息
     if ! snapper -c "$conf" get-config >/dev/null 2>&1; then
         notify_ok "$MSG_FIX_PERM_TITLE" "$(printf "$MSG_FIX_PERM_BODY" "$conf")"
         if command -v pkexec >/dev/null 2>&1; then
-            # 自动提权修改 snapper 配置，允许 wheel 组免密操作快照
             if ! pkexec snapper -c "$conf" set-config ALLOW_GROUPS="wheel" NUMBER_LIMIT=10 NUMBER_MIN_AGE=0 SYNC_ACL="yes"; then
                 notify_err "$MSG_FIX_PERM_FAIL"
                 exit 1
@@ -210,7 +209,6 @@ done
 # 动作: 列出快照
 if [[ $OPT_LIST -eq 1 ]]; then
     LIST_TARGETS=("${TARGETS[@]}")
-    # 如果没有指定 -c，为了防止刷屏，默认只列出 root 配置（如果存在）
     if [[ -z "$OPT_CONFIG" && -n "${CONFIG_MAP["root"]:-}" ]]; then
         LIST_TARGETS=("root")
     fi
@@ -225,20 +223,46 @@ fi
 
 # 动作: 删除指定快照
 if [[ ${#OPT_DELETE[@]} -gt 0 ]]; then
-    # 删除快照时，如果没指定 -c，为了安全起见默认只操作 root 配置
     DEL_TARGET="${OPT_CONFIG:-root}"
     if [[ -z "${CONFIG_MAP[$DEL_TARGET]:-}" ]]; then
         notify_err "$MSG_ERR_BADCONF" "$DEL_TARGET"
         exit 1
     fi
     
-    for snap_id in "${OPT_DELETE[@]}"; do
-        if snapper -c "$DEL_TARGET" delete "$snap_id"; then
-            notify_ok "$MSG_DEL_OK" "$(printf "$MSG_DEL_BODY" "$snap_id" "$DEL_TARGET")"
-        else
-            notify_err "$MSG_DEL_FAIL (ID: $snap_id)"
+    # 检查是否包含全选指令 all
+    is_delete_all=0
+    for id in "${OPT_DELETE[@]}"; do
+        # 兼容大小写 (all, ALL, All)
+        if [[ "${id,,}" == "all" ]]; then
+            is_delete_all=1
+            break
         fi
     done
+
+    if [[ $is_delete_all -eq 1 ]]; then
+        # 提取所有快照 ID（不包括表头和代表系统的 0 号）
+        all_ids=$(snapper -c "$DEL_TARGET" list 2>/dev/null | awk -F' *[|│] *' 'NR>2 && $1 ~ /^[0-9]+$/ && $1 != "0" {print $1}')
+        
+        if [[ -n "$all_ids" ]]; then
+            # 不加引号，让 Bash 自动将换行拆分为参数传给 snapper
+            if snapper -c "$DEL_TARGET" delete $all_ids; then
+                notify_ok "$MSG_DEL_OK" "$(printf "$MSG_DEL_ALL_BODY" "$DEL_TARGET")"
+            else
+                notify_err "$MSG_DEL_FAIL (All)"
+            fi
+        else
+            echo "$(printf "$MSG_DEL_EMPTY" "$DEL_TARGET")"
+        fi
+    else
+        # 逐个删除指定 ID
+        for snap_id in "${OPT_DELETE[@]}"; do
+            if snapper -c "$DEL_TARGET" delete "$snap_id"; then
+                notify_ok "$MSG_DEL_OK" "$(printf "$MSG_DEL_BODY" "$snap_id" "$DEL_TARGET")"
+            else
+                notify_err "$MSG_DEL_FAIL (ID: $snap_id)"
+            fi
+        done
+    fi
     exit 0
 fi
 
@@ -249,12 +273,10 @@ SAVE_SUCCESS=1
 CLEAN_SUCCESS=1
 
 for conf in "${TARGETS[@]}"; do
-    # 1. 创建快照 (交由 dbus 通信，不需要 sudo)
     if ! snapper -c "$conf" create --description "$OPT_DESC" --cleanup-algorithm number; then
         SAVE_SUCCESS=0
     fi
     
-    # 2. 清理旧快照
     if ! snapper -c "$conf" cleanup number >/dev/null 2>&1; then
         CLEAN_SUCCESS=0
     fi
