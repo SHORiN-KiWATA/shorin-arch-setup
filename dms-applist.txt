@@ -60,5 +60,6 @@ python-pywalfox
 firefox
 bazaar
 nwg-look
+hyprland
 # --- Shorin 专属自定义脚本/工具 ---
 shorin-contrib-git
