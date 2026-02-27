@@ -59,6 +59,5 @@ adw-gtk-theme
 python-pywalfox
 firefox
 bazaar
-nwg-look
 # --- Shorin 专属自定义脚本/工具 ---
 shorin-contrib-git
