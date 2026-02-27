@@ -90,8 +90,31 @@ AUR_HELPER="paru"
 # --- Installation: Core Components ---
 section "Shorin Hyprniri" "Core Components & Utilities"
 
-exe as_user "$AUR_HELPER" -Rns --noconfirm hyprcursor hyprgraphics hyprland hyprland-guiutils hyprlang hyprlock hyprpicker hyprtoolkit hyprutils xdg-desktop-portal-hyprland
-
+# 清理可能冲突的依赖
+declare -a target_pkgs=(
+    "hyprcursor"
+    "hyprgraphics"
+    "hyprland"
+    "hyprland-guiutils"
+    "hyprlang"
+    "hyprlock"
+    "hyprpicker"
+    "hyprtoolkit"
+    "hyprutils"
+    "xdg-desktop-portal-hyprland"
+)
+# 2. 过滤出系统中实际已安装的包
+declare -a installed_pkgs=()
+for pkg in "${target_pkgs[@]}"; do
+    # 使用 pacman -Qq 检查是否安装，抑制输出以保持终端干净
+    if pacman -Qq "$pkg" >/dev/null 2>&1; then
+        installed_pkgs+=("$pkg")
+    fi
+done
+# 3. 只有当存在已安装的包时，才执行卸载命令
+if [[ ${#installed_pkgs[@]} -gt 0 ]]; then
+    exe as_user "$AUR_HELPER" -Rns --noconfirm "${installed_pkgs[@]}"
+fi
 
 log "Installing Hyprland core components..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
