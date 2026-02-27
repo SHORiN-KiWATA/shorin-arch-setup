@@ -11,6 +11,7 @@
 # 5. 清空用户回收站 (Trash) 和缩略图缓存 (Thumbnails)
 # 6. 移除未使用的 Flatpak 运行时
 # 7. 清理截图与录屏目录 (Screenshots & wf-recorder)
+# 8. 清理旧 Btrfs 快照与 btrfs-assistant 的冗余备份子卷
 # ===============================================================
 
 set -euo pipefail
@@ -71,6 +72,7 @@ MSG_DESC_3       | 3. Vacuum systemd journal logs (keep 2 weeks)   | 3. 清理 s
 MSG_DESC_4       | 4. Empty Trash, thumbnail and clipboard cache   | 4. 清空回收站、缩略图和剪贴板缓存
 MSG_DESC_5       | 5. Remove unused Flatpak runtimes               | 5. 删除未使用的 Flatpak 运行时
 MSG_DESC_6       | 6. Clean screenshots and screen records         | 6. 清理截图和屏幕录制文件
+MSG_DESC_7       | 7. Clean old btrfs snapshots & backup subvols   | 7. 清理旧 Btrfs 快照与冗余备份子卷
 MSG_ASK_CONFIRM  | Continue with cleanup? [Y/n]                    | 是否继续执行清理？[Y/n]
 MSG_ABORT        | Cleanup cancelled by user.                      | 用户已取消清理。
 MSG_DONE         | System cleanup completed!                       | 系统清理完成！
@@ -95,6 +97,12 @@ MSG_STEP_FLATPAK | Checking for unused Flatpak runtimes...         | 正在检�
 MSG_FLATPAK_DONE | Unused Flatpak runtimes removed.                | 未使用的 Flatpak 运行时已删除。
 MSG_STEP_MEDIA   | Cleaning screenshots and screen records...      | 正在清理截图和屏幕录制文件...
 MSG_MEDIA_DONE   | Screenshots and screen records cleaned.         | 截图和录屏文件已清理。
+
+MSG_STEP_SNAP    | Cleaning old btrfs snapshots...                 | 正在清理超出配额的旧 Btrfs 快照...
+MSG_SNAP_DONE    | Old snapshots cleaned.                          | 旧快照已按配额清理。
+MSG_STEP_BTRFS_BA| Checking btrfs-assistant backup subvolumes...   | 正在检查 btrfs-assistant 冗余备份子卷...
+MSG_BTRFS_BA_DONE| Backup subvolumes cleaned.                      | 冗余备份子卷已删除。
+MSG_BTRFS_BA_NONE| No redundant backup subvolumes found.           | 未发现冗余备份子卷。
 '
 
 while IFS='|' read -r v e c; do
@@ -142,6 +150,7 @@ if [ "$SKIP_CONFIRM" = false ]; then
     printf "  %s\n" "$MSG_DESC_4"
     printf "  %s\n" "$MSG_DESC_5"
     printf "  %s\n" "$MSG_DESC_6"
+    printf "  %s\n" "$MSG_DESC_7"
     
     printf "\n${H_YELLOW}%s ${NC}" "$MSG_ASK_CONFIRM"
     read -r confirm
@@ -242,7 +251,6 @@ RECORDS_DIR="$HOME/Videos/wf-recorder"
 MEDIA_CLEANED=false
 
 if [ -d "$SCREENSHOTS_DIR" ]; then
-    # 使用 mindepth 1 删除目录内的所有文件和子目录，保留父目录本身
     find "$SCREENSHOTS_DIR" -mindepth 1 -delete 2>/dev/null || true
     MEDIA_CLEANED=true
 fi
@@ -254,6 +262,51 @@ fi
 
 if [ "$MEDIA_CLEANED" = true ]; then
     _success "$MSG_MEDIA_DONE"
+fi
+
+# [8] Btrfs Snapshots & Backup Subvolumes
+if command -v btrfs >/dev/null 2>&1 && findmnt -f -n -o FSTYPE / | grep -q btrfs; then
+    # 清理 Snapper 留下的多余快照 (触发配额清理)
+    if command -v snapper >/dev/null 2>&1; then
+        _info "$MSG_STEP_SNAP"
+        while IFS= read -r conf; do
+            [[ -z "$conf" ]] && continue
+            sudo snapper -c "$conf" cleanup number >/dev/null 2>&1 || true
+            sudo snapper -c "$conf" cleanup timeline >/dev/null 2>&1 || true
+        done < <(snapper list-configs 2>/dev/null | awk 'NR>2 {print $1}')
+        _success "$MSG_SNAP_DONE"
+    fi
+
+    # 清理 btrfs-assistant 回档产生的冗余备份子卷
+    _info "$MSG_STEP_BTRFS_BA"
+    BTRFS_ROOT_DEV=$(findmnt -n -o SOURCE / | cut -d'[' -f1)
+    MNT_DIR=$(mktemp -d /tmp/btrfs_clean_XXXX)
+    
+    # 挂载真实的 Btrfs Top-Level 以查看所有子卷
+    if sudo mount -t btrfs -o subvolid=5 "$BTRFS_ROOT_DEV" "$MNT_DIR" 2>/dev/null; then
+        found_backups=0
+        
+        # 寻找类似 @_backup_2026-02-27T04:16:38 的子卷
+        while IFS= read -r -d '' subvol_dir; do
+            # 确认该目录确实是一个 Btrfs 子卷
+            if sudo btrfs subvolume show "$subvol_dir" >/dev/null 2>&1; then
+                sudo btrfs subvolume delete "$subvol_dir" >/dev/null 2>&1
+                printf "  Removed Backup Subvolume: %s\n" "$(basename "$subvol_dir")"
+                found_backups=1
+            fi
+        done < <(find "$MNT_DIR" -maxdepth 1 -type d -name "*_backup_20*" -print0 2>/dev/null)
+        
+        sudo umount "$MNT_DIR" || true
+        rmdir "$MNT_DIR" || true
+        
+        if [[ $found_backups -eq 1 ]]; then
+            _success "$MSG_BTRFS_BA_DONE"
+        else
+            _success "$MSG_BTRFS_BA_NONE"
+        fi
+    else
+        rmdir "$MNT_DIR" || true
+    fi
 fi
 
 printf "\n"
