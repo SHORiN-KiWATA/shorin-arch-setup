@@ -154,7 +154,7 @@ REAL_HOME=$(getent passwd "$MY_USERNAME" | cut -d: -f6)
 
 # 强制以该用户身份运行更新命令
 # 注意：使用 env 设置 HOME 和 LANG 确保目录名为英文 (arch 习惯)
-if exe runuser -u "$MY_USERNAME" -- env LANG=en_US.UTF-8 HOME="$REAL_HOME" xdg-user-dirs-update --force; then
+if exe runuser -u "$MY_USERNAME" -- env LANGUAGE=en_US.UTF-8 LANG=en_US.UTF-8 HOME="$REAL_HOME" xdg-user-dirs-update --force; then
     success "Directories created in $REAL_HOME."
 else
     warn "Failed to generate standard directories."
