@@ -33,11 +33,6 @@ export INFO="${H_BLUE}ℹ${NC}"
 export WARN="${H_YELLOW}⚠${NC}"
 export ARROW="${H_CYAN}➜${NC}"
 
-# 日志文件
-export TEMP_LOG_FILE="/tmp/log-shorin-arch-setup.txt"
-[ ! -f "$TEMP_LOG_FILE" ] && touch "$TEMP_LOG_FILE" && chmod 666 "$TEMP_LOG_FILE"
-
-# --- 2. 基础工具 ---
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
@@ -45,7 +40,12 @@ check_root() {
         exit 1
     fi
 }
+check_root
+# 日志文件
+export TEMP_LOG_FILE="/tmp/log-shorin-arch-setup.txt"
+[ ! -f "$TEMP_LOG_FILE" ] && touch "$TEMP_LOG_FILE" && chmod 666 "$TEMP_LOG_FILE"
 
+# --- 2. 基础工具 ---
 write_log() {
     # Strip ANSI colors for log file
     local clean_msg=$(echo -e "$2" | sed 's/\x1b\[[0-9;]*m//g')
