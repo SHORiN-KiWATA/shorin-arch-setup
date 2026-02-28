@@ -203,6 +203,7 @@ fi
 section "Config" "Desktop Cleanup"
 log "Hiding unnecessary .desktop icons..."
 run_hide_desktop_file
+chown -R "$TARGET_USER:" "$HOME_DIR/.local/share"
 
 log "Copying tutorial files..."
 force_copy "$PARENT_DIR/resources/必看-shoirn-hyprniri使用方法.txt" "$HOME_DIR"
