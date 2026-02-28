@@ -2,6 +2,14 @@
 如果出现了两个任务栏可以运行以下命令关掉：
 systemctl --user disable --now  dms
 
+我没有装显示管理器（DM），所以注销之后是纯黑的TTY，运行niri-session命令可以打开niri。
+！！！如果你要装显示管理器请先取消niri自动启动
+systemctl --user disable niri-autostart 
+
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
+
 【重要按键】
 super+T 打开终端
 super+E 打开文档管理器
@@ -26,7 +34,8 @@ super+左键 移动窗口
 super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，设置一张壁纸。我在Wallpapers里存放了一张，可以直接使用。然后开启“带模糊效果的壁纸复本”，这是overview的模糊壁纸，super+G或者super+O打开overview就可以看到。
 
 2.【颜色更随壁纸变化】【gtk主题和qt主题】
-选择“主题与配色”，点击auto，然后选择一个自己喜欢的配色方案。然后到该页面底端，点击“应用GTK配色”，然后重启电脑，或者super+shift+E退出niri后重新打开niri。
+选择“主题与配色”，点击auto，然后选择一个自己喜欢的配色方案。然后到该页面底端，点击“应用GTK配色”。然后打开GTK Setting软件，选择使用adw-gte3-dark。最后重启电脑，或者super+shift+E退出niri后用niri-session命令重新打开niri。
+
 
 3.【Firefox颜色同步】
 打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
@@ -39,7 +48,7 @@ super+Z打开程序菜单，打开dms设置。进入“个性化-->壁纸”，�
 
 
 【输入法配置】
-super+空格切换输入法
+super+空格切换输入法。第一次使用输入法有可能无法使用，重启一下输入法可以解决。
 f4可以打开菜单。如果出现卡A的情况可以试试按右shift解决。
 
 【实用命令】
@@ -137,6 +146,8 @@ Mod + Ctrl + Down  / J  向下移动窗口
 Mod + Ctrl + Up    / K  向上移动窗口
 Mod + A                 向左移动窗口 (列之间)
 Mod + D                 向右移动窗口 (列之间)
+Mod + W                 向上移动窗口 
+Mod + S                 向下移动窗口 
 
 > 列操作 (特殊)
 Mod + Ctrl + A          向左移动列

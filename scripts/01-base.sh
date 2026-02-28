@@ -65,7 +65,7 @@ fi
 section "Step 3/6" "Base Fonts"
 
 log "Installing adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts , ttf-liberation, emoji..."
-exe pacman -S --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts ttf-liberation noto-fonts-emoji ttf-jetbrains-mono-nerd
+exe pacman -S --noconfirm --needed adobe-source-han-serif-cn-fonts adobe-source-han-sans-cn-fonts ttf-liberation noto-fonts-emoji ttf-jetbrains-mono-nerd otf-font-awesome noto-fonts noto-fonts-cjk
 log "Base fonts installed."
 
 log "Installing terminus-font..."
@@ -73,19 +73,19 @@ log "Installing terminus-font..."
 exe pacman -S --noconfirm --needed terminus-font
 
 log "Setting font for current session..."
-exe setfont ter-v20n
+exe setfont ter-v28n
 
 log "Configuring permanent vconsole font..."
 if [ -f /etc/vconsole.conf ] && grep -q "^FONT=" /etc/vconsole.conf; then
-    exe sed -i 's/^FONT=.*/FONT=ter-v20n/' /etc/vconsole.conf
+    exe sed -i 's/^FONT=.*/FONT=ter-v28n/' /etc/vconsole.conf
 else
-    echo "FONT=ter-v20n" >> /etc/vconsole.conf
+    echo "FONT=ter-v28n" >> /etc/vconsole.conf
 fi
 
 log "Restarting systemd-vconsole-setup..."
 exe systemctl restart systemd-vconsole-setup
 
-success "TTY font configured (ter-v20n)."
+success "TTY font configured (ter-v28n)."
 # ------------------------------------------------------------------------------
 # 4. Configure archlinuxcn Repository
 # ------------------------------------------------------------------------------
@@ -136,8 +136,13 @@ if pacman -Qi networkmanager &> /dev/null; then
     if [ ! -d /etc/NetworkManager/conf.d ]; then
         mkdir -p /etc/NetworkManager/conf.d
     fi
+    if [ -f /etc/NetworkManager/conf.d/wifi_backend.conf ];then 
+        rm /etc/NetworkManager/conf.d/wifi_backend.conf
+    fi
+    if [ ! -f /etc/NetworkManager/conf.d/iwd.conf  ];then
     echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
     rm -rfv /etc/NetworkManager/system-connections/*
+    fi
     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
     success "Network backend configured (iwd)."
 else

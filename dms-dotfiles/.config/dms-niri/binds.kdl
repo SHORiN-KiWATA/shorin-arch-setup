@@ -10,8 +10,8 @@ binds {
 
     // alt+tab切换窗口
     Mod+F1 hotkey-overlay-title="开关输入法 Toggle fcitx" {spawn-sh "pkill fcitx5 || fcitx5 ";}
-    Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "~/.local/bin/quicksave";}
-    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "~/.local/bin/quickload";}
+    Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "quicksave";}
+    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "quickload";}
 
     // 临时开一个浮动终端
     Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "kitty" "--single-instance" "--class" "quickterminal";}
@@ -64,12 +64,9 @@ binds {
     // super+ctrl+a/d 向左/右移动列
     Mod+Ctrl+A  { move-column-left; }
     Mod+Ctrl+D { move-column-right; }
-    // mod+S/W 当前列内上下切换聚焦，如果到顶了会切换工作区
-    Mod+S  { focus-window-or-workspace-down; }
-    Mod+W    { focus-window-or-workspace-up; }
-    // mod+ctrl+S/W 上下切换窗口
-    Mod+Ctrl+S  { move-window-down; }
-    Mod+Ctrl+W    { move-window-up; }
+    // mod+S/W 上下切换窗口
+    Mod+S { move-window-down; }
+    Mod+W { move-window-up; }
     
     // 切换到第一个colume
     Mod+Home { focus-column-first; }
@@ -216,13 +213,13 @@ binds {
     // 剪贴板
     Mod+Alt+V hotkey-overlay-title="剪贴板 Clipboard" {spawn "dms" "ipc" "call" "clipboard" "toggle";} 
     // 记事本
-    Mod+Shift+N hotkey-overlay-title="Notepad" { spawn "dms" "ipc" "call" "notepad" "toggle"; }
+    Mod+Shift+N hotkey-overlay-title="记事本 Notepad" { spawn "dms" "ipc" "call" "notepad" "toggle"; }
     // 锁屏
-    Mod+Alt+L hotkey-overlay-title="Lock Screen" { spawn "dms" "ipc" "call" "lock" "lock"; }
+    Mod+Alt+L hotkey-overlay-title="锁屏 Lock Screen" { spawn "dms" "ipc" "call" "lock" "lock"; }
     // 锁屏、关闭显示器、休眠
     Mod+Alt+P hotkey-overlay-title="挂起 Suspend" { spawn-sh "niri msg action power-off-monitors && dms ipc call lock lock && systemctl suspend";}
     // Ctrl+Alt+Del 呼出任务管理器
-    Ctrl+Alt+Delete hotkey-overlay-title="Task Manager" { spawn "dms" "ipc" "call" "processlist" "focusOrToggle"; }
+    Ctrl+Alt+Delete hotkey-overlay-title="任务管理器 Task Manager" { spawn "dms" "ipc" "call" "processlist" "focusOrToggle"; }
     // 创建窗口规则 (Mod+Shift+W)
     Mod+Shift+W hotkey-overlay-title="Create window rule" { spawn "dms" "ipc" "call" "window-rules" "toggle"; }
 

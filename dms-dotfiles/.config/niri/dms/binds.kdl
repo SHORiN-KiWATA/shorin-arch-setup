@@ -10,8 +10,8 @@ binds {
 
     // alt+tab切换窗口
     Mod+F1 hotkey-overlay-title="开关输入法 Toggle fcitx" {spawn-sh "pkill fcitx5 || fcitx5 ";}
-    Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "~/.local/bin/quicksave";}
-    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "~/.local/bin/quickload";}
+    Mod+F5 hotkey-overlay-title="快速存档 Quick save" {spawn "quicksave";}
+    Mod+F8 hotkey-overlay-title="快速读档 Quick load" {spawn "quickload";}
 
     // 临时开一个浮动终端
     Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "kitty" "--single-instance" "--class" "quickterminal";}
@@ -64,12 +64,9 @@ binds {
     // super+ctrl+a/d 向左/右移动列
     Mod+Ctrl+A  { move-column-left; }
     Mod+Ctrl+D { move-column-right; }
-    // mod+S/W 当前列内上下切换聚焦，如果到顶了会切换工作区
-    Mod+S  { focus-window-or-workspace-down; }
-    Mod+W    { focus-window-or-workspace-up; }
-    // mod+ctrl+S/W 上下切换窗口
-    Mod+Ctrl+S  { move-window-down; }
-    Mod+Ctrl+W    { move-window-up; }
+    // mod+S/W 上下切换窗口
+    Mod+S { move-window-down; }
+    Mod+W { move-window-up; }
     
     // 切换到第一个colume
     Mod+Home { focus-column-first; }

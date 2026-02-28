@@ -23,7 +23,6 @@ force_copy() {
     fi
 
     if [[ -d "${src%/}" ]]; then
-
         (cd "$src" && find . -type d) | while read -r d; do
             as_user rm -f "$target_dir/$d" 2>/dev/null
         done
@@ -31,6 +30,7 @@ force_copy() {
 
     exe as_user cp -rf "$src" "$target_dir"
 }
+
 # --- Identify User & DM Check ---
 log "Identifying target user..."
 DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
@@ -81,18 +81,57 @@ cleanup_sudo() {
 }
 trap cleanup_sudo EXIT INT TERM
 
+# ========================================================================
+#   exec 
+# ========================================================================
+
+AUR_HELPER="paru"
+
 # --- Installation: Core Components ---
-AUR_HELPER="yay"
-section "Shorin DMS" "Core Components"
-log "Installing core shell components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats
+section "Shorin Hyprniri" "Core Components & Utilities"
+
+exe as_user "$AUR_HELPER" -Rns --noconfirm hyprcursor hyprgraphics hyprland hyprland-guiutils hyprlang hyprlock hyprpicker hyprtoolkit hyprutils xdg-desktop-portal-hyprland
+
+
+log "Installing Hyprland core components..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
+
+log "Installing terminal utilities..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg 
+
+log "Installing file manager and dependencies..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader
+
+log "Installing screenshot and screencast tools..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed satty grim slurp xdg-desktop-portal-hyprland
+
+# --- Environment Configurations ---
+section "Shorin Hyprniri" "Environment Configuration"
+
+log "Configuring default terminal and templates..."
+exe ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
+
+as_user mkdir -p "$HOME_DIR/Templates"
+as_user touch "$HOME_DIR/Templates/new" "$HOME_DIR/Templates/new.sh"
+if [[ -f "$HOME_DIR/Templates/new.sh" ]] && grep -q "#!" "$HOME_DIR/Templates/new.sh"; then
+    log "Template new.sh already initialized."
+else
+    as_user bash -c "echo '#!/usr/bin/env bash' >> '$HOME_DIR/Templates/new.sh'"
+fi
+chown -R "$TARGET_USER:" "$HOME_DIR/Templates"
+
+log "Applying file manager bookmarks..."
+as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
 
 # --- Dotfiles & Wallpapers ---
-section "Shorin DMS" "Dotfiles & Wallpapers"
-log "Deploying user dotfiles..."
-DOTFILES_SRC="$PARENT_DIR/dms-dotfiles"
-chown -R "$TARGET_USER:" "$DOTFILES_SRC"
-force_copy "$DOTFILES_SRC/." "$HOME_DIR"
+section "Shorin Hyprniri" "Dotfiles & Wallpapers"
+
+log "Deploying user dotfiles from repository..."
+DOTFILES_REPO_LINK="https://github.com/SHORiN-KiWATA/shorin-dms-hyprniri.git"
+exe git clone --depth 1 "$DOTFILES_REPO_LINK" "$PARENT_DIR/shorin-dms-hyprniri-dotfiles"
+chown -R "$TARGET_USER:" "$PARENT_DIR/shorin-dms-hyprniri-dotfiles"
+force_copy "$PARENT_DIR/shorin-dms-hyprniri-dotfiles/dotfiles/." "$HOME_DIR"
+as_user shorin link
 
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
@@ -101,33 +140,24 @@ chown -R "$TARGET_USER:" "$WALLPAPER_SOURCE_DIR"
 as_user mkdir -p "$WALLPAPER_DIR"
 force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 
-# --- File Manager & Terminal Setup ---
-section "Shorin DMS" "File Manager & Terminal"
+# --- Browser Setup ---
+section "Shorin Hyprniri" "Browser Setup"
 
-log "Installing Nautilus, Thunar and dependencies..."
-exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
+log "Installing Firefox and Pywalfox..."
+exe as_user "$AUR_HELPER" -S --noconfirm --needed firefox python-pywalfox
 
-log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fuzzel wf-recorder ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git
-as_user shorin link
-
-log "Configuring default terminal and templates..."
-ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
-as_user mkdir -p "$HOME_DIR/Templates"
-as_user touch "$HOME_DIR/Templates/new" "$HOME_DIR/Templates/new.sh"
-as_user bash -c "echo '#!/usr/bin/env bash' >> '$HOME_DIR/Templates/new.sh'"
-chown -R "$TARGET_USER:" "$HOME_DIR/Templates"
-
-log "Applying Nautilus bugfixes and bookmarks..."
-configure_nautilus_user
-as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
+log "Configuring Firefox Pywalfox extension policy..."
+POL_DIR="/etc/firefox/policies"
+exe mkdir -p "$POL_DIR"
+echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' >"$POL_DIR/policies.json"
+exe chmod 755 "$POL_DIR"
+exe chmod 644 "$POL_DIR/policies.json"
 
 # --- Flatpak & Theme Integration ---
-section "Shorin DMS" "Flatpak & Theme Integration"
+section "Shorin Hyprniri" "Flatpak & Theme Integration"
 
 if command -v flatpak &>/dev/null; then
-    log "Configuring Flatpak overrides and themes..."
+    log "Configuring Flatpak overrides and theme integrations..."
     exe as_user "$AUR_HELPER" -S --noconfirm --needed bazaar
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
@@ -136,6 +166,8 @@ if command -v flatpak &>/dev/null; then
     as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
     as_user flatpak override --user --filesystem=xdg-config/fontconfig
     as_user ln -sf /usr/share/themes "$HOME_DIR/.local/share/themes"
+else
+    warn "Flatpak is not installed. Skipping overrides."
 fi
 
 
@@ -144,55 +176,46 @@ if command -v kitty &>/dev/null; then
 exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
 fi
 
-log "Installing theme components and browser..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox nwg-look
-
-log "Configuring Firefox Pywalfox policy..."
-POL_DIR="/etc/firefox/policies"
-exe mkdir -p "$POL_DIR"
-echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' >"$POL_DIR/policies.json"
-exe chmod 755 "$POL_DIR"
-exe chmod 644 "$POL_DIR/policies.json"
-
 # --- Desktop Cleanup & Tutorials ---
 section "Config" "Desktop Cleanup"
 log "Hiding unnecessary .desktop icons..."
 run_hide_desktop_file
 
 log "Copying tutorial files..."
-force_copy "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
+force_copy "$PARENT_DIR/resources/必看-shoirn-hyprniri使用方法.txt" "$HOME_DIR"
 
-# niri blur toggle 脚本
- curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+# ========================================================================
+#   exec-end 
+# ========================================================================
 
 # --- Finalization & Auto-Login ---
 section "Final" "Auto-Login & Cleanup"
 rm -f "$SUDO_TEMP_FILE"
 
 SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/niri-autostart.service"
-LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+SVC_FILE="$SVC_DIR/hyprland-autostart.service"
+LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
 
 if [ "$SKIP_AUTOLOGIN" = true ]; then
     log "Auto-login skipped."
     as_user rm -f "$LINK" "$SVC_FILE"
 else
-    log "Configuring TTY Auto-login for Niri..."
+    log "Configuring TTY Auto-login for Hyprland..."
     mkdir -p "/etc/systemd/system/getty@tty1.service.d"
     echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
     as_user mkdir -p "$(dirname "$LINK")"
     cat <<EOT >"$SVC_FILE"
 [Unit]
-Description=Niri Session Autostart
+Description=Hyprland Session Autostart
 After=graphical-session-pre.target
 [Service]
-ExecStart=/usr/bin/niri-session
+ExecStart=/usr/bin/start-hyprland
 Restart=on-failure
 [Install]
 WantedBy=default.target
 EOT
-    as_user ln -sf "../niri-autostart.service" "$LINK"
+    as_user ln -sf "../hyprland-autostart.service" "$LINK"
     chown -R "$TARGET_USER" "$SVC_DIR"
     success "Auto-login enabled successfully."
 fi

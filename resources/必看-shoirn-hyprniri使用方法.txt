@@ -1,0 +1,35 @@
+
+
+如果出现了两个任务栏可以运行以下命令关掉：
+systemctl --user disable --now  dms
+
+我没有装显示管理器（DM），所以注销之后是纯黑的TTY，运行start-hyprland命令可以打开hyprland。
+！！！如果你要装显示管理器请先取消hyprland的自动启动
+systemctl --user disable hyprland-autostart 
+
+一些必要的手动设置
+【主题同步】super+z打开程序菜单选择dms设置。选择一张喜欢的壁纸（壁纸存放在~/Pictures/Wallpapers），然后在“主题与配色”界面选择“自动”，在页面底端点击应用gtk主题。打开GTK Settings，设置使用adw-gtk3-dark主题。
+
+【Firefox颜色同步】
+打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
+
+【vscode颜色同步】
+在vscode里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
+
+
+super+T 打开终端
+super+E 打开文档管理器
+super+Z 开始菜单
+super+Q 关闭窗口
+super+R 按预设切换 宽度
+super+F 最大化
+Super+alt+F 全屏
+super+alt+A 开关剪贴板
+super+右键 调整窗口大小
+super+左键 移动窗口
+super+V 切换浮动窗口
+具体按键可以看~/.config/hypr/hyprland.conf中的bind相关内容，重要键位有中文注释。
+
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
