@@ -117,7 +117,7 @@ if [[ ${#installed_pkgs[@]} -gt 0 ]]; then
 fi
 
 log "Installing Hyprland core components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland-git quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
+exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
 
 log "Installing terminal utilities..."
 exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg 
