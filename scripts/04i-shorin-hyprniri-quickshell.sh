@@ -92,16 +92,16 @@ section "Shorin Hyprniri" "Core Components & Utilities"
 
 # 清理可能冲突的依赖
 declare -a target_pkgs=(
-    "hyprcursor"
-    "hyprgraphics"
-    "hyprland"
-    "hyprland-guiutils"
-    "hyprlang"
-    "hyprlock"
-    "hyprpicker"
-    "hyprtoolkit"
-    "hyprutils"
-    "xdg-desktop-portal-hyprland"
+    "hyprcursor-git"
+    "hyprgraphics-git"
+    "hyprland-git"
+    "hyprland-guiutils-git"
+    "hyprlang-git"
+    "hyprlock-git"
+    "hyprpicker-git"
+    "hyprtoolkit-git"
+    "hyprutils-git"
+    "xdg-desktop-portal-hyprland-git"
 )
 # 2. 过滤出系统中实际已安装的包
 declare -a installed_pkgs=()
