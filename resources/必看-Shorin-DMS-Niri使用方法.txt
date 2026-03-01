@@ -17,17 +17,20 @@ super+Z 开始菜单
 super+Q 关闭窗口
 super+R 按预设切换 宽度
 super+F 最大化
-super+G/O 切换overview（在overview的时候可以左键移动窗口，滚轮上下切换工作区）
-super+alt+A 开关剪贴板
-
 Super+alt+F 全屏
-super+H/L 左右切换聚焦
-super+滚轮 左右切换聚焦
-super+A/D 左右移动窗口（合并列）
-super+U/i 上下切换工作区
+super+G/O 切换overview（在overview的时候可以左键移动窗口，滚轮上下切换工作区）
+super+alt+A 截图（或者用printscreen键）
+super+alt+V 开关剪贴板
 super+V 切换浮动窗口
+suepr+N 切换浮动窗口聚焦
+
+super+H/L 左右切换聚焦
+super+U/i 上下切换工作区
 super+右键 调整窗口大小
 super+左键 移动窗口
+super+滚轮 左右切换聚焦
+super+Shift+滚轮 上下切换工作区
+super+A/D 左右移动窗口（合并列）
 
 有一些必要设置需要手动完成
 1.【overview壁纸】

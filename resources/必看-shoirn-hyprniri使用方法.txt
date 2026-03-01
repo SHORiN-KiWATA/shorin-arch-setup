@@ -24,7 +24,8 @@ super+Q 关闭窗口
 super+R 按预设切换 宽度
 super+F 最大化
 Super+alt+F 全屏
-super+alt+A 开关剪贴板
+super+alt+V 开关剪贴板
+super+alt+A 截图
 super+右键 调整窗口大小
 super+左键 移动窗口
 super+V 切换浮动窗口
