@@ -12,7 +12,8 @@ else
 fi
 
 check_root
-
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST" # 确保每次运行生成全新的订单
 force_copy() {
     local src="$1"
     local target_dir="$2"
@@ -82,10 +83,13 @@ cleanup_sudo() {
 trap cleanup_sudo EXIT INT TERM
 
 # --- Installation: Core Components ---
-AUR_HELPER="yay"
+AUR_HELPER="paru"
 section "Shorin DMS" "Core Components"
 log "Installing core shell components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats
+
+CORE_PKGS="quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats"
+echo "$CORE_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
 
 # --- Dotfiles & Wallpapers ---
 section "Shorin DMS" "Dotfiles & Wallpapers"
@@ -105,11 +109,22 @@ force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 section "Shorin DMS" "File Manager & Terminal"
 
 log "Installing Nautilus, Thunar and dependencies..."
-exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
+FM_PKGS1="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
+FM_PKGS2="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf"
+
+echo "$FM_PKGS1" >> "$VERIFY_LIST"
+echo "$FM_PKGS2" >> "$VERIFY_LIST"
+
+exe pacman -S --noconfirm --needed $FM_PKGS1
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $FM_PKGS2
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fuzzel wf-recorder ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git
+TERM_PKGS="fuzzel wf-recorder ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git"
+
+echo "$TERM_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
+
+# shorin-contrib
 as_user shorin link
 
 log "Configuring default terminal and templates..."
@@ -128,6 +143,7 @@ section "Shorin DMS" "Flatpak & Theme Integration"
 
 if command -v flatpak &>/dev/null; then
     log "Configuring Flatpak overrides and themes..."
+    echo "bazaar" >> "$VERIFY_LIST"
     exe as_user "$AUR_HELPER" -S --noconfirm --needed bazaar
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
@@ -145,7 +161,9 @@ exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
 fi
 
 log "Installing theme components and browser..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed matugen adw-gtk-theme python-pywalfox firefox nwg-look
+THEME_PKGS="matugen adw-gtk-theme python-pywalfox firefox nwg-look"
+echo "$THEME_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $THEME_PKGS
 
 log "Configuring Firefox Pywalfox policy..."
 POL_DIR="/etc/firefox/policies"

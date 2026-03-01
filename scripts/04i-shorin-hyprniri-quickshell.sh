@@ -13,6 +13,12 @@ fi
 
 check_root
 
+# ========================================================================
+#   初始化验证清单
+# ========================================================================
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
+
 force_copy() {
     local src="$1"
     local target_dir="$2"
@@ -117,16 +123,24 @@ if [[ ${#installed_pkgs[@]} -gt 0 ]]; then
 fi
 
 log "Installing Hyprland core components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
+CORE_PKGS="vulkan-headers hyprland quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist"
+echo "$CORE_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg 
+TERM_PKGS="fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg"
+echo "$TERM_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
 
 log "Installing file manager and dependencies..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader
+FM_PKGS="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader"
+echo "$FM_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $FM_PKGS
 
 log "Installing screenshot and screencast tools..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed satty grim slurp xdg-desktop-portal-hyprland
+SCREEN_PKGS="satty grim slurp xdg-desktop-portal-hyprland"
+echo "$SCREEN_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $SCREEN_PKGS
 
 # --- Environment Configurations ---
 section "Shorin Hyprniri" "Environment Configuration"
@@ -167,7 +181,9 @@ force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 section "Shorin Hyprniri" "Browser Setup"
 
 log "Installing Firefox and Pywalfox..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed firefox python-pywalfox
+BROWSER_PKGS="firefox python-pywalfox"
+echo "$BROWSER_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $BROWSER_PKGS
 
 log "Configuring Firefox Pywalfox extension policy..."
 POL_DIR="/etc/firefox/policies"
@@ -181,6 +197,7 @@ section "Shorin Hyprniri" "Flatpak & Theme Integration"
 
 if command -v flatpak &>/dev/null; then
     log "Configuring Flatpak overrides and theme integrations..."
+    echo "bazaar" >> "$VERIFY_LIST"
     exe as_user "$AUR_HELPER" -S --noconfirm --needed bazaar
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"

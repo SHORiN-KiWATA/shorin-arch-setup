@@ -101,6 +101,8 @@ except Exception:
 " "$target_key"
 }
 
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
 
 log "Installing DMS..."
 # ==============================================================================
@@ -289,7 +291,9 @@ section "Config" "file manager"
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     log "DMS niri detected, configuring nautilus"
-    exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
+    FM_PKGS="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
+    echo "$FM_PKGS" >> "$VERIFY_LIST"
+    exe pacman -S --noconfirm --needed $FM_PKGS    
     if pacman -Q | grep -q "kitty" && [[ ! -f /usr/bin/gnome-terminal || -L /usr/bin/gnome-terminal ]]; then
         ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
     fi
@@ -312,6 +316,7 @@ section "Config" "screenshare"
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     log "DMS niri detected, configuring xdg-desktop-portal"
+    echo "xdg-desktop-portal-gnome" >> "$VERIFY_LIST"
     exe pacman -S --noconfirm --needed xdg-desktop-portal-gnome
     if ! grep -q '/usr/lib/xdg-desktop-portal-gnome' "$DMS_NIRI_CONFIG_FILE"; then
         log "Configuring environment in niri config.kdl"
@@ -320,6 +325,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
 
 elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     log "DMS hyprland detected, configuring xdg-desktop-portal"
+    echo "xdg-desktop-portal-hyprland" >> "$VERIFY_LIST"
     exe pacman -S --noconfirm --needed xdg-desktop-portal-hyprland
     if ! grep -q '/usr/lib/xdg-desktop-portal-hyprland' "$DMS_HYPR_CONFIG_FILE"; then
         log "Configuring environment in hyprland.conf"
@@ -328,10 +334,10 @@ elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
 fi
 
 # ==============================================================================
-#  Validation Check: DMS & Core Components
+#  Validation Check: DMS & Core Components (Blackbox Audit)
 # ==============================================================================
 section "Config" "components validation"
-log "Verifying DMS and core components installation for autologin..."
+log "Verifying DMS and core components installation..."
 
 MISSING_COMPONENTS=()
 
@@ -343,11 +349,13 @@ if ! command -v quickshell &>/dev/null; then
 fi
 
 if [[ ${#MISSING_COMPONENTS[@]} -gt 0 ]]; then
-    warn "Validation failed! Missing components: ${MISSING_COMPONENTS[*]}"
-    warn "Setting SKIP_AUTOLOGIN=true to prevent booting into a broken environment."
-    SKIP_AUTOLOGIN="true"
+    error "FATAL: Official DMS installer failed to provide core binaries!"
+    warn "Missing core commands: ${MISSING_COMPONENTS[*]}"
+    write_log "FATAL" "DMS Blackbox installation failed. Missing: ${MISSING_COMPONENTS[*]}"
+    echo -e "   ${H_YELLOW}>>> Exiting installer. Please check upstream DankLinux repo or network. ${NC}"
+    exit 1 
 else
-    success "All core components validated successfully."
+    success "Blackbox components validated successfully."
 fi
 
 # ==============================================================================
@@ -486,7 +494,9 @@ configure_nautilus_user
 
 if command -v niri &>/dev/null; then
     log "Niri detected, installing Thunar and related plugins..."
-    exe as_user yay -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
+    NIRI_EXTRA="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf"
+    echo "$NIRI_EXTRA" >> "$VERIFY_LIST"
+    exe as_user yay -S --noconfirm --needed $NIRI_EXTRA
 fi
 
 force_copy "$DMS_DOTFILES_DIR/.config/Thunar" "$HOME_DIR/.config/"
@@ -498,7 +508,9 @@ as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
 sed -i '/match namespace="\^quickshell\$"/,/}/ s/place-within-backdrop[[:space:]]\+true/place-within-backdrop false/' "$DMS_NIRI_CONFIG_FILE"
 sed -i -E '/^\s*\/\//b; s/^(\s*)numlock/\1\/\/numlock/' "$DMS_NIRI_CONFIG_FILE"
 
-exe as_user yay -S --noconfirm --needed satty mpv kitty
+NIRI_MEDIA="satty mpv kitty"
+echo "$NIRI_MEDIA" >> "$VERIFY_LIST"
+exe as_user yay -S --noconfirm --needed $NIRI_MEDIA
 force_copy "$DMS_DOTFILES_DIR/.config/mpv" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/satty" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/fuzzel" "$HOME_DIR/.config/"
@@ -543,11 +555,10 @@ fi
 
 # === 自定义fish和kitty配置 === 
 if command -v kitty &>/dev/null; then
-    section "Shorin DMS" "terminal and shell"
-    log "Applying Shorin DMS custom configurations for Terminal..."
-    
-    exe as_user yay -S --noconfirm --needed cups-pk-helper kimageformats dsearch-bin fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git
-    
+    section "Shorin DMS" "terminal and shell"   
+    SHORIN_TERM_PKGS="cups-pk-helper kimageformats dsearch-bin fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git"
+    echo "$SHORIN_TERM_PKGS" >> "$VERIFY_LIST"
+    exe as_user yay -S --noconfirm --needed $SHORIN_TERM_PKGS
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
     as_user mkdir -p "$HOME_DIR/.config"
     force_copy "$DMS_DOTFILES_DIR/.config/fish" "$HOME_DIR/.config/"
@@ -573,7 +584,10 @@ section "Shorin DMS" "flatpak"
 log "Configuring Flatpak for Shorin DMS..."
 
 if command -v flatpak &>/dev/null; then
+    FLATPAK_PKGS="bazaar"
+    echo "$FLATPAK_PKGS" >> "$VERIFY_LIST"
     exe as_user yay -S --noconfirm --needed bazaar
+
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
     as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
@@ -586,8 +600,10 @@ fi
 # === matugen 配置 ===
 section "Shorin DMS" "matugen"
 log "Configuring Matugen for Shorin DMS..."
-exe as_user yay -S --noconfirm --needed matugen python-pywalfox firefox adw-gtk-theme nwg-look
-
+MATUGEN_PKGS="matugen python-pywalfox firefox adw-gtk-theme nwg-look"
+echo "$MATUGEN_PKGS" >> "$VERIFY_LIST"
+exe as_user yay -S --noconfirm --needed $MATUGEN_PKGS
+    
 force_copy "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
