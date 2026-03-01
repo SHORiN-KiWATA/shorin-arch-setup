@@ -119,28 +119,7 @@ fi
 info_kv "Target" "$TARGET_USER"
 
 # DM Check
-KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
-SKIP_AUTOLOGIN="false"
-DM_FOUND=""
-
-for dm in "${KNOWN_DMS[@]}"; do
-    if pacman -Q "$dm" &>/dev/null; then
-        DM_FOUND="$dm"
-        break
-    fi
-done
-
-if [[ -n "$DM_FOUND" ]]; then
-    info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
-    SKIP_AUTOLOGIN="true"
-else
-    read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
-    if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
-        SKIP_AUTOLOGIN="false"
-    else
-        SKIP_AUTOLOGIN="true"
-    fi
-fi
+check_dm_conflict
 
 log "Target user for DMS installation: $TARGET_USER"
 
@@ -357,71 +336,81 @@ else
 fi
 
 # ==============================================================================
-#  tty autologin
+#  Dispaly Manager
 # ==============================================================================
-section "Config" "tty autostart"
+section "Config" "Dispaly Manager"
 
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-as_user mkdir -p "$SVC_DIR/default.target.wants"
+# SVC_DIR="$HOME_DIR/.config/systemd/user"
+# as_user mkdir -p "$SVC_DIR/default.target.wants"
 
-if [[ "$SKIP_AUTOLOGIN" == "false" ]]; then
-    log "Configuring Niri Auto-start (TTY)..."
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
-fi
+# if [[ "$SKIP_AUTOLOGIN" == "false" ]]; then
+#     log "Configuring Niri Auto-start (TTY)..."
+#     mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+#     echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+# fi
 
-# ===================================================
-#  window manager autostart (if don't have any of dm)
-# ===================================================
-section "Config" "WM autostart"
+# # ===================================================
+# #  window manager autostart (if don't have any of dm)
+# # ===================================================
+# section "Config" "WM autostart"
 
-if [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_NIRI_INSTALLED" == "true" ]]; then
-    SVC_FILE="$SVC_DIR/niri-autostart.service"
-    LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+# if [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_NIRI_INSTALLED" == "true" ]]; then
+#     SVC_FILE="$SVC_DIR/niri-autostart.service"
+#     LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
     
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Niri Session Autostart
-After=graphical-session-pre.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
-[Service]
-ExecStart=/usr/bin/niri-session
-Restart=on-failure
-RestartSec=2
+#     cat <<EOT >"$SVC_FILE"
+# [Unit]
+# Description=Niri Session Autostart
+# After=graphical-session-pre.target
+# StartLimitIntervalSec=60
+# StartLimitBurst=3
+# [Service]
+# ExecStart=/usr/bin/niri-session
+# Restart=on-failure
+# RestartSec=2
 
-[Install]
-WantedBy=default.target
-EOT
+# [Install]
+# WantedBy=default.target
+# EOT
 
-    as_user ln -sf "$SVC_FILE" "$LINK"
-    chown -R "$TARGET_USER:" "$SVC_DIR"
-    success "Niri/DMS auto-start enabled with DMS dependency."
+#     as_user ln -sf "$SVC_FILE" "$LINK"
+#     chown -R "$TARGET_USER:" "$SVC_DIR"
+#     success "Niri/DMS auto-start enabled with DMS dependency."
 
-elif [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_HYPR_INSTALLED" == "true" ]]; then
-    SVC_FILE="$SVC_DIR/hyprland-autostart.service"
-    LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+# elif [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_HYPR_INSTALLED" == "true" ]]; then
+#     SVC_FILE="$SVC_DIR/hyprland-autostart.service"
+#     LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
     
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Hyprland Session Autostart
-After=graphical-session-pre.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
-[Service]
-ExecStart=/usr/bin/start-hyprland
-Restart=on-failure
-RestartSec=2
+#     cat <<EOT >"$SVC_FILE"
+# [Unit]
+# Description=Hyprland Session Autostart
+# After=graphical-session-pre.target
+# StartLimitIntervalSec=60
+# StartLimitBurst=3
+# [Service]
+# ExecStart=/usr/bin/start-hyprland
+# Restart=on-failure
+# RestartSec=2
 
-[Install]
-WantedBy=default.target
-EOT
+# [Install]
+# WantedBy=default.target
+# EOT
 
-    as_user ln -sf "$SVC_FILE" "$LINK"
-    chown -R "$TARGET_USER:" "$SVC_DIR"
-    success "Hyprland DMS auto-start enabled with DMS dependency."
+#     as_user ln -sf "$SVC_FILE" "$LINK"
+#     chown -R "$TARGET_USER:" "$SVC_DIR"
+#     success "Hyprland DMS auto-start enabled with DMS dependency."
+# fi
+
+# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
+log "Cleaning up legacy TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+
+if [ "$SKIP_DM" = true ]; then
+  log "Display Manager setup skipped (Conflict found or user opted out)."
+  warn "You will need to start your session manually from the TTY."
+else
+  setup_greetd_tuigreet
 fi
-
 
 # ============================================================================
 #   Shorin DMS 自定义增强模块

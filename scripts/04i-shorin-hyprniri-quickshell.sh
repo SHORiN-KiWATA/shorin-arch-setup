@@ -47,29 +47,7 @@ if [[ -z "$TARGET_USER" || ! -d "$HOME_DIR" ]]; then
 fi
 
 info_kv "Target User" "$TARGET_USER"
-
-KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
-SKIP_AUTOLOGIN="false"
-DM_FOUND=""
-
-for dm in "${KNOWN_DMS[@]}"; do
-    if pacman -Q "$dm" &>/dev/null; then
-        DM_FOUND="$dm"
-        break
-    fi
-done
-
-if [[ -n "$DM_FOUND" ]]; then
-    info_kv "Conflict DM" "${H_RED}$DM_FOUND${NC}"
-    SKIP_AUTOLOGIN="true"
-else
-    read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
-    if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
-        SKIP_AUTOLOGIN="false"
-    else
-        SKIP_AUTOLOGIN="true"
-    fi
-fi
+check_dm_conflict
 
 # --- Temporary Sudo Privileges ---
 log "Granting temporary sudo privileges..."
@@ -231,30 +209,14 @@ force_copy "$PARENT_DIR/resources/必看-shoirn-hyprniri使用方法.txt" "$HOME
 section "Final" "Auto-Login & Cleanup"
 rm -f "$SUDO_TEMP_FILE"
 
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/hyprland-autostart.service"
-LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
+log "Cleaning up legacy TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
-if [ "$SKIP_AUTOLOGIN" = true ]; then
-    log "Auto-login skipped."
-    as_user rm -f "$LINK" "$SVC_FILE"
+if [ "$SKIP_DM" = true ]; then
+  log "Display Manager setup skipped (Conflict found or user opted out)."
+  warn "You will need to start your session manually from the TTY."
 else
-    log "Configuring TTY Auto-login for Hyprland..."
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
-    as_user mkdir -p "$(dirname "$LINK")"
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Hyprland Session Autostart
-After=graphical-session-pre.target
-[Service]
-ExecStart=/usr/bin/start-hyprland
-Restart=on-failure
-[Install]
-WantedBy=default.target
-EOT
-    as_user ln -sf "../hyprland-autostart.service" "$LINK"
-    chown -R "$TARGET_USER" "$SVC_DIR"
-    success "Auto-login enabled successfully."
+  setup_greetd_tuigreet
 fi

@@ -484,3 +484,74 @@ configure_nautilus_user() {
     fi
   fi
 }
+
+# ==============================================================================
+# check_dm_conflict - 检测现有的显示管理器冲突，并让用户选择是否启用新 DM
+# ==============================================================================
+# 使用方法: check_dm_conflict
+# 结果: 设置全局变量 $SKIP_DM (true/false)
+check_dm_conflict() {
+    local KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
+    SKIP_DM=false
+    local DM_FOUND=""
+    
+    for dm in "${KNOWN_DMS[@]}"; do
+        if pacman -Q "$dm" &>/dev/null; then
+            DM_FOUND="$dm"
+            break
+        fi
+    done
+
+    if [ -n "$DM_FOUND" ]; then
+        info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
+        SKIP_DM=true
+    else
+        # read -t 20 等待 20 秒，超时默认 Y
+        read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager (greetd)? [Y/n] (Default Y): ${NC}")" choice || true
+        if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
+            SKIP_DM=false
+        else
+            SKIP_DM=true
+        fi
+    fi
+}
+
+# ==============================================================================
+# setup_greetd_tuigreet - 安装并配置 greetd + tuigreet
+# ==============================================================================
+# 使用方法: setup_greetd_tuigreet
+setup_greetd_tuigreet() {
+    log "Installing greetd and tuigreet..."
+    exe pacman -S --noconfirm --needed greetd greetd-tuigreet
+
+    # 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
+    systemctl disable getty@tty1.service 2>/dev/null
+
+    # 配置 greetd (覆盖写入 config.toml)
+    log "Configuring /etc/greetd/config.toml..."
+    local GREETD_CONF="/etc/greetd/config.toml"
+
+    cat <<EOF > "$GREETD_CONF"
+[terminal]
+# 绑定到 TTY1
+vt = 1
+
+[default_session]
+# 使用 tuigreet 作为前端
+# 自动扫描 /usr/share/wayland-sessions/，支持时间显示、密码星号、记住上次选择
+command = "tuigreet --time --remember --asterisks"
+user = "greeter"
+EOF
+
+    # 修复 tuigreet 的 --remember 缓存目录权限
+    log "Ensuring cache directory permissions for tuigreet..."
+    mkdir -p /var/cache/tuigreet
+    chown -R greeter:greeter /var/cache/tuigreet
+    chmod 755 /var/cache/tuigreet
+
+    # 启用服务
+    log "Enabling greetd service..."
+    systemctl enable greetd.service
+
+    success "greetd with tuigreet frontend has been successfully configured!"
+}
