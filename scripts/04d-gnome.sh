@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# GNOME Setup Script (04d-gnome.sh) - Fixed D-Bus & Extensions
+# GNOME Setup Script (04d-gnome.sh) - Fixed D-Bus & Extensions & Verify
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +18,10 @@ fi
 log "Initializing installation..."
 
 check_root
+
+# 初始化 Verify 列表
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
 
 # ==============================================================================
 #  Identify User 
@@ -51,19 +55,19 @@ trap cleanup_sudo EXIT INT TERM
 section "Step 1" "Install base pkgs"
 log "Installing GNOME and base tools..."
 
-# 修正了字体包名，原来的 xx-xx 看起来像乱码，这里用标准的 Nerd Font 包名
-if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None \
-    gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid loupe \
-    gnome-control-center bazaar flatpak file-roller \
-    nautilus-python firefox nm-connection-editor pacman-contrib \
-    dnsmasq ttf-jetbrains-mono-nerd; then
+GNOME_BASE_PKGS="gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid loupe gnome-control-center bazaar flatpak file-roller nautilus-python firefox nm-connection-editor pacman-contrib dnsmasq ttf-jetbrains-mono-nerd"
+echo "$GNOME_BASE_PKGS" >> "$VERIFY_LIST"
 
-        exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus fish
-        log "Packages installed successfully."
-
+if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None $GNOME_BASE_PKGS; then
+    
+    GNOME_FM_PKGS="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
+    echo "$GNOME_FM_PKGS" >> "$VERIFY_LIST"
+    exe pacman -S --noconfirm --needed $GNOME_FM_PKGS
+    
+    log "Packages installed successfully."
 else
-        log "Installation failed."
-        return 1
+    log "Installation failed."
+    return 1
 fi
 
 # start gdm 
@@ -195,7 +199,9 @@ EOF
 section "Step 5" "Install Extensions"
 log "Installing Extensions CLI..."
 
-sudo -u $TARGET_USER yay -S --noconfirm --needed --answerdiff=None --answerclean=None gnome-extensions-cli ttf-jetbrains-maple-mono-nf-xx-xx
+EXT_CLI_PKGS="gnome-extensions-cli ttf-jetbrains-maple-mono-nf-xx-xx"
+echo "$EXT_CLI_PKGS" >> "$VERIFY_LIST"
+sudo -u $TARGET_USER yay -S --noconfirm --needed --answerdiff=None --answerclean=None $EXT_CLI_PKGS
 
 EXTENSION_LIST=(
     "arch-update@RaphaelRochet"
@@ -291,7 +297,10 @@ EOF
 # Firefox Policies
 #=================================================
 section "Firefox" "Configuring Firefox GNOME Integration"
-exe sudo -u $TARGET_USER yay -S --noconfirm --needed --answerdiff=None --answerclean=None gnome-browser-connector
+
+FF_GNOME_PKGS="gnome-browser-connector"
+echo "$FF_GNOME_PKGS" >> "$VERIFY_LIST"
+exe sudo -u $TARGET_USER yay -S --noconfirm --needed --answerdiff=None --answerclean=None $FF_GNOME_PKGS
 
 POL_DIR="/etc/firefox/policies"
 exe mkdir -p "$POL_DIR"
@@ -324,7 +333,7 @@ XDG_CURRENT_DESKTOP=GNOME
 EOT
 fi
 
-#=================================================T
+#=================================================
 # Dotfiles
 #=================================================
 section "Dotfiles" "Deploying dotfiles"
@@ -355,7 +364,9 @@ if command -v flatpak &>/dev/null; then
 fi
 
 log "Installing shell tools..."
-pacman -S --noconfirm --needed thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git
+SHELL_TOOLS_PKGS="thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git"
+echo "$SHELL_TOOLS_PKGS" >> "$VERIFY_LIST"
+pacman -S --noconfirm --needed $SHELL_TOOLS_PKGS 
 
 as_user shorin link
 
