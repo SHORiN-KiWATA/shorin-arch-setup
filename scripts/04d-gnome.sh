@@ -58,7 +58,7 @@ if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None 
     nautilus-python firefox nm-connection-editor pacman-contrib \
     dnsmasq ttf-jetbrains-mono-nerd; then
 
-        exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus 
+        exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus fish
         log "Packages installed successfully."
 
 else
