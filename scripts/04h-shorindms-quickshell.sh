@@ -191,7 +191,6 @@ LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
 if [ "$SKIP_AUTOLOGIN" = true ]; then
     log "Auto-login skipped."
-    as_user rm -f "$LINK" "$SVC_FILE"
 else
     log "Configuring TTY Auto-login for Niri..."
     mkdir -p "/etc/systemd/system/getty@tty1.service.d"
