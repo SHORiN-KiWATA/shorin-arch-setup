@@ -43,18 +43,18 @@ function apt -d "Smart wrapper routing apt commands to paru/yay/pacman"
             set -l c_rst (set_color normal)
 
             if test $is_zh -eq 1
-                echo "智能 Arch 包管理器包装器 (路由优先级: "$c_hl"paru > yay > pacman"$c_rst")"
+                echo "Arch 包管理器包装器 (优先级: "$c_hl"paru > yay > pacman"$c_rst")"
                 echo "用法: "$c_hl"apt"$c_rst" <命令> [软件包...]"
                 echo ""
                 echo "命令:"
-                echo "  "$c_cmd"update(upgrade)"$c_rst"  同步数据库并更新系统 (防部分更新破坏, -Syu)"
+                echo "  "$c_cmd"update(upgrade)"$c_rst"  同步数据库并更新系统 (-Syu)"
                 echo "  "$c_cmd"install        "$c_rst"  安装软件包 (-S)"
                 if test $has_shorin -eq 1
-                    echo "  "$c_cmd"install ui     "$c_rst"  打开交互式界面安装 (依赖: shorin pac)"
+                    echo "  "$c_cmd"install ui     "$c_rst"  打开交互式界面安装 (依赖: shorin-contrib-git)"
                 end
                 echo "  "$c_cmd"remove         "$c_rst"  彻底卸载软件包、依赖及配置文件 (-Rns)"
                 if test $has_shorin -eq 1
-                    echo "  "$c_cmd"remove ui      "$c_rst"  打开交互式界面卸载 (依赖: shorin pacr)"
+                    echo "  "$c_cmd"remove ui      "$c_rst"  打开交互式界面卸载 (依赖: shorin-contrib-git)"
                 end
                 echo "  "$c_cmd"search         "$c_rst"  搜索软件包 (-Ss)"
                 echo "  "$c_cmd"show           "$c_rst"  显示软件包详细信息 (-Si)"
