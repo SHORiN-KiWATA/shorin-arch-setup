@@ -42,9 +42,11 @@ check_root() {
 }
 check_root
 
+# ==============================================================================
+# detect_target_user - 识别目标用户（修复多用户菜单逻辑）
+# ==============================================================================
 detect_target_user() {
-    # 1. 优先读取缓存文件。这保证了即使用户还没创建，
-    # 只要在 Pre-flight 阶段问过一次，后续所有脚本都不用再问。
+    # 1. 缓存检查
     if [[ -f "/tmp/shorin_install_user" ]]; then
         TARGET_USER=$(cat "/tmp/shorin_install_user")
         HOME_DIR="/home/$TARGET_USER"
@@ -52,45 +54,56 @@ detect_target_user() {
         return 0
     fi
 
-    log "Identifying target user..."
+    log "Detecting system users..."
 
-    # 2. 尝试从 Sudo 提取 (适用于已经装好系统，后续单独跑脚本维护的情况)
-    if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
-        TARGET_USER="$SUDO_USER"
-    else
-        # 3. 尝试提取系统现有的普通用户
-        mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
+    # 2. 提取系统中所有普通用户 (UID 1000-60000)
+    mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
+
+    # 3. 核心决策逻辑
+    if [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
+        # 情况 A: 发现多个用户 -> 强制弹出菜单
+        echo -e "   ${H_YELLOW}>>> Multiple users detected. Who is the target?${NC}"
         
-        if [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
-            TARGET_USER="${HUMAN_USERS[0]}"
-        elif [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
-            echo -e "   \033[1;33m>>> Multiple users detected:\033[0m"
-            for i in "${!HUMAN_USERS[@]}"; do echo "       [$i] ${HUMAN_USERS[$i]}"; done
-            while true; do
-                read -p "   Select target user ID: " idx
-                if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 0 ] && [ "$idx" -lt "${#HUMAN_USERS[@]}" ]; then
-                    TARGET_USER="${HUMAN_USERS[$idx]}"
-                    break
-                else
-                    echo -e "   \033[1;31mInvalid selection.\033[0m"
-                fi
-            done
+        # 标记当前执行 sudo 的用户，方便识别
+        local suggest=""
+        [[ -n "${SUDO_USER:-}" ]] && suggest=" (current)"
+
+        for i in "${!HUMAN_USERS[@]}"; do
+            local mark=""
+            [[ "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]] && mark="${H_CYAN}*${NC}"
+            echo -e "       [${i}] ${mark}${HUMAN_USERS[$i]}"
+        done
+
+        while true; do
+            echo -ne "   ${H_CYAN}Select user ID [0-$(( ${#HUMAN_USERS[@]} - 1 ))]: ${NC}"
+            read -r idx
+            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 0 ] && [ "$idx" -lt "${#HUMAN_USERS[@]}" ]; then
+                TARGET_USER="${HUMAN_USERS[$idx]}"
+                break
+            else
+                warn "Invalid selection."
+            fi
+        done
+
+    elif [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
+        TARGET_USER="${HUMAN_USERS[0]}"
+        log "Single user detected: ${H_CYAN}${TARGET_USER}${NC}"
+
+    else
+        if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+            TARGET_USER="$SUDO_USER"
         else
-            # 4. 终极兜底：纯 LiveUSB 环境，用户还没建。
-            # 这里我们主动问用户“你打算”叫什么名字。
-            read -p "   No standard user found. Enter intended username: " TARGET_USER
+            echo -ne "   ${H_YELLOW}No standard user found. Enter intended username:${NC} "
+            read -r TARGET_USER
         fi
     fi
 
-    # 验证输入非空
+    # 4. 最终验证与持久化
     if [[ -z "$TARGET_USER" ]]; then
         error "Target user cannot be empty."
         exit 1
     fi
 
-    # 5. 写入缓存文件！
-    # 这样接下来的 03-user.sh 就可以直接读取这个文件来创建用户，
-    # 04、05 脚本也可以直接读取它来寻找 home 目录。
     echo "$TARGET_USER" > "/tmp/shorin_install_user"
     HOME_DIR="/home/$TARGET_USER"
     export TARGET_USER HOME_DIR
