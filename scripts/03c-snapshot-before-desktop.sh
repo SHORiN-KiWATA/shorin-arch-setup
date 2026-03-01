@@ -76,8 +76,9 @@ fi
 
 log "Preparing to create restore point..."
 create_checkpoint
-rm -fv $HOME_DIR/.config/systemd/user/default.target.wants/hyprland-autostart.service
-rm -fv $HOME_DIR/.config/systemd/user/default.target.wants/niri-autostart.service
+
+rm -f $HOME_DIR/.config/systemd/user/default.target.wants/hyprland-autostart.service &>/dev/null
+rm -f $HOME_DIR/.config/systemd/user/default.target.wants/niri-autostart.service &>/dev/null
 
 
 log "Module 03c completed."
