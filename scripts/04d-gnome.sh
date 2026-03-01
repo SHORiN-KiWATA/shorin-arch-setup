@@ -366,7 +366,7 @@ fi
 log "Installing shell tools..."
 SHELL_TOOLS_PKGS="thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git"
 echo "$SHELL_TOOLS_PKGS" >> "$VERIFY_LIST"
-pacman -S --noconfirm --needed $SHELL_TOOLS_PKGS 
+exe as_user paru -S --noconfirm --needed $SHELL_TOOLS_PKGS 
 
 as_user shorin link
 

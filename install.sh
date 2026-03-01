@@ -463,6 +463,9 @@ if pacman -Qi networkmanager &> /dev/null; then
 
     rm -rf /etc/NetworkManager/system-connections/* 
 fi
+# --- verify 配置残留清理 ---
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
 
 # --- 4. Final GRUB Update ---
 log "Regenerating final GRUB configuration..."
