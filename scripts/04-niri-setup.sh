@@ -146,7 +146,7 @@ if [ -n "$DM_FOUND" ]; then
   info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
   SKIP_AUTOLOGIN=true
 else
-  read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
+  read -t 20 -p "$(echo -e "   ${H_CYAN}Enable auto-start? [Y/n] (Default Y): ${NC}")" choice || true
   [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
 fi
 
@@ -559,33 +559,70 @@ run_hide_desktop_file
 section "Final" "Cleanup & Boot"
 rm -f "$SUDO_TEMP_FILE"
 
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/niri-autostart.service"
-LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
+# SVC_DIR="$HOME_DIR/.config/systemd/user"
+# SVC_FILE="$SVC_DIR/niri-autostart.service"
+# LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
-if [ "$SKIP_AUTOLOGIN" = true ]; then
-  log "Auto-login skipped."
-  as_user rm -f "$LINK" "$SVC_FILE"
-else
-  log "Configuring TTY Auto-login..."
-  mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-  #echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+# if [ "$SKIP_AUTOLOGIN" = true ]; then
+#   log "Auto-login skipped."
+#   as_user rm -f "$LINK" "$SVC_FILE"
+# else
+#   log "Configuring TTY Auto-login..."
+#   mkdir -p "/etc/systemd/system/getty@tty1.service.d"
+#   echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
-  as_user mkdir -p "$(dirname "$LINK")"
-  cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Niri Session Autostart
-After=graphical-session-pre.target
-[Service]
-ExecStart=/usr/bin/niri-session
-Restart=on-failure
-[Install]
-WantedBy=default.target
-EOT
-  as_user ln -sf "../niri-autostart.service" "$LINK"
-  chown -R "$TARGET_USER" "$SVC_DIR"
-  success "Enabled."
-fi
+#   as_user mkdir -p "$(dirname "$LINK")"
+#   cat <<EOT >"$SVC_FILE"
+# [Unit]
+# Description=Niri Session Autostart
+# After=graphical-session-pre.target
+# [Service]
+# ExecStart=/usr/bin/niri-session
+# Restart=on-failure
+# [Install]
+# WantedBy=default.target
+# EOT
+#   as_user ln -sf "../niri-autostart.service" "$LINK"
+#   chown -R "$TARGET_USER" "$SVC_DIR"
+#   success "Enabled."
+# fi
+
+log "Installing greetd and tuigreet..."
+exe pacman -S --noconfirm --needed greetd greetd-tuigreet
+
+# 1. 清理旧的 TTY 自动登录残留（防止神仙打架）
+log "Cleaning up old TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+# 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
+systemctl disable getty@tty1.service 2>/dev/null
+
+# 2. 配置 greetd (覆盖写入 config.toml)
+log "Configuring /etc/greetd/config.toml..."
+GREETD_CONF="/etc/greetd/config.toml"
+
+cat <<EOF > "$GREETD_CONF"
+[terminal]
+# 绑定到 TTY1
+vt = 1
+
+[default_session]
+# 使用 tuigreet 作为前端
+# 自动扫描 /usr/share/wayland-sessions/，支持时间显示、密码星号、记住上次选择
+command = "tuigreet --time --remember --asterisks"
+user = "greeter"
+EOF
+
+# 3. 修复 tuigreet 的 --remember 缓存目录权限
+log "Ensuring cache directory permissions for tuigreet '--remember' feature..."
+mkdir -p /var/cache/tuigreet
+chown -R greeter:greeter /var/cache/tuigreet
+chmod 755 /var/cache/tuigreet
+
+# 4. 启用服务
+log "Enabling greetd service..."
+systemctl enable greetd.service
+
+success "greetd with tuigreet frontend has been successfully configured!"
 
 trap - ERR
 log "Module 04 completed."
