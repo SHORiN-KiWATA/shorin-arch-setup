@@ -95,22 +95,41 @@ if grep -q "\[archlinuxcn\]" /etc/pacman.conf; then
     success "archlinuxcn repository already exists."
 else
     log "Adding archlinuxcn mirrors to pacman.conf..."
-    cat <<EOT >> /etc/pacman.conf
+    
+    # Timezone check: KISS approach, works reliably inside arch-chroot and host system
+    LOCAL_TZ=""
+    if [ -L /etc/localtime ]; then
+        LOCAL_TZ=$(readlink -f /etc/localtime)
+    fi
 
-[archlinuxcn]
+    echo "" >> /etc/pacman.conf
+    echo "[archlinuxcn]" >> /etc/pacman.conf
+
+    if [[ "$LOCAL_TZ" == *"Asia/Shanghai"* ]]; then
+        log "Timezone is Asia/Shanghai. Applying mainland mirrors..."
+        cat <<EOT >> /etc/pacman.conf
 Server = https://mirrors.ustc.edu.cn/archlinuxcn/\$arch
 Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch
 Server = https://mirrors.hit.edu.cn/archlinuxcn/\$arch
 Server = https://repo.huaweicloud.com/archlinuxcn/\$arch
 EOT
-    success "Mirrors added."
+    else
+        log "Non-Shanghai timezone detected. Prepending global repo.archlinuxcn.org mirror..."
+        cat <<EOT >> /etc/pacman.conf
+Server = https://repo.archlinuxcn.org/\$arch
+Server = https://mirrors.ustc.edu.cn/archlinuxcn/\$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/\$arch
+Server = https://mirrors.hit.edu.cn/archlinuxcn/\$arch
+Server = https://repo.huaweicloud.com/archlinuxcn/\$arch
+EOT
+    fi
+    success "Mirrors added based on timezone."
 fi
 
 log "Installing archlinuxcn-keyring..."
 # Keyring installation often needs -Sy specifically, but -Syu is safe too
 exe pacman -Syu --noconfirm archlinuxcn-keyring
 success "ArchLinuxCN configured."
-
 # ------------------------------------------------------------------------------
 # 5. Install AUR Helpers
 # ------------------------------------------------------------------------------
