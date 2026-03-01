@@ -117,7 +117,7 @@ else
                 --info=inline \
                 --header="[TAB] TOGGLE | [ENTER] INSTALL | [CTRL-D] DE-ALL | [CTRL-A] SE-ALL" \
                 --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
-                --preview-window=right:45%:wrap:border-left \
+                --preview-window=down:45%:wrap:border-up \
                 --color=dark \
                 --color=fg+:white,bg+:black \
                 --color=hl:blue,hl+:blue:bold \

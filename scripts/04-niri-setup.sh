@@ -213,7 +213,7 @@ if [ -f "$LIST_FILE" ]; then
           --info=inline \
           --header="[TAB] TOGGLE | [ENTER] INSTALL | [CTRL-D] DE-ALL | [CTRL-A] SE-ALL" \
           --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
-          --preview-window=right:50%:wrap:border-left \
+          --preview-window=down:50%:wrap \
           --color=dark \
           --color=fg+:white,bg+:black \
           --color=hl:blue,hl+:blue:bold \
