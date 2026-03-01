@@ -17,6 +17,7 @@ systemctl --user disable hyprland-autostart
 在vscode里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
 
 
+【重要按键】
 super+T 打开终端
 super+E 打开文档管理器
 super+Z 开始菜单
@@ -34,3 +35,13 @@ super+V 切换浮动窗口
 如果出现网络问题可以进行以下操作更换wifi后端：
 sudo rm /etc/NetworkManager/conf.d/iwd.conf
 sudo systemctl restart NetworkManager
+
+【实用命令】
+运行shorin命令可以看到所有可用的便利命令
+pac 安装软件(安装软件还可以用bazaar，这是flatpak软件商城)
+pacr 卸载软件
+mirror-update 更新镜像源
+sysup 更新系统
+clean 系统清理
+quicksave 快速存档
+
