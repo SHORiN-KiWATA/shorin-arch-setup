@@ -179,7 +179,7 @@ log "Copying tutorial files..."
 force_copy "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
 
 # niri blur toggle 脚本
- curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+curl -L shorin.xyz/niri-blur-toggle | as_user bash 
 
 # --- Finalization & Auto-Login ---
 section "Final" "Auto-Login & Cleanup"

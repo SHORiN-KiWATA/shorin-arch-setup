@@ -67,9 +67,7 @@ create_checkpoint() {
 # ==============================================================================
 # --- Identify User & DM Check ---
 log "Identifying target user..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo "$u")}"
-HOME_DIR="/home/$TARGET_USER"
+detect_target_user
 
 if [[ -z "$TARGET_USER" || ! -d "$HOME_DIR" ]]; then
     error "Target user invalid or home directory does not exist."
