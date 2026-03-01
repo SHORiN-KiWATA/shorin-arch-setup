@@ -6,8 +6,10 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-source "$SCRIPT_DIR/00-utils.sh"
 
+source "$SCRIPT_DIR/00-utils.sh"
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
 DEBUG=${DEBUG:-0}
 CN_MIRROR=${CN_MIRROR:-0}
 UNDO_SCRIPT="$SCRIPT_DIR/de-undochange.sh"
@@ -156,6 +158,8 @@ fi
 # ==============================================================================
 section "Step 1/9" "Core Components"
 PKGS="niri xdg-desktop-portal-gnome fuzzel kitty firefox libnotify mako polkit-gnome"
+# 記錄到清單
+echo "$PKGS" >> "$VERIFY_LIST"
 exe pacman -S --noconfirm --needed $PKGS
 
 log "Configuring Firefox Policies..."
@@ -168,10 +172,15 @@ exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
 # STEP 3: File Manager
 # ==============================================================================
 section "Step 2/9" "File Manager"
-exe pacman -S --noconfirm --needed ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus
+FM_PKGS1="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
+FM_PKGS2="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf"
 
-exe pacman -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf
+# 記錄到清單
+echo "$FM_PKGS1" >> "$VERIFY_LIST"
+echo "$FM_PKGS2" >> "$VERIFY_LIST"
 
+exe pacman -S --noconfirm --needed $FM_PKGS1
+exe pacman -S --noconfirm --needed $FM_PKGS2
 if [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then
   exe ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
 fi
@@ -258,7 +267,8 @@ if [ -f "$LIST_FILE" ]; then
     BATCH_LIST=()
     AUR_LIST=()
     info_kv "Target" "${#PACKAGE_ARRAY[@]} packages scheduled."
-
+    # 記錄到清單 (將陣列展開並寫入)
+    echo "${PACKAGE_ARRAY[@]}" >> "$VERIFY_LIST"
     for pkg in "${PACKAGE_ARRAY[@]}"; do
       [ "$pkg" == "imagemagic" ] && pkg="imagemagick"
       [[ "$pkg" == "AUR:"* ]] && AUR_LIST+=("${pkg#AUR:}") || BATCH_LIST+=("$pkg")
