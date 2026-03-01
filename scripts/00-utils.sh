@@ -41,6 +41,97 @@ check_root() {
     fi
 }
 check_root
+
+# ==============================================================================
+# detect_target_user - 识别目标用户 (支持 1-based 序号与回车默认选择)
+# ==============================================================================
+detect_target_user() {
+    # 1. 缓存检查
+    if [[ -f "/tmp/shorin_install_user" ]]; then
+        TARGET_USER=$(cat "/tmp/shorin_install_user")
+        HOME_DIR="/home/$TARGET_USER"
+        export TARGET_USER HOME_DIR
+        return 0
+    fi
+
+    log "Detecting system users..."
+
+    # 2. 提取系统中所有普通用户 (UID 1000-60000)
+    mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
+
+    # 3. 核心决策逻辑
+    if [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
+        echo -e "   ${H_YELLOW}>>> Multiple users detected. Who is the target?${NC}"
+        
+        local default_user=""
+        local default_idx=""
+
+        # 遍历用户，生成 1 开始的序号，并捕获当前 Sudo 用户作为默认值
+        for i in "${!HUMAN_USERS[@]}"; do
+            local mark=""
+            local display_idx=$((i + 1))
+            
+            if [[ "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]]; then
+                mark="${H_CYAN}*${NC}"
+                default_user="${HUMAN_USERS[$i]}"
+                default_idx="$display_idx"
+            fi
+            
+            echo -e "       [${display_idx}] ${mark}${HUMAN_USERS[$i]}"
+        done
+
+        while true; do
+            # 动态生成提示词
+            if [[ -n "$default_user" ]]; then
+                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}] (Default ${default_idx}): ${NC}"
+            else
+                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}]: ${NC}"
+            fi
+            
+            read -r idx
+            
+            # 处理直接回车：如果有默认用户，直接采纳
+            if [[ -z "$idx" && -n "$default_user" ]]; then
+                TARGET_USER="$default_user"
+                log "Defaulting to current user: ${H_CYAN}${TARGET_USER}${NC}"
+                break
+            fi
+
+            # 验证输入是否为合法数字 (1 到 数组长度)
+            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le "${#HUMAN_USERS[@]}" ]; then
+                # 数组索引需要减 1 还原
+                TARGET_USER="${HUMAN_USERS[$((idx - 1))]}"
+                break
+            else
+                warn "Invalid selection. Please enter a valid number or press Enter for default."
+            fi
+        done
+
+    elif [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
+        TARGET_USER="${HUMAN_USERS[0]}"
+        log "Single user detected: ${H_CYAN}${TARGET_USER}${NC}"
+
+    else
+        if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+            TARGET_USER="$SUDO_USER"
+        else
+            echo -ne "   ${H_YELLOW}No standard user found. Enter intended username:${NC} "
+            read -r TARGET_USER
+        fi
+    fi
+
+    # 4. 最终验证与持久化
+    if [[ -z "$TARGET_USER" ]]; then
+        error "Target user cannot be empty."
+        exit 1
+    fi
+
+    echo "$TARGET_USER" > "/tmp/shorin_install_user"
+    HOME_DIR="/home/$TARGET_USER"
+    export TARGET_USER HOME_DIR
+    
+}
+
 # 日志文件
 export TEMP_LOG_FILE="/tmp/log-shorin-arch-setup.txt"
 [ ! -f "$TEMP_LOG_FILE" ] && touch "$TEMP_LOG_FILE" && chmod 666 "$TEMP_LOG_FILE"
@@ -392,4 +483,75 @@ configure_nautilus_user() {
       
     fi
   fi
+}
+
+# ==============================================================================
+# check_dm_conflict - 检测现有的显示管理器冲突，并让用户选择是否启用新 DM
+# ==============================================================================
+# 使用方法: check_dm_conflict
+# 结果: 设置全局变量 $SKIP_DM (true/false)
+check_dm_conflict() {
+    local KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
+    SKIP_DM=false
+    local DM_FOUND=""
+    
+    for dm in "${KNOWN_DMS[@]}"; do
+        if pacman -Q "$dm" &>/dev/null; then
+            DM_FOUND="$dm"
+            break
+        fi
+    done
+
+    if [ -n "$DM_FOUND" ]; then
+        info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
+        SKIP_DM=true
+    else
+        # read -t 20 等待 20 秒，超时默认 Y
+        read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager (greetd)? [Y/n] (Default Y): ${NC}")" choice || true
+        if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
+            SKIP_DM=false
+        else
+            SKIP_DM=true
+        fi
+    fi
+}
+
+# ==============================================================================
+# setup_greetd_tuigreet - 安装并配置 greetd + tuigreet
+# ==============================================================================
+# 使用方法: setup_greetd_tuigreet
+setup_greetd_tuigreet() {
+    log "Installing greetd and tuigreet..."
+    exe pacman -S --noconfirm --needed greetd greetd-tuigreet
+
+    # 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
+    systemctl disable getty@tty1.service 2>/dev/null
+
+    # 配置 greetd (覆盖写入 config.toml)
+    log "Configuring /etc/greetd/config.toml..."
+    local GREETD_CONF="/etc/greetd/config.toml"
+
+    cat <<EOF > "$GREETD_CONF"
+[terminal]
+# 绑定到 TTY1
+vt = 1
+
+[default_session]
+# 使用 tuigreet 作为前端
+# 自动扫描 /usr/share/wayland-sessions/，支持时间显示、密码星号、记住上次选择
+command = "tuigreet --time --remember --asterisks"
+user = "greeter"
+EOF
+
+    # 修复 tuigreet 的 --remember 缓存目录权限
+    log "Ensuring cache directory permissions for tuigreet..."
+    mkdir -p /var/cache/tuigreet
+    chown -R greeter:greeter /var/cache/tuigreet
+    chmod 755 /var/cache/tuigreet
+
+    # 启用服务
+    log "Enabling greetd service..."
+    systemctl enable greetd.service
+
+    success "greetd with tuigreet frontend has been successfully configured!"
 }

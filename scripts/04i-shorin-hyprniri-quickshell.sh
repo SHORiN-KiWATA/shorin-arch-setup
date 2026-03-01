@@ -13,6 +13,12 @@ fi
 
 check_root
 
+# ========================================================================
+#   初始化验证清单
+# ========================================================================
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
+
 force_copy() {
     local src="$1"
     local target_dir="$2"
@@ -33,9 +39,7 @@ force_copy() {
 
 # --- Identify User & DM Check ---
 log "Identifying target user..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo "$u")}"
-HOME_DIR="/home/$TARGET_USER"
+detect_target_user
 
 if [[ -z "$TARGET_USER" || ! -d "$HOME_DIR" ]]; then
     error "Target user invalid or home directory does not exist."
@@ -43,29 +47,7 @@ if [[ -z "$TARGET_USER" || ! -d "$HOME_DIR" ]]; then
 fi
 
 info_kv "Target User" "$TARGET_USER"
-
-KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
-SKIP_AUTOLOGIN="false"
-DM_FOUND=""
-
-for dm in "${KNOWN_DMS[@]}"; do
-    if pacman -Q "$dm" &>/dev/null; then
-        DM_FOUND="$dm"
-        break
-    fi
-done
-
-if [[ -n "$DM_FOUND" ]]; then
-    info_kv "Conflict DM" "${H_RED}$DM_FOUND${NC}"
-    SKIP_AUTOLOGIN="true"
-else
-    read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
-    if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
-        SKIP_AUTOLOGIN="false"
-    else
-        SKIP_AUTOLOGIN="true"
-    fi
-fi
+check_dm_conflict
 
 # --- Temporary Sudo Privileges ---
 log "Granting temporary sudo privileges..."
@@ -117,16 +99,24 @@ if [[ ${#installed_pkgs[@]} -gt 0 ]]; then
 fi
 
 log "Installing Hyprland core components..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed vulkan-headers hyprland quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist
+CORE_PKGS="vulkan-headers hyprland quickshell-git dms-shell-bin matugen cava cups-pk-helper kimageformats kitty adw-gtk-theme nwg-look breeze-cursors wl-clipboard cliphist"
+echo "$CORE_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
 
 log "Installing terminal utilities..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg 
+TERM_PKGS="fish jq zoxide socat imagemagick imv starship eza ttf-jetbrains-maple-mono-nf-xx-xx fuzzel shorin-contrib-git timg"
+echo "$TERM_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
 
 log "Installing file manager and dependencies..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader
+FM_PKGS="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader"
+echo "$FM_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $FM_PKGS
 
 log "Installing screenshot and screencast tools..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed satty grim slurp xdg-desktop-portal-hyprland
+SCREEN_PKGS="satty grim slurp xdg-desktop-portal-hyprland"
+echo "$SCREEN_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $SCREEN_PKGS
 
 # --- Environment Configurations ---
 section "Shorin Hyprniri" "Environment Configuration"
@@ -167,7 +157,9 @@ force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 section "Shorin Hyprniri" "Browser Setup"
 
 log "Installing Firefox and Pywalfox..."
-exe as_user "$AUR_HELPER" -S --noconfirm --needed firefox python-pywalfox
+BROWSER_PKGS="firefox python-pywalfox"
+echo "$BROWSER_PKGS" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed $BROWSER_PKGS
 
 log "Configuring Firefox Pywalfox extension policy..."
 POL_DIR="/etc/firefox/policies"
@@ -181,6 +173,7 @@ section "Shorin Hyprniri" "Flatpak & Theme Integration"
 
 if command -v flatpak &>/dev/null; then
     log "Configuring Flatpak overrides and theme integrations..."
+    echo "bazaar" >> "$VERIFY_LIST"
     exe as_user "$AUR_HELPER" -S --noconfirm --needed bazaar
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
@@ -216,30 +209,14 @@ force_copy "$PARENT_DIR/resources/必看-shoirn-hyprniri使用方法.txt" "$HOME
 section "Final" "Auto-Login & Cleanup"
 rm -f "$SUDO_TEMP_FILE"
 
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/hyprland-autostart.service"
-LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
+log "Cleaning up legacy TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
-if [ "$SKIP_AUTOLOGIN" = true ]; then
-    log "Auto-login skipped."
-    as_user rm -f "$LINK" "$SVC_FILE"
+if [ "$SKIP_DM" = true ]; then
+  log "Display Manager setup skipped (Conflict found or user opted out)."
+  warn "You will need to start your session manually from the TTY."
 else
-    log "Configuring TTY Auto-login for Hyprland..."
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
-    as_user mkdir -p "$(dirname "$LINK")"
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Hyprland Session Autostart
-After=graphical-session-pre.target
-[Service]
-ExecStart=/usr/bin/start-hyprland
-Restart=on-failure
-[Install]
-WantedBy=default.target
-EOT
-    as_user ln -sf "../hyprland-autostart.service" "$LINK"
-    chown -R "$TARGET_USER" "$SVC_DIR"
-    success "Auto-login enabled successfully."
+  setup_greetd_tuigreet
 fi

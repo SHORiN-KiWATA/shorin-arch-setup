@@ -51,12 +51,13 @@ fi
 # 2. 清理旧目录 (使用绝对路径，指哪打哪)
 if [ -d "$TARGET_DIR" ]; then
     printf "Removing existing directory '%s'...\n" "$TARGET_DIR"
-    rm -rf "$TARGET_DIR"
+    sudo rm -rf "$TARGET_DIR"
 fi
 
 # 3. 克隆指定分支 (显式传递 TARGET_DIR)
 printf "Cloning repository to %s...\n" "$TARGET_DIR"
 if git clone --depth 1 -b "$TARGET_BRANCH" "$REPO_URL" "$TARGET_DIR"; then
+    sudo chmod 755 "$TARGET_DIR"
     printf "%bClone successful.%b\n" "$GREEN" "$NC"
 else
     printf "%bError: Failed to clone branch '%s'. Check if it exists.%b\n" "$RED" "$TARGET_BRANCH" "$NC"

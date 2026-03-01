@@ -89,7 +89,7 @@ select_desktop() {
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
         "No-Desktop |none"
-        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
+        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
         "Shorin-DMS-Niri |shorindms"
         "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
         "Shorin-DMS-Hyprland-Scrolling |hyprniri"
@@ -180,7 +180,7 @@ BASE_MODULES=(
 )
 
 case "$DESKTOP_ENV" in
-    niri)
+    shorinniri)
         BASE_MODULES+=("04-niri-setup.sh")
         ;;
     kde)
@@ -216,7 +216,7 @@ case "$DESKTOP_ENV" in
         ;;
 esac
 
-BASE_MODULES+=("07-grub-theme.sh" "99-apps.sh")
+BASE_MODULES+=("05-verify-desktop.sh" "07-grub-theme.sh" "99-apps.sh")
 MODULES=("${BASE_MODULES[@]}")
 
 if [ ! -f "$STATE_FILE" ]; then touch "$STATE_FILE"; fi
@@ -463,6 +463,9 @@ if pacman -Qi networkmanager &> /dev/null; then
 
     rm -rf /etc/NetworkManager/system-connections/* 
 fi
+# --- verify 配置残留清理 ---
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
 
 # --- 4. Final GRUB Update ---
 log "Regenerating final GRUB configuration..."

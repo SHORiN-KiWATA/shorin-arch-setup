@@ -16,29 +16,11 @@ log "installing Illogical Impulse End4 (Quickshell)..."
 #  Identify User & DM Check
 # ==============================================================================
 log "Identifying user..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
-HOME_DIR="/home/$TARGET_USER"
+detect_target_user
 info_kv "Target" "$TARGET_USER"
 
 # DM Check
-KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
-SKIP_AUTOLOGIN=false
-DM_FOUND=""
-for dm in "${KNOWN_DMS[@]}"; do
-  if pacman -Q "$dm" &>/dev/null; then
-    DM_FOUND="$dm"
-    break
-  fi
-done
-
-if [ -n "$DM_FOUND" ]; then
-  info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
-  SKIP_AUTOLOGIN=true
-else
-  read -t 20 -p "$(echo -e "   ${H_CYAN}Enable TTY auto-login? [Y/n] (Default Y): ${NC}")" choice || true
-  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
-fi
+check_dm_conflict
 
 log "Target user for End4 installation: $TARGET_USER"
 # ==============================================================================
@@ -149,48 +131,18 @@ run_hide_desktop_file
 # ==============================================================================
 #  autologin
 # ==============================================================================
-section "Config" "autostart"
+section "Config" "Display Manager"
 
-SVC_DIR="$HOME_DIR/.config/systemd/user"
-SVC_FILE="$SVC_DIR/hyprland-autostart.service"
-LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
+# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
+log "Cleaning up legacy TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
-# 确保目录存在
-as_user mkdir -p "$SVC_DIR/default.target.wants"
+if [ "$SKIP_DM" = true ]; then
+  log "Display Manager setup skipped (Conflict found or user opted out)."
+  warn "You will need to start your session manually from the TTY."
+else
 
-# tty自动登录
-if [ "$SKIP_AUTOLOGIN" = false ]; then
-
-    log "Configuring TTY Auto-login..."
-    
-    # 1. 配置 TTY 自动登录
-    mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
-fi
-
-if [ "$SKIP_AUTOLOGIN" = false ] && command -v hyprland &>/dev/null; then
-
-    cat <<EOT >"$SVC_FILE"
-[Unit]
-Description=Hyprland Session Autostart
-After=graphical-session-pre.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
-[Service]
-ExecStart=/usr/bin/start-hyprland
-Restart=on-failure
-RestartSec=2
-
-[Install]
-WantedBy=default.target
-
-EOT
-    # 启用服务
-    as_user ln -sf "$SVC_FILE" "$LINK"
-    # 确保权限
-    chown -R "$TARGET_USER" "$SVC_DIR"
-    success "Hyprland auto-start enabled."
-
+  setup_greetd_tuigreet
 fi
 
 log "Module 04e (End4) completed."
