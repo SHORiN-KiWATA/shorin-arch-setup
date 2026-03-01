@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# GNOME Setup Script (04d-gnome.sh) - Fixed D-Bus & Extensions & Verify
+# GNOME Setup Script (04d-gnome.sh) - Fixed D-Bus & Extensions & Verify & DMCheck
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,13 +24,16 @@ VERIFY_LIST="/tmp/shorin_install_verify.list"
 rm -f "$VERIFY_LIST"
 
 # ==============================================================================
-#  Identify User 
+#  Identify User & DM Check
 # ==============================================================================
 detect_target_user
 TARGET_UID=$(id -u "$TARGET_USER")
 
 info_kv "Target User" "$TARGET_USER"
 info_kv "Home Dir"    "$HOME_DIR"
+
+# 调用 Utils 函数进行冲突检测 (会自动设置 $SKIP_DM 变量)
+check_dm_conflict
 
 # ==================================
 # temp sudo without passwd
@@ -70,9 +73,14 @@ else
     return 1
 fi
 
-# start gdm 
-log "Enable gdm..."
-exe systemctl enable gdm
+# Enable Display Manager (GDM)
+if [ "$SKIP_DM" = true ]; then
+    log "Display Manager setup skipped (Conflict found or user opted out)."
+else
+    log "Enabling GDM..."
+    exe systemctl enable gdm.service
+    success "GDM enabled."
+fi
 
 #=================================================
 # Step 2: Set default terminal (修复：加入 D-Bus)

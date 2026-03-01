@@ -13,6 +13,10 @@ CN_MIRROR=${CN_MIRROR:-0}
 
 check_root
 
+# 初始化 Verify 列表
+VERIFY_LIST="/tmp/shorin_install_verify.list"
+rm -f "$VERIFY_LIST"
+
 # Ensure FZF is installed
 if ! command -v fzf &> /dev/null; then
     log "Installing dependency: fzf..."
@@ -24,10 +28,13 @@ trap 'echo -e "\n   ${H_YELLOW}>>> Operation cancelled by user (Ctrl+C). Skippin
 section "Phase 6" "KDE Plasma Environment"
 
 # ------------------------------------------------------------------------------
-# 0. Identify Target User
+# 0. Identify Target User & DM Check
 # ------------------------------------------------------------------------------
 detect_target_user
 info_kv "Target" "$TARGET_USER"
+
+# 调用 Utils 函数进行冲突检测 (会自动设置 $SKIP_DM 变量)
+check_dm_conflict
 
 # ------------------------------------------------------------------------------
 # 1. Install KDE Plasma Base
@@ -36,6 +43,9 @@ section "Step 1/5" "Plasma Core"
 
 log "Installing KDE Plasma Meta & Apps..."
 KDE_PKGS="plasma-meta konsole dolphin kate firefox qt6-multimedia-ffmpeg pipewire-jack sddm"
+
+# 注入 Verify 列表
+echo "$KDE_PKGS" >> "$VERIFY_LIST"
 exe pacman -S --noconfirm --needed $KDE_PKGS
 success "KDE Plasma installed."
 
@@ -46,7 +56,10 @@ section "Step 2/5" "Software Store & Network"
 
 log "Configuring Discover & Flatpak..."
 
-exe pacman -S --noconfirm --needed flatpak flatpak-kcm
+FLATPAK_PKGS="flatpak flatpak-kcm"
+echo "$FLATPAK_PKGS" >> "$VERIFY_LIST"
+exe pacman -S --noconfirm --needed $FLATPAK_PKGS
+
 exe flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 # --- Network Detection Logic ---
@@ -232,6 +245,10 @@ if [ -f "$LIST_FILE" ]; then
     fi
 
     info_kv "Scheduled" "Repo: ${#REPO_APPS[@]}" "AUR: ${#AUR_APPS[@]}"
+    
+    # 注入 FZF 选中的包到 Verify 列表
+    echo "${REPO_APPS[@]}" >> "$VERIFY_LIST"
+    echo "${AUR_APPS[@]}" >> "$VERIFY_LIST"
 
     # ---------------------------------------------------------
     # 3.4 Install Applications
@@ -393,21 +410,15 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# 5. Enable SDDM (FIXED THEME)
+# 5. Enable Display Manager (SDDM)
 # ------------------------------------------------------------------------------
 section "Step 5/5" "Enable Display Manager"
 
-# log "Configuring SDDM Theme to Breeze..."
-# exe mkdir -p /etc/sddm.conf.d
-# cat > /etc/sddm.conf.d/theme.conf <<EOF
-# [Theme]
-# Current=breeze
-# EOF
-# log "Theme set to 'breeze'."
-
-log "Enabling PLM..."
-exe systemctl enable plasmalogin
-success "PLM enabled. Will start on reboot."
+if [ "$SKIP_DM" = true ]; then
+    log "Display Manager setup skipped (Conflict found or user opted out)."
+else
+    systemctl enable plasmalogin
+fi
 
 # === 隐藏多余的 Desktop 图标 ===
 section "Config" "Hiding useless .desktop files"
