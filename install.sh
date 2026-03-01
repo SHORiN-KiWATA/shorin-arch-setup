@@ -216,7 +216,7 @@ case "$DESKTOP_ENV" in
         ;;
 esac
 
-BASE_MODULES+=("07-grub-theme.sh" "99-apps.sh")
+BASE_MODULES+=("05-verify-desktop.sh" "07-grub-theme.sh" "99-apps.sh")
 MODULES=("${BASE_MODULES[@]}")
 
 if [ ! -f "$STATE_FILE" ]; then touch "$STATE_FILE"; fi
