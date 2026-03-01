@@ -352,12 +352,12 @@ fi
 as_user mkdir -p "$HOME_DIR/Templates"
 as_user touch "$HOME_DIR/Templates/new"
 # 修复：确保 new.sh 是用户所有，且内容正确
-sudo -u "$TARGET_USER" bash -c "echo '#!/bin/bash' > $HOME_DIR/Templates/new.sh"
+sudo -u "$TARGET_USER" bash -c "echo '#!/usr/bin/env bash' > $HOME_DIR/Templates/new.sh"
 sudo -u "$TARGET_USER" chmod +x "$HOME_DIR/Templates/new.sh"
 
 log "Fixing permissions..."
-chown -R $TARGET_USER:$TARGET_USER $HOME_DIR/.config
-chown -R $TARGET_USER:$TARGET_USER $HOME_DIR/.local
+chown -R $TARGET_USER: $HOME_DIR/.config
+chown -R $TARGET_USER: $HOME_DIR/.local
 
 if command -v flatpak &>/dev/null; then
     sudo -u "$TARGET_USER" flatpak override --user --filesystem=xdg-config/fontconfig
