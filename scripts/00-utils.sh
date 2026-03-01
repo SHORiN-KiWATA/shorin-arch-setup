@@ -539,7 +539,7 @@ vt = 1
 [default_session]
 # 使用 tuigreet 作为前端
 # 自动扫描 /usr/share/wayland-sessions/，支持时间显示、密码星号、记住上次选择
-command = "tuigreet --time --remember --asterisks"
+command = "tuigreet --time --user-menu --remember --remember-user-session --asterisks"
 user = "greeter"
 EOF
 
