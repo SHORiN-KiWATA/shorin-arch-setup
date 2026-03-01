@@ -21,9 +21,7 @@ section "Start" "Installing Caelestia (Quickshell)..."
 log "Identifying target user..."
 
 # Detect user ID 1000 or prompt manually
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
-HOME_DIR="/home/$TARGET_USER"
+detect_target_user
 
 info_kv "Target User" "$TARGET_USER"
 info_kv "Home Dir"    "$HOME_DIR"

@@ -41,6 +41,63 @@ check_root() {
     fi
 }
 check_root
+
+detect_target_user() {
+    # 1. 优先读取缓存文件。这保证了即使用户还没创建，
+    # 只要在 Pre-flight 阶段问过一次，后续所有脚本都不用再问。
+    if [[ -f "/tmp/shorin_install_user" ]]; then
+        TARGET_USER=$(cat "/tmp/shorin_install_user")
+        HOME_DIR="/home/$TARGET_USER"
+        export TARGET_USER HOME_DIR
+        return 0
+    fi
+
+    log "Identifying target user..."
+
+    # 2. 尝试从 Sudo 提取 (适用于已经装好系统，后续单独跑脚本维护的情况)
+    if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+        TARGET_USER="$SUDO_USER"
+    else
+        # 3. 尝试提取系统现有的普通用户
+        mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
+        
+        if [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
+            TARGET_USER="${HUMAN_USERS[0]}"
+        elif [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
+            echo -e "   \033[1;33m>>> Multiple users detected:\033[0m"
+            for i in "${!HUMAN_USERS[@]}"; do echo "       [$i] ${HUMAN_USERS[$i]}"; done
+            while true; do
+                read -p "   Select target user ID: " idx
+                if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 0 ] && [ "$idx" -lt "${#HUMAN_USERS[@]}" ]; then
+                    TARGET_USER="${HUMAN_USERS[$idx]}"
+                    break
+                else
+                    echo -e "   \033[1;31mInvalid selection.\033[0m"
+                fi
+            done
+        else
+            # 4. 终极兜底：纯 LiveUSB 环境，用户还没建。
+            # 这里我们主动问用户“你打算”叫什么名字。
+            read -p "   No standard user found. Enter intended username: " TARGET_USER
+        fi
+    fi
+
+    # 验证输入非空
+    if [[ -z "$TARGET_USER" ]]; then
+        error "Target user cannot be empty."
+        exit 1
+    fi
+
+    # 5. 写入缓存文件！
+    # 这样接下来的 03-user.sh 就可以直接读取这个文件来创建用户，
+    # 04、05 脚本也可以直接读取它来寻找 home 目录。
+    echo "$TARGET_USER" > "/tmp/shorin_install_user"
+    HOME_DIR="/home/$TARGET_USER"
+    export TARGET_USER HOME_DIR
+    
+    info_kv "Target User" "$TARGET_USER"
+}
+
 # 日志文件
 export TEMP_LOG_FILE="/tmp/log-shorin-arch-setup.txt"
 [ ! -f "$TEMP_LOG_FILE" ] && touch "$TEMP_LOG_FILE" && chmod 666 "$TEMP_LOG_FILE"

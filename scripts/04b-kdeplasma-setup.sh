@@ -26,10 +26,7 @@ section "Phase 6" "KDE Plasma Environment"
 # ------------------------------------------------------------------------------
 # 0. Identify Target User
 # ------------------------------------------------------------------------------
-log "Identifying user..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-if [ -n "$DETECTED_USER" ]; then TARGET_USER="$DETECTED_USER"; else read -p "Target user: " TARGET_USER; fi
-HOME_DIR="/home/$TARGET_USER"
+detect_target_user
 info_kv "Target" "$TARGET_USER"
 
 # ------------------------------------------------------------------------------

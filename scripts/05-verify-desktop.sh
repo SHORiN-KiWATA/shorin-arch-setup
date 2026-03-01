@@ -77,8 +77,7 @@ fi
 # 3. 配置文件部署验证 (Dotfiles Audit)
 # ==============================================================================
 log "Identifying target user for config audit..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER}"
+detect_target_user
 
 if [ -z "$TARGET_USER" ]; then
     warn "Could not reliably detect user 1000. Skipping dotfiles audit."

@@ -22,11 +22,8 @@ check_root
 # ==============================================================================
 #  Identify User 
 # ==============================================================================
-log "Identifying user..."
-DETECTED_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd)
-TARGET_USER="${DETECTED_USER:-$(read -p "Target user: " u && echo $u)}"
+detect_target_user
 TARGET_UID=$(id -u "$TARGET_USER")
-HOME_DIR="/home/$TARGET_USER"
 
 info_kv "Target User" "$TARGET_USER"
 info_kv "Home Dir"    "$HOME_DIR"
