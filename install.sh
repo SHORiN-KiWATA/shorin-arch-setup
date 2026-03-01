@@ -89,7 +89,7 @@ select_desktop() {
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
         "No-Desktop |none"
-        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |niri"
+        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
         "Shorin-DMS-Niri |shorindms"
         "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
         "Shorin-DMS-Hyprland-Scrolling |hyprniri"
@@ -180,7 +180,7 @@ BASE_MODULES=(
 )
 
 case "$DESKTOP_ENV" in
-    niri)
+    shorinniri)
         BASE_MODULES+=("04-niri-setup.sh")
         ;;
     kde)
