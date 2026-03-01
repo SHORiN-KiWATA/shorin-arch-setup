@@ -17,8 +17,12 @@ check_root
 # ==============================================================================
 section "Phase 3" "User Account Setup"
 
-# 调用全局函数，确定目标用户 ($TARGET_USER)
-# 这一步会处理：读取缓存、识别 Sudo 用户、多用户菜单或提示输入新用户名
+
+# 清理缓存
+if [ -f "/tmp/shorin_install_user" ]; then 
+    rm "/tmp/shorin_install_user"
+fi
+# 调用全局函数，确定目标用户
 detect_target_user
 
 # 检查系统是否已经真的创建了这个账户
