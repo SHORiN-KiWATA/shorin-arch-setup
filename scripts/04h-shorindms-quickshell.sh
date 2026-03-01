@@ -195,7 +195,7 @@ if [ "$SKIP_AUTOLOGIN" = true ]; then
 else
     log "Configuring TTY Auto-login for Niri..."
     mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+    #echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
     as_user mkdir -p "$(dirname "$LINK")"
     cat <<EOT >"$SVC_FILE"
