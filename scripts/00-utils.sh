@@ -43,7 +43,7 @@ check_root() {
 check_root
 
 # ==============================================================================
-# detect_target_user - 识别目标用户（修复多用户菜单逻辑）
+# detect_target_user - 识别目标用户 (支持 1-based 序号与回车默认选择)
 # ==============================================================================
 detect_target_user() {
     # 1. 缓存检查
@@ -61,27 +61,49 @@ detect_target_user() {
 
     # 3. 核心决策逻辑
     if [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
-        # 情况 A: 发现多个用户 -> 强制弹出菜单
         echo -e "   ${H_YELLOW}>>> Multiple users detected. Who is the target?${NC}"
         
-        # 标记当前执行 sudo 的用户，方便识别
-        local suggest=""
-        [[ -n "${SUDO_USER:-}" ]] && suggest=" (current)"
+        local default_user=""
+        local default_idx=""
 
+        # 遍历用户，生成 1 开始的序号，并捕获当前 Sudo 用户作为默认值
         for i in "${!HUMAN_USERS[@]}"; do
             local mark=""
-            [[ "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]] && mark="${H_CYAN}*${NC}"
-            echo -e "       [${i}] ${mark}${HUMAN_USERS[$i]}"
+            local display_idx=$((i + 1))
+            
+            if [[ "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]]; then
+                mark="${H_CYAN}*${NC}"
+                default_user="${HUMAN_USERS[$i]}"
+                default_idx="$display_idx"
+            fi
+            
+            echo -e "       [${display_idx}] ${mark}${HUMAN_USERS[$i]}"
         done
 
         while true; do
-            echo -ne "   ${H_CYAN}Select user ID [0-$(( ${#HUMAN_USERS[@]} - 1 ))]: ${NC}"
+            # 动态生成提示词
+            if [[ -n "$default_user" ]]; then
+                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}] (Default ${default_idx}): ${NC}"
+            else
+                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}]: ${NC}"
+            fi
+            
             read -r idx
-            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 0 ] && [ "$idx" -lt "${#HUMAN_USERS[@]}" ]; then
-                TARGET_USER="${HUMAN_USERS[$idx]}"
+            
+            # 处理直接回车：如果有默认用户，直接采纳
+            if [[ -z "$idx" && -n "$default_user" ]]; then
+                TARGET_USER="$default_user"
+                log "Defaulting to current user: ${H_CYAN}${TARGET_USER}${NC}"
+                break
+            fi
+
+            # 验证输入是否为合法数字 (1 到 数组长度)
+            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le "${#HUMAN_USERS[@]}" ]; then
+                # 数组索引需要减 1 还原
+                TARGET_USER="${HUMAN_USERS[$((idx - 1))]}"
                 break
             else
-                warn "Invalid selection."
+                warn "Invalid selection. Please enter a valid number or press Enter for default."
             fi
         done
 
@@ -108,7 +130,6 @@ detect_target_user() {
     HOME_DIR="/home/$TARGET_USER"
     export TARGET_USER HOME_DIR
     
-    info_kv "Target User" "$TARGET_USER"
 }
 
 # 日志文件
