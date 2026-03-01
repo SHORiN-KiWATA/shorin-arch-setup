@@ -51,6 +51,7 @@ fi
 # 2. 清理旧目录 (使用绝对路径，指哪打哪)
 if [ -d "$TARGET_DIR" ]; then
     printf "Removing existing directory '%s'...\n" "$TARGET_DIR"
+    chown -R root: "$TARGET_DIR" 
     rm -rf "$TARGET_DIR"
 fi
 
