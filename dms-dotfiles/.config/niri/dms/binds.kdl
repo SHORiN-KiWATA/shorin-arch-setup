@@ -30,6 +30,8 @@ binds {
     Mod+Z hotkey-overlay-title="程序菜单 Applauncher" { spawn-sh "dms ipc call spotlight toggle || fuzzel"; }
     // dms 壁纸选择
     Mod+Alt+W hotkey-overlay-title="壁纸切换 Wallpaper" { spawn "dms" "ipc" "call" "dankdash" "wallpaper";}
+    // 随机下载壁纸
+    Mod+Shift+F10 hotkey-overlay-title="随机下载壁纸 Random wallpaper" { spawn "~/.local/bin/random-anime-wallpaper-dms";}
 
     Mod+O hotkey-overlay-title="切换总览界面 toggle overview" repeat=false { toggle-overview; }
     Mod+G repeat=false { toggle-overview; }

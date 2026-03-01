@@ -1,0 +1,161 @@
+#!/bin/bash
+set -euo pipefail
+
+# =============================================================================
+# 功能描述: 
+#   从指定 API 获取随机壁纸，强制转换为 PNG 格式，并使用 dms IPC 协议设置为桌面壁纸。
+# 
+# 核心特性:
+#   1. 异步下载与长耗时心跳通知。
+#   2. 健壮性检查：校验文件大小与 MIME 类型，剔除损坏/无效文件。
+#   3. 格式转换：自动将下载的图片(无论原格式)转换为 dms 支持的 PNG 格式。
+#   4. 资源自清洁：根据配置自动清理历史壁纸，保持存储整洁。
+#   5. 解耦设计：更新完毕后触发异步的系统 UI 更新钩子 (matugen, niri等)。
+# 
+# 选项:
+#   -k: 保留模式，不清理旧壁纸
+#   -s: 静默模式，关闭桌面通知
+#   -h: 显示帮助信息
+# 
+# 依赖:
+#   curl, file, notify-send, ImageMagick (magick 或 convert)
+# =============================================================================
+
+# ================= 默认配置 =================
+API_URL="https://t.alcy.cc/pc/"
+SAVE_DIR="$HOME/Pictures/Wallpapers/api-random-download"
+
+# 自动清理时保留最近多少张图片
+KEEP_COUNT=40
+
+# 默认开关状态 (可被参数覆盖)
+ENABLE_CLEANUP=true
+SILENT_MODE=false
+
+# ================= 参数解析 =================
+usage() {
+    echo "用法: $(basename "$0") [-k] [-s] [-h]"
+    echo "  -k  (Keep)    保留模式：不清理旧壁纸"
+    echo "  -s  (Silent)  静默模式：不发送任何 notify-send 通知"
+    echo "  -h  帮助信息"
+    exit 0
+}
+
+while getopts "ksh" opt; do
+  case $opt in
+    k) ENABLE_CLEANUP=false ;;
+    s) SILENT_MODE=true ;;
+    h) usage ;;
+    *) usage ;;
+  esac
+done
+
+# ================= 辅助函数 =================
+
+# 统一通知函数 (兼容 set -u 处理未传递的 $3)
+send_notify() {
+    if [ "$SILENT_MODE" = false ]; then
+        notify-send "$1" "$2" ${3:-}
+    fi
+}
+
+# ================= 主逻辑 =================
+
+mkdir -p "$SAVE_DIR"
+TIMESTAMP=$(date +%s)
+RAW_PATH="${SAVE_DIR}/wall_${TIMESTAMP}_raw.tmp"
+FINAL_PATH="${SAVE_DIR}/wall_${TIMESTAMP}.png"
+
+# --- 1. 下载模块 (带心跳通知) ---
+
+if [ "$SILENT_MODE" = false ]; then
+    (
+        sleep 8
+        while true; do
+            notify-send "Wallpaper" "Downloading is still in progress..." --expire-time=5000 --icon=drive-harddisk --replace-id=999 || true
+            sleep 8
+        done
+    ) &
+    NOTIFY_PID=$!
+else
+    NOTIFY_PID=""
+fi
+
+send_notify "Wallpaper" "Downloading from Alcy..." "--expire-time=5000"
+
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+# 执行下载并做严格模式下的安全判断
+if ! curl -L -s -A "$USER_AGENT" --connect-timeout 10 -m 120 -o "$RAW_PATH" "$API_URL"; then
+    [ -n "${NOTIFY_PID:-}" ] && kill "$NOTIFY_PID" 2>/dev/null || true
+    send_notify "Wallpaper Error" "Download failed (Network/API Error)"
+    exit 1
+fi
+
+# 下载结束，杀掉通知进程
+if [ -n "${NOTIFY_PID:-}" ]; then
+    kill "$NOTIFY_PID" 2>/dev/null || true
+fi
+
+# 校验文件 (大小)
+if [ ! -f "$RAW_PATH" ] || [ "$(wc -c < "$RAW_PATH")" -lt 20480 ]; then
+    send_notify "Wallpaper Error" "Download failed (File too small/Invalid)"
+    rm -f "$RAW_PATH"
+    exit 1
+fi
+
+# 校验文件 (MIME 类型)
+FILE_TYPE=$(file --mime-type -b "$RAW_PATH" || echo "unknown")
+if [[ "$FILE_TYPE" != image/* ]]; then
+    send_notify "Wallpaper Error" "Not an image file ($FILE_TYPE)"
+    rm -f "$RAW_PATH"
+    exit 1
+fi
+
+# --- 2. 格式转换模块 (转为 PNG) ---
+
+# 检查 ImageMagick 是否存在 (兼容新版 magick 和旧版 convert)
+if command -v magick > /dev/null 2>&1; then
+    IMG_TOOL="magick"
+elif command -v convert > /dev/null 2>&1; then
+    IMG_TOOL="convert"
+else
+    send_notify "Wallpaper Error" "ImageMagick not found. Please install it." 
+    rm -f "$RAW_PATH"
+    exit 1
+fi
+
+# 执行转换
+if ! $IMG_TOOL "$RAW_PATH" "$FINAL_PATH"; then
+    send_notify "Wallpaper Error" "Failed to convert image to PNG format" 
+    rm -f "$RAW_PATH" "$FINAL_PATH"
+    exit 1
+fi
+
+# 转换成功，清理原始临时文件
+rm -f "$RAW_PATH"
+
+# --- 3. 应用模块 (dms ipc call) ---
+
+dms ipc call wallpaper set "$FINAL_PATH"
+
+# --- 4. 钩子与清理 ---
+(
+    if [ -x "$HOME/.config/scripts/matugen-update.sh" ]; then
+        "$HOME/.config/scripts/matugen-update.sh" "$FINAL_PATH" > /dev/null || true
+    fi
+    
+    sleep 0.5
+    
+    if [ -x "$HOME/.config/scripts/niri_set_overview_blur_dark_bg.sh" ]; then
+        "$HOME/.config/scripts/niri_set_overview_blur_dark_bg.sh" > /dev/null || true
+    fi
+    
+    # 动态清理逻辑
+    if [ "$ENABLE_CLEANUP" = true ]; then
+        DELETE_START=$((KEEP_COUNT + 1))
+        cd "$SAVE_DIR" && ls -t | tail -n +"$DELETE_START" | xargs -I {} rm -- {} 2>/dev/null || true
+    fi
+) &
+
+send_notify "Wallpaper Updated" "PNG applied successfully!"

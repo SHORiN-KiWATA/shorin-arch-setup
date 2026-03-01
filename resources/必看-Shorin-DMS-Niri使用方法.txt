@@ -31,6 +31,7 @@ super+左键 移动窗口
 super+滚轮 左右切换聚焦
 super+Shift+滚轮 上下切换工作区
 super+A/D 左右移动窗口（合并列）
+super+shift+F10 下载随机动漫壁纸
 
 有一些必要设置需要手动完成
 1.【overview壁纸】
