@@ -133,7 +133,7 @@ info_kv "Target" "$TARGET_USER"
 
 # DM Check
 KNOWN_DMS=("gdm" "sddm" "lightdm" "lxdm" "slim" "xorg-xdm" "ly" "greetd" "plasma-login-manager")
-SKIP_AUTOLOGIN=false
+SKIP_DM=false
 DM_FOUND=""
 for dm in "${KNOWN_DMS[@]}"; do
   if pacman -Q "$dm" &>/dev/null; then
@@ -144,10 +144,10 @@ done
 
 if [ -n "$DM_FOUND" ]; then
   info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
-  SKIP_AUTOLOGIN=true
+  SKIP_DM=true
 else
   read -t 20 -p "$(echo -e "   ${H_CYAN}Enable auto-start? [Y/n] (Default Y): ${NC}")" choice || true
-  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_AUTOLOGIN=false || SKIP_AUTOLOGIN=true
+  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && SKIP_DM=false || SKIP_DM=true
 fi
 
 # ==============================================================================
@@ -553,17 +553,18 @@ section "Config" "Hiding useless .desktop files"
 log "Hiding useless .desktop files"
 run_hide_desktop_file
 
+rm -f "$SUDO_TEMP_FILE"
+
+
 # ==============================================================================
 # STEP 9: Cleanup & Auto-Login
 # ==============================================================================
-section "Final" "Cleanup & Boot"
-rm -f "$SUDO_TEMP_FILE"
-
+# section "Final" "Cleanup & Boot"
 # SVC_DIR="$HOME_DIR/.config/systemd/user"
 # SVC_FILE="$SVC_DIR/niri-autostart.service"
 # LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
 
-# if [ "$SKIP_AUTOLOGIN" = true ]; then
+# if [ "$SKIP_DM" = true ]; then
 #   log "Auto-login skipped."
 #   as_user rm -f "$LINK" "$SVC_FILE"
 # else
@@ -587,20 +588,34 @@ rm -f "$SUDO_TEMP_FILE"
 #   success "Enabled."
 # fi
 
-log "Installing greetd and tuigreet..."
-exe pacman -S --noconfirm --needed greetd greetd-tuigreet
 
-# 1. 清理旧的 TTY 自动登录残留（防止神仙打架）
-log "Cleaning up old TTY autologin configs..."
+# ==============================================================================
+# STEP 9: Display Manager (greetd + tuigreet) & Cleanup
+# ==============================================================================
+section "Final" "Cleanup & Boot Configuration"
+
+# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
+log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
-# 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
-systemctl disable getty@tty1.service 2>/dev/null
 
-# 2. 配置 greetd (覆盖写入 config.toml)
-log "Configuring /etc/greetd/config.toml..."
-GREETD_CONF="/etc/greetd/config.toml"
+if [ "$SKIP_DM" = true ]; then
+  log "Display Manager setup skipped (Conflict found or user opted out)."
+  warn "You will need to start your session manually from the TTY."
+else
+  # ============================================================================
+  # Greetd & Tuigreet 自动化部署模块
+  # ============================================================================
+  log "Installing greetd and tuigreet..."
+  exe pacman -S --noconfirm --needed greetd greetd-tuigreet
 
-cat <<EOF > "$GREETD_CONF"
+  # 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
+  systemctl disable getty@tty1.service 2>/dev/null
+
+  # 配置 greetd (覆盖写入 config.toml)
+  log "Configuring /etc/greetd/config.toml..."
+  GREETD_CONF="/etc/greetd/config.toml"
+
+  cat <<EOF > "$GREETD_CONF"
 [terminal]
 # 绑定到 TTY1
 vt = 1
@@ -612,17 +627,18 @@ command = "tuigreet --time --remember --asterisks"
 user = "greeter"
 EOF
 
-# 3. 修复 tuigreet 的 --remember 缓存目录权限
-log "Ensuring cache directory permissions for tuigreet '--remember' feature..."
-mkdir -p /var/cache/tuigreet
-chown -R greeter:greeter /var/cache/tuigreet
-chmod 755 /var/cache/tuigreet
+  # 修复 tuigreet 的 --remember 缓存目录权限
+  log "Ensuring cache directory permissions for tuigreet..."
+  mkdir -p /var/cache/tuigreet
+  chown -R greeter:greeter /var/cache/tuigreet
+  chmod 755 /var/cache/tuigreet
 
-# 4. 启用服务
-log "Enabling greetd service..."
-systemctl enable greetd.service
+  # 启用服务
+  log "Enabling greetd service..."
+  systemctl enable greetd.service
 
-success "greetd with tuigreet frontend has been successfully configured!"
+  success "greetd with tuigreet frontend has been successfully configured!"
+fi
 
 trap - ERR
 log "Module 04 completed."
