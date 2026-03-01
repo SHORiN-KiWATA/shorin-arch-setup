@@ -59,9 +59,6 @@ create_checkpoint() {
     fi
 }
 
-
-
-
 # ==============================================================================
 # 执行
 # ==============================================================================
@@ -77,8 +74,14 @@ fi
 log "Preparing to create restore point..."
 create_checkpoint
 
-rm -f $HOME_DIR/.config/systemd/user/default.target.wants/hyprland-autostart.service &>/dev/null
-rm -f $HOME_DIR/.config/systemd/user/default.target.wants/niri-autostart.service &>/dev/null
-
-
+HYRPLAND_AUTOSTART="$HOME_DIR/.config/systemd/user/hyprland-autostart.service"
+NIRI_AUTOSTART="$HOME_DIR/.config/systemd/user/niri-autostart.service"
+if [ -f "$HYPRLAND_AUTOSTART" ]; then
+    log "Removing existing Hyprland autostart service..."
+    rm -f "$HYPRLAND_AUTOSTART"
+fi
+if [ -f "$NIRI_AUTOSTART" ]; then
+    log "Removing existing Niri autostart service..."
+    rm -f "$NIRI_AUTOSTART"
+fi
 log "Module 03c completed."
