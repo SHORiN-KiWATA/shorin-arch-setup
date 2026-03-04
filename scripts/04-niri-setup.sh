@@ -161,8 +161,11 @@ echo "$FM_PKGS2" >> "$VERIFY_LIST"
 
 exe pacman -S --noconfirm --needed $FM_PKGS1
 exe pacman -S --noconfirm --needed $FM_PKGS2
-if [ ! -f /usr/bin/gnome-terminal ] || [ -L /usr/bin/gnome-terminal ]; then
-  exe ln -sf /usr/bin/kitty /usr/bin/gnome-terminal
+
+exe as_user paru -S --noconfirm --needed xdg-terminal-exec
+
+if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
+  echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
 fi
 
 # Nautilus Nvidia/Input Fix
