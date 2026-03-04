@@ -1,0 +1,67 @@
+title-text: ""
+desktop-color: "#000000"
+terminal-font: "VGA Regular 16"
+
+#menu
++ boot_menu {
+	left = 50%-284
+	top = 50%-62
+	width = 568
+	height = 124
+	item_font = "MBytePC230 Regular 16"
+	selected_item_font = "MBytePC230 Regular 16"
+	icon_width = 4
+	item_height = 20
+	item_padding = 0
+	item_icon_space = 0
+	item_spacing = 1
+	selected_item_pixmap_style = "selected_blob_*.png"
+	scrollbar = true
+	scrollbar_width = 0
+	item_color = "#ffffff"
+	selected_item_color = "#ffffff"
+
+	menu_pixmap_style = "inbox_*.png"
+}
+
+# "Please select boot device:"
++ canvas {
+	
+	left = 50%-284
+	top = 50%-62-56
+	width = 568
+	height = 56
+
+	+ label {  left = 0  top = 22  width = 100%  height = 16  color = "white"  align = "center"  text = "Please select boot device:"  font = "Mbytepc230 Regular 16"  }
+
+	+ image {  file = "frame_s.png"  left = 8  top = 100%-12  width = 100%-16  height = 12  }
+	+ image {  file = "frame_nw.png"  left = 0  top = 0  }
+	+ image {  file = "frame_n.png"  left = 8  top = 0  width = 100%-16  height = 12  }
+	+ image {  file = "frame_ne.png"  left = 100%-8  top = 0  }
+	+ image {  file = "inbox_e.png"  left = 100%-16  top = 12  width = 16  height = 100%-12  }
+	+ image {  file = "inbox_w.png"  left = 0  top = 12  width = 16  height = 100%-12  }
+	+ image {  file = "inbox_c.png"  left = 16  top = 12  width = 100%-32  height = 100%-24 }
+}
+
+# "↑ and ↓ to move selection ..."
++ canvas {
+	
+	left = 50%-284
+	top = 50%+62
+	width = 568
+	height = 91
+
+	+ label {  left = 0  top = 21  width = 100%  height = 16  color = "white"  align = "center"  text = "↑ and ↓ to move selection"  font = "MBytePC230 Regular 16"  }
+	+ label {  left = 0  top = 39  width = 100%  height = 16  color = "white"  align = "center"  text = "ENTER to select boot device"  font = "MBytePC230 Regular 16"  }
+	+ label {  left = 0  top = 57  width = 100%  height = 16  color = "white"  align = "center"  text = "ESC to boot using defaults"  font = "MBytePC230 Regular 16"  }
+
+	+ image {  file = "frame_n.png"  left = 8  top = 0  width = 100%-16  height = 12  }
+	+ image {  file = "inbox_e.png"  left = 100%-16  top = 0  width = 16  height = 100%-12  }
+	+ image {  file = "frame_se.png"  left = 100%-8  top = 100%-12  }
+	+ image {  file = "frame_s.png"  left = 8  top = 100%-12  width = 100%-16  height = 12  }
+	+ image {  file = "frame_sw.png"  left = 0  top = 100%-12  }
+	+ image {  file = "inbox_w.png"  left = 0  top = 0  width = 16 height = 100%-12  }
+	+ image {  file = "inbox_c.png"  left = 16  top = 12  width = 100%-32  height = 100%-24  }
+
+}
+

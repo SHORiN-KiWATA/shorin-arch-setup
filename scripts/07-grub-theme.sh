@@ -321,8 +321,8 @@ section "Step 5/7" "Menu Entries"
 log "Adding Power Options to GRUB menu..."
 
 cp /etc/grub.d/40_custom /etc/grub.d/99_custom
-echo 'menuentry "Reboot"' {reboot} >> /etc/grub.d/99_custom
-echo 'menuentry "Shutdown"' {halt} >> /etc/grub.d/99_custom
+echo 'menuentry "Reboot" --class restart {reboot}' >> /etc/grub.d/99_custom
+echo 'menuentry "Shutdown" --class shutdown {halt}' >> /etc/grub.d/99_custom
 
 success "Added grub menuentry 99-shutdown"
 
