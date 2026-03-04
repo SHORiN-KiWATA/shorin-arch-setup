@@ -162,11 +162,13 @@ echo "$FM_PKGS2" >> "$VERIFY_LIST"
 exe pacman -S --noconfirm --needed $FM_PKGS1
 exe pacman -S --noconfirm --needed $FM_PKGS2
 
-exe as_user paru -S --noconfirm --needed xdg-terminal-exec
 
+# 默认终端处理
+exe as_user paru -S --noconfirm --needed xdg-terminal-exec
 if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
   echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
 fi
+as_user gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty
 
 # Nautilus Nvidia/Input Fix
 configure_nautilus_user
