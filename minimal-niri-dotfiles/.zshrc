@@ -41,4 +41,4 @@ alias lt='eza --tree --level=2 --icons'
 
 alias fa='fastfetch'
 alias f='f'
-alias f='f --nsfw'
+alias fnsfw='f --nsfw'
