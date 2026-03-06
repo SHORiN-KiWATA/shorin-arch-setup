@@ -166,7 +166,7 @@ exe pacman -S --noconfirm --needed $FM_PKGS2
 # 默认终端处理
 echo "xdg-terminal-exec" >> "$VERIFY_LIST"
 exe as_user paru -S --noconfirm --needed xdg-terminal-exec
-if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
+if ! grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
   echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
 fi
 

@@ -105,7 +105,7 @@ section "Shorin Hyprniri" "Environment Configuration"
 
 log "Configuring default terminal and templates..."
 # 默认终端处理
-if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
+if ! grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
     echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
 fi
 

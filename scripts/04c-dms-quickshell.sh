@@ -24,13 +24,13 @@ force_copy() {
         warn "force_copy: Missing arguments"
         return 1
     fi
-
+    
     local item_name
     item_name=$(basename "$src")
     
     # 只有当拷贝的不是 "目录下的所有内容" (即路径不以 /. 结尾) 时，才执行精确删除
     if [[ "$src" != */. ]]; then
-        # 清理 target_dir 结尾多余的斜杠或 /. 
+        # 清理 target_dir 结尾多余的斜杠或 /.
         local clean_target="${target_dir%/}"
         clean_target="${clean_target%/.}"
         
@@ -46,11 +46,11 @@ force_copy() {
 niri_remove_bind() {
     local target_key="$1"
     local config_file="$HOME_DIR/.config/niri/dms/binds.kdl"
-
+    
     if [[ ! -f "$config_file" ]]; then
         return 1
     fi
-
+    
     # 使用 Python 处理，无日志，无备份
     python3 -c "
 import sys, re
@@ -72,8 +72,8 @@ try:
         start_idx = match.start()
         open_brace_idx = content.find('{', start_idx)
         if open_brace_idx == -1:
-            break 
-        
+            break
+
         balance = 0
         end_idx = -1
         for i in range(open_brace_idx, len(content)):
@@ -85,7 +85,7 @@ try:
                 if balance == 0:
                     end_idx = i + 1
                     break
-        
+
         if end_idx != -1:
             if end_idx < len(content) and content[end_idx] == '\n':
                 end_idx += 1
@@ -98,7 +98,7 @@ try:
 
 except Exception:
     pass
-" "$target_key"
+    " "$target_key"
 }
 
 VERIFY_LIST="/tmp/shorin_install_verify.list"
@@ -131,7 +131,7 @@ log "Downloading DMS installer wrapper..."
 if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
     chmod +x "$INSTALLER_SCRIPT"
     chown "$TARGET_USER" "$INSTALLER_SCRIPT"
-
+    
     log "Executing DMS installer as user ($TARGET_USER)..."
     log "NOTE: If the installer asks for input, this script might hang."
     pacman -S --noconfirm vulkan-headers
@@ -139,7 +139,7 @@ if curl -fsSL "$DMS_URL" -o "$INSTALLER_SCRIPT"; then
         success "DankMaterialShell installed successfully."
     else
         warn "DMS installer returned an error code. You may need to install it manually."
-        exit 1 
+        exit 1
     fi
     rm -f "$INSTALLER_SCRIPT"
 else
@@ -157,29 +157,29 @@ DMS_NIRI_CONFIG_FILE="$HOME_DIR/.config/niri/config.kdl"
 DMS_HYPR_CONFIG_FILE="$HOME_DIR/.config/hypr/hyprland.conf"
 
 if [[ -L "$DMS_AUTOSTART_LINK" ]]; then
-    log "Detect DMS systemd service enabled, disabling ...." 
+    log "Detect DMS systemd service enabled, disabling ...."
     rm -f "$DMS_AUTOSTART_LINK"
 fi
 
 DMS_NIRI_INSTALLED="false"
 DMS_HYPR_INSTALLED="false"
 
-if command -v niri &>/dev/null; then 
+if command -v niri &>/dev/null; then
     DMS_NIRI_INSTALLED="true"
-elif command -v hyprland &>/dev/null; then
+    elif command -v hyprland &>/dev/null; then
     DMS_HYPR_INSTALLED="true"
 fi
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     if ! grep -E -q "^[[:space:]]*spawn-at-startup.*dms.*run" "$DMS_NIRI_CONFIG_FILE"; then
-        log "Enabling DMS autostart in niri config.kdl..." 
+        log "Enabling DMS autostart in niri config.kdl..."
         echo 'spawn-at-startup "dms" "run"' >> "$DMS_NIRI_CONFIG_FILE"
         echo 'spawn-at-startup "xhost" "+si:localuser:root"' >> "$DMS_NIRI_CONFIG_FILE"
     else
         log "DMS autostart already exists in niri config.kdl, skipping."
     fi
-
-elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
+    
+    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     log "Configuring Hyprland autostart..."
     if ! grep -q "exec-once.*dms run" "$DMS_HYPR_CONFIG_FILE"; then
         log "Adding DMS autostart to hyprland.conf"
@@ -202,7 +202,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     else
         log "Fcitx5 autostart already exists, skipping."
     fi
-
+    
     if grep -q "^[[:space:]]*environment[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
         log "Existing environment block found. Injecting fcitx variables..."
         if ! grep -q 'XMODIFIERS "@im=fcitx"' "$DMS_NIRI_CONFIG_FILE"; then
@@ -222,7 +222,7 @@ environment {
 }
 EOT
     fi
-
+    
     chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
     
     # === [ 核心修复点 ] ===
@@ -232,8 +232,8 @@ EOT
     # =======================
     
     force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-
-elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
+    
+    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     if ! grep -q "fcitx5" "$DMS_HYPR_CONFIG_FILE"; then
         log "Adding fcitx5 autostart to hyprland.conf"
         echo 'exec-once = fcitx5 -d' >> "$DMS_HYPR_CONFIG_FILE"
@@ -257,7 +257,7 @@ EOT
     # === [ 核心修复点 ] ===
     as_user rm -rf "$HOME_DIR/.local/share/fcitx5"
     as_user rm -rf "$HOME_DIR/.config/fcitx5"
-    # 这里我顺手修正了原本脚本的一个小 Bug: 
+    # 这里我顺手修正了原本脚本的一个小 Bug:
     # 如果 quickshell-dotfiles 包含 .config 和 .local，应复制到 ~ 下，而不是 ~/.config/ 下，否则会变成 ~/.config/.config
     force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
 fi
@@ -270,17 +270,17 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     log "DMS niri detected, configuring nautilus"
     FM_PKGS="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal  xdg-terminal-exec file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
     echo "$FM_PKGS" >> "$VERIFY_LIST"
-    exe as_user paru -S --noconfirm --needed $FM_PKGS    
+    exe as_user paru -S --noconfirm --needed $FM_PKGS
     # 默认终端处理
-    if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
-    echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
+    if ! grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
+        echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
     fi
-
+    
     # if [ ! -f /usr/local/bin/gnome-terminal ] || [ -L /usr/local/bin/gnome-terminal ]; then
     #   exe ln -sf /usr/bin/kitty /usr/local/bin/gnome-terminal
     # fi
     sudo -u "$TARGET_USER" dbus-run-session gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty
-
+    
     as_user mkdir -p "$HOME_DIR/Templates"
     as_user touch "$HOME_DIR/Templates/new"
     as_user touch "$HOME_DIR/Templates/new.sh"
@@ -288,9 +288,9 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     chown -R "$TARGET_USER:" "$HOME_DIR/Templates"
     
     configure_nautilus_user
-
-
-elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
+    
+    
+    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     log "DMS hyprland detected, skipping file manager."
 fi
 
@@ -307,8 +307,8 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
         log "Configuring environment in niri config.kdl"
         echo 'spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri & /usr/lib/xdg-desktop-portal-gnome"' >> "$DMS_NIRI_CONFIG_FILE"
     fi
-
-elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
+    
+    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
     log "DMS hyprland detected, configuring xdg-desktop-portal"
     echo "xdg-desktop-portal-hyprland" >> "$VERIFY_LIST"
     exe pacman -S --noconfirm --needed xdg-desktop-portal-hyprland
@@ -338,7 +338,7 @@ if [[ ${#MISSING_COMPONENTS[@]} -gt 0 ]]; then
     warn "Missing core commands: ${MISSING_COMPONENTS[*]}"
     write_log "FATAL" "DMS Blackbox installation failed. Missing: ${MISSING_COMPONENTS[*]}"
     echo -e "   ${H_YELLOW}>>> Exiting installer. Please check upstream DankLinux repo or network. ${NC}"
-    exit 1 
+    exit 1
 else
     success "Blackbox components validated successfully."
 fi
@@ -365,7 +365,7 @@ section "Config" "Dispaly Manager"
 # if [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_NIRI_INSTALLED" == "true" ]]; then
 #     SVC_FILE="$SVC_DIR/niri-autostart.service"
 #     LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
-    
+
 #     cat <<EOT >"$SVC_FILE"
 # [Unit]
 # Description=Niri Session Autostart
@@ -388,7 +388,7 @@ section "Config" "Dispaly Manager"
 # elif [[ "$SKIP_AUTOLOGIN" == "false" && "$DMS_HYPR_INSTALLED" == "true" ]]; then
 #     SVC_FILE="$SVC_DIR/hyprland-autostart.service"
 #     LINK="$SVC_DIR/default.target.wants/hyprland-autostart.service"
-    
+
 #     cat <<EOT >"$SVC_FILE"
 # [Unit]
 # Description=Hyprland Session Autostart
@@ -414,10 +414,10 @@ log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
 if [ "$SKIP_DM" = true ]; then
-  log "Display Manager setup skipped (Conflict found or user opted out)."
-  warn "You will need to start your session manually from the TTY."
+    log "Display Manager setup skipped (Conflict found or user opted out)."
+    warn "You will need to start your session manually from the TTY."
 else
-  setup_greetd_tuigreet
+    setup_greetd_tuigreet
 fi
 
 # ============================================================================
@@ -426,7 +426,7 @@ fi
 log "Checking if Niri is installed for Shorin Customizations..."
 if ! command -v niri &>/dev/null; then
     SHORIN_DMS=0
-fi 
+fi
 
 if [[ "${SHORIN_DMS:-0}" != "1" ]]; then
     log "Shorin DMS not selected or Niri missing, skipping custom configurations."
@@ -440,9 +440,9 @@ BACKUP_FILE="$HOME_DIR/shorin_config_backup.tar.gz"
 log "Backing up old configs to archive (Overwrite previous)..."
 
 BACKUP_LIST=(
-    "Thunar" "xfce4" "gtk-3.0" "mpv" "satty" "fuzzel" 
-    "niri/shorin-niri" "fish" "kitty"  
-    "mimeapps.list" "matugen" "btop" "cava" "yazi" 
+    "Thunar" "xfce4" "gtk-3.0" "mpv" "satty" "fuzzel"
+    "niri/shorin-niri" "fish" "kitty"
+    "mimeapps.list" "matugen" "btop" "cava" "yazi"
     "fcitx5" "fontconfig"
 )
 
@@ -524,8 +524,8 @@ fi
 
 
 # === update module ===
-if command -v kitty &>/dev/null; then 
-exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
+if command -v kitty &>/dev/null; then
+    exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
 fi
 
 # === 光标配置 ===
@@ -548,16 +548,16 @@ else
     log "Cursor configuration block already exists, skipping."
 fi
 
-# === 自定义fish和kitty配置 === 
+# === 自定义fish和kitty配置 ===
 if command -v kitty &>/dev/null; then
-    section "Shorin DMS" "terminal and shell"   
+    section "Shorin DMS" "terminal and shell"
     SHORIN_TERM_PKGS="cups-pk-helper kimageformats dsearch-bin fuzzel wf-recorder slurp eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git"
     echo "$SHORIN_TERM_PKGS" >> "$VERIFY_LIST"
     exe as_user yay -S --noconfirm --needed $SHORIN_TERM_PKGS
     chown -R "$TARGET_USER:" "$DMS_DOTFILES_DIR"
     as_user mkdir -p "$HOME_DIR/.config"
     force_copy "$DMS_DOTFILES_DIR/.config/fish" "$HOME_DIR/.config/"
-    force_copy "$DMS_DOTFILES_DIR/.config/kitty" "$HOME_DIR/.config/"    
+    force_copy "$DMS_DOTFILES_DIR/.config/kitty" "$HOME_DIR/.config/"
     as_user mkdir -p "$HOME_DIR/.local/bin"
     force_copy "$DMS_DOTFILES_DIR/.local/bin/." "$HOME_DIR/.local/bin/"
     as_user shorin link
@@ -582,7 +582,7 @@ if command -v flatpak &>/dev/null; then
     FLATPAK_PKGS="bazaar"
     echo "$FLATPAK_PKGS" >> "$VERIFY_LIST"
     exe as_user yay -S --noconfirm --needed bazaar
-
+    
     as_user flatpak override --user --filesystem=xdg-data/themes
     as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
     as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
@@ -598,7 +598,7 @@ log "Configuring Matugen for Shorin DMS..."
 MATUGEN_PKGS="matugen python-pywalfox firefox adw-gtk-theme nwg-look"
 echo "$MATUGEN_PKGS" >> "$VERIFY_LIST"
 exe as_user yay -S --noconfirm --needed $MATUGEN_PKGS
-    
+
 force_copy "$DMS_DOTFILES_DIR/.config/matugen" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/btop" "$HOME_DIR/.config/"
 force_copy "$DMS_DOTFILES_DIR/.config/cava" "$HOME_DIR/.config/"
@@ -634,13 +634,13 @@ if ! grep -q 'QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"; then
 QT_QPA_PLATFORMTHEME "gtk3"\
 QT_QPA_PLATFORMTHEME_QT6 "gtk3"\
 // fix quickshell icon theme missing\
-QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"
+    QS_ICON_THEME "Adwaita"' "$DMS_NIRI_CONFIG_FILE"
 else
     log "QT/Icon variables already exist in environment block."
 fi
 
 # === niri blur ===
-curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+curl -L shorin.xyz/niri-blur-toggle | as_user bash
 
 # === font configuration字体配置 ===
 section "Shorin DMS" "fonts"
