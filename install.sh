@@ -89,7 +89,7 @@ select_desktop() {
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
         "No-Desktop |none"
-        "Minimal-Niri for old PCs |minimalniri"
+        "Minimal-Niri |minimalniri"
         "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
         "Shorin-DMS-Niri |shorindms"
         "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
