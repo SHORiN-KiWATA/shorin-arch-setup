@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# 【脚本功能说明】
+# 1. 结合 Fastfetch，在终端启动时展示随机二次元图片 (支持 SFW / NSFW 模式)。
+# 2. 具备静默后台异步下载机制，库存不足时自动补货，绝不阻塞前台终端的启动。
+# 3. 具备智能缓存管理机制，自动控制待展示区与已使用区 (used) 的图片数量上限。
+# 4. 具备极致的网络环境容错处理，无网或弱网时自动降级 fallback，避免死等。
+# 5. 具备自动清理 Fastfetch 内部生成的图片转换缓存功能，防止磁盘空间无感膨胀。
+# ==============================================================================
+
+# 启用严格模式：遇到错误退出、未定义变量退出、管道中任何命令失败则失败
+set -euo pipefail
+
+# ================= 配置区域 =================
+
+# [开关] 阅后即焚模式 (针对 Fastfetch 内部缓存)
+# true  = 运行后强力清空 ~/.cache/fastfetch/images/ (防止转码缓存膨胀)
+# false = 保留缓存
+clean_cache_mode=true
+
+# 每次补货下载多少张
+download_batch_size=10
+# 最大库存上限 (待展示区)
+max_cache_limit=100
+# 库存少于多少张时开始补货
+min_trigger_limit=60
+# used 目录最大存放数量 (超过此数量将按照时间顺序删除最旧的文件)
+max_used_limit=50
+
+# ===========================================
+
+# --- 0. 参数解析与模式设置 ---
+
+nsfw_mode=false
+if [[ "${NSFW:-}" == "1" ]]; then
+    nsfw_mode=true
+fi
+
+args_for_fastfetch=()
+for arg in "$@"; do
+    if [[ "$arg" == "--nsfw" ]]; then
+        nsfw_mode=true
+    else
+        args_for_fastfetch+=("$arg")
+    fi
+done
+
+# --- 1. 目录配置 ---
+
+if [[ "$nsfw_mode" == true ]]; then
+    cache_dir="$HOME/.cache/fastfetch_waifu_nsfw"
+    lock_file="/tmp/fastfetch_waifu_nsfw.lock"
+else
+    cache_dir="$HOME/.cache/fastfetch_waifu"
+    lock_file="/tmp/fastfetch_waifu.lock"
+fi
+
+used_dir="$cache_dir/used"
+mkdir -p "$cache_dir" "$used_dir"
+
+# --- 2. 核心函数定义 ---
+
+check_network() {
+    curl -sI --connect-timeout 2 "http://captive.apple.com/hotspot-detect.html" >/dev/null 2>&1
+}
+
+get_random_url() {
+    local timeout="--connect-timeout 5 --max-time 15"
+    local rand=$(( RANDOM % 3 + 1 ))
+    
+    # 管道中使用 || true 确保 jq 解析失败时不会触发 pipefail 导致脚本崩溃
+    if [[ "$nsfw_mode" == true ]]; then
+        case $rand in
+            1) curl -s $timeout "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=true" | jq -r '.images[0].url' 2>/dev/null || true ;;
+            2) curl -s $timeout "https://api.waifu.pics/nsfw/waifu" | jq -r '.url' 2>/dev/null || true ;;
+            3) curl -s $timeout "https://api.waifu.pics/nsfw/neko" | jq -r '.url' 2>/dev/null || true ;;
+        esac
+    else
+        case $rand in
+            1) curl -s $timeout "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false" | jq -r '.images[0].url' 2>/dev/null || true ;;
+            2) curl -s $timeout "https://nekos.best/api/v2/waifu" | jq -r '.results[0].url' 2>/dev/null || true ;;
+            3) curl -s $timeout "https://api.waifu.pics/sfw/waifu" | jq -r '.url' 2>/dev/null || true ;;
+        esac
+    fi
+}
+
+download_one_image() {
+    local url
+    url=$(get_random_url || true)
+    
+    if [[ -n "$url" && "$url" =~ ^http ]]; then
+        local filename="waifu_$(date +%s%N)_$RANDOM.jpg"
+        local target_path="$cache_dir/$filename"
+        
+        # 使用 || true 防止 curl 意外崩溃
+        curl -s -L --connect-timeout 5 --max-time 15 -o "$target_path" "$url" || true
+        
+        if [[ -s "$target_path" ]]; then
+            if command -v file >/dev/null 2>&1; then
+                if ! file --mime-type "$target_path" | grep -q "image/"; then
+                    rm -f "$target_path"
+                fi
+            fi
+        else
+            rm -f "$target_path"
+        fi
+    fi
+}
+
+background_job() {
+    (
+        # 1. 彻底切断标准输入输出，变成纯粹的后台幽灵进程
+        exec </dev/null >/dev/null 2>&1
+        
+        # 2. 忽略终端挂断信号
+        trap '' HUP
+        
+        # 3. 局部关闭严格模式，确保后台尽力而为，不因单次网络错误退出
+        set +e
+
+        # 4. 获取文件描述符 200 的排他锁，防止并发下载
+        exec 200>"$lock_file"
+        flock -n 200 || exit 0
+
+        # 网络检查，没网就悄悄退出
+        if ! check_network; then
+            exit 0
+        fi
+
+        # 开启空 glob 扩展
+        shopt -s nullglob
+        
+        # --- 补货逻辑 ---
+        local current_files=("$cache_dir"/*.jpg)
+        if (( ${#current_files[@]} < min_trigger_limit )); then
+            for ((i=0; i<download_batch_size; i++)); do
+                download_one_image
+                sleep 0.5
+            done
+        fi
+
+        # --- 清理过多库存逻辑 ---
+        local final_files=("$cache_dir"/*.jpg)
+        if (( ${#final_files[@]} > max_cache_limit )); then
+            local skip_lines=$(( max_cache_limit + 1 ))
+            local cache_to_delete
+            # 只有明确文件存在时才执行 ls，避免 nullglob 导致的当前目录误删
+            mapfile -t cache_to_delete < <(ls -tp "$cache_dir"/*.jpg 2>/dev/null | tail -n +"$skip_lines")
+            if (( ${#cache_to_delete[@]} > 0 )); then
+                rm -f -- "${cache_to_delete[@]}"
+            fi
+        fi
+    ) &
+}
+
+# --- 3. 主程序逻辑 ---
+
+# 开启空 glob 扩展，安全获取文件列表
+shopt -s nullglob
+files=("$cache_dir"/*.jpg)
+num_files=${#files[@]}
+selected_img=""
+
+if (( num_files > 0 )); then
+    rand_index=$(( RANDOM % num_files ))
+    selected_img="${files[$rand_index]}"
+    
+    background_job
+else
+    echo "库存不够啦！正在去搬运新的图片，请稍等哦..."
+    
+    if check_network; then
+        # 前台下载时暂时关闭严格模式，防止网络异常导致脚本闪退
+        set +e
+        download_one_image
+        set -e
+    else
+        echo "网络好像不太通畅，无法下载新图片 QAQ"
+    fi
+    
+    # 重新获取文件列表
+    files=("$cache_dir"/*.jpg)
+    if (( ${#files[@]} > 0 )); then
+        selected_img="${files[0]}"
+        background_job
+    fi
+fi
+
+if [[ -n "$selected_img" && -f "$selected_img" ]]; then
+    # 显示图片
+    fastfetch --logo "$selected_img" --logo-preserve-aspect-ratio true "${args_for_fastfetch[@]}"
+    
+    # === 移动到 used 目录 ===
+    mv "$selected_img" "$used_dir/"
+    
+    # === 检查 used 目录并清理旧图 ===
+    used_files=("$used_dir"/*.jpg)
+    if (( ${#used_files[@]} > max_used_limit )); then
+        skip_lines=$(( max_used_limit + 1 ))
+        
+        mapfile -t files_to_delete < <(ls -tp "$used_dir"/*.jpg 2>/dev/null | tail -n +"$skip_lines")
+        if (( ${#files_to_delete[@]} > 0 )); then
+            rm -f -- "${files_to_delete[@]}"
+        fi
+    fi
+
+    # 清理 Fastfetch 内部缓存
+    if [[ "$clean_cache_mode" == true ]]; then
+        rm -rf "$HOME/.cache/fastfetch/images"
+    fi
+else
+    echo "图片获取失败了，这次只能先显示默认的 Logo 啦 QAQ"
+    fastfetch "${args_for_fastfetch[@]}"
+fi
