@@ -117,7 +117,7 @@ configure_nautilus_user
 
 # --- 7. Tools ---
 section "Minimal Niri" "Tools"
-TOOLS_PKGS=(imv cliphist wl-clipboard shorinclip-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol)
+TOOLS_PKGS=(imv cliphist wl-clipboard shorinclip-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol pulsemixer)
 echo "${TOOLS_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TOOLS_PKGS[@]}"
 
@@ -134,10 +134,14 @@ if command -v flatpak &>/dev/null; then
     as_user flatpak override --user --filesystem=xdg-config/fontconfig
 fi
 run_hide_desktop_file
+
+force_copy "$PARENT_DIR/resources/Minimal-Niri使用方法.txt" "$HOME_DIR"
+
 section "Final" "Cleanup & Boot Configuration"
 
 log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+
 
 if [ "$SKIP_DM" = true ]; then
     log "Display Manager setup skipped (Conflict found or user opted out)."
