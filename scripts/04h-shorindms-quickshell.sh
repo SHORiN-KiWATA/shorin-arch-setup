@@ -14,24 +14,7 @@ fi
 check_root
 VERIFY_LIST="/tmp/shorin_install_verify.list"
 rm -f "$VERIFY_LIST" # 确保每次运行生成全新的订单
-force_copy() {
-    local src="$1"
-    local target_dir="$2"
-    
-    if [[ -z "$src" || -z "$target_dir" ]]; then
-        warn "force_copy: Missing arguments"
-        return 1
-    fi
 
-    if [[ -d "${src%/}" ]]; then
-
-        (cd "$src" && find . -type d) | while read -r d; do
-            as_user rm -f "$target_dir/$d" 2>/dev/null
-        done
-    fi
-
-    exe as_user cp -rf "$src" "$target_dir"
-}
 # --- Identify User & DM Check ---
 log "Identifying target user..."
 detect_target_user
@@ -107,7 +90,7 @@ as_user shorin link
 log "Configuring default terminal and templates..."
 # 默认终端处理
 if grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
-echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
+    echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
 fi
 
 # if [ ! -f /usr/local/bin/gnome-terminal ] || [ -L /usr/local/bin/gnome-terminal ]; then
@@ -142,8 +125,8 @@ fi
 
 
 # === update module ===
-if command -v kitty &>/dev/null; then 
-exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
+if command -v kitty &>/dev/null; then
+    exe ln -sf /usr/bin/kitty /usr/local/bin/xterm
 fi
 
 log "Installing theme components and browser..."
@@ -167,7 +150,7 @@ log "Copying tutorial files..."
 force_copy "$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt" "$HOME_DIR"
 
 # niri blur toggle 脚本
-curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+curl -L shorin.xyz/niri-blur-toggle | as_user bash
 
 # --- Finalization & Auto-Login ---
 section "Final" "Auto-Login & Cleanup"
@@ -178,9 +161,9 @@ log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
 if [ "$SKIP_DM" = true ]; then
-  log "Display Manager setup skipped (Conflict found or user opted out)."
-  warn "You will need to start your session manually from the TTY."
+    log "Display Manager setup skipped (Conflict found or user opted out)."
+    warn "You will need to start your session manually from the TTY."
 else
-
-  setup_greetd_tuigreet
+    
+    setup_greetd_tuigreet
 fi

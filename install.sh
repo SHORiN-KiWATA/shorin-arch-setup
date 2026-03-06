@@ -41,24 +41,24 @@ banner1() {
 cat << "EOF"
    _____ __  ______  ____  _____   __
   / ___// / / / __ \/ __ \/  _/ | / /
-  \__ \/ /_/ / / / / /_/ // //  |/ / 
- ___/ / __  / /_/ / _, _// // /|  /  
-/____/_/ /_/\____/_/ |_/___/_/ |_/   
+  \__ \/ /_/ / / / / /_/ // //  |/ /
+ ___/ / __  / /_/ / _, _// // /|  /
+/____/_/ /_/\____/_/ |_/___/_/ |_/
 EOF
 }
 
 banner2() {
 cat << "EOF"
-  ██████  ██   ██  ██████  ███████ ██ ███    ██ 
-  ██      ██   ██ ██    ██ ██   ██    ██ ██  ██ 
-  ███████ ███████ ██    ██ ██████  ██ ██ ██  ██ 
-       ██ ██   ██ ██    ██ ██   ██ ██ ██  ██ ██ 
-  ██████  ██   ██  ██████  ██   ██ ██ ██   ████ 
+  ██████  ██   ██  ██████  ███████ ██ ███    ██
+  ██      ██   ██ ██    ██ ██   ██    ██ ██  ██
+  ███████ ███████ ██    ██ ██████  ██ ██ ██  ██
+       ██ ██   ██ ██    ██ ██   ██ ██ ██  ██ ██
+  ██████  ██   ██  ██████  ██   ██ ██ ██   ████
 EOF
 }
 banner3() {
 cat << "EOF"
-   ______ __ __   ___   ____   ____  _   _ 
+   ______ __ __   ___   ____   ____  _   _
   / ___/|  |  | /   \ |    \ |    || \ | |
  (   \_ |  |  ||     ||  D  ) |  | |  \| |
   \__  ||  _  ||  O  ||    /  |  | |     |
@@ -89,6 +89,7 @@ select_desktop() {
     # 1. 定义选项 (显示名称|内部ID)
     local OPTIONS=(
         "No-Desktop |none"
+        "Minimal-Niri for old PCs |minimalniri"
         "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
         "Shorin-DMS-Niri |shorindms"
         "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
@@ -98,6 +99,7 @@ select_desktop() {
         "Quickshell: End4--illogical-impulse (Hyprland)|end4"
         "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
         "Quickshell: Caelestia (Hyprland)|caelestia"
+        
     )
     
     # 2. 绘制菜单 (半开放式风格)
@@ -107,7 +109,7 @@ select_desktop() {
     echo -e "${H_PURPLE}╭${HR}${NC}"
     echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}"
     echo -e "${H_PURPLE}│${NC}" # 空行分隔
-
+    
     local idx=1
     for opt in "${OPTIONS[@]}"; do
         local name="${opt%%|*}"
@@ -147,7 +149,7 @@ sys_dashboard() {
     
     if [ "$CN_MIRROR" == "1" ]; then
         echo -e "${H_BLUE}║${NC} ${BOLD}Network${NC}  : ${H_YELLOW}CN Optimized (Manual)${NC}"
-    elif [ "$DEBUG" == "1" ]; then
+        elif [ "$DEBUG" == "1" ]; then
         echo -e "${H_BLUE}║${NC} ${BOLD}Network${NC}  : ${H_RED}DEBUG FORCE (CN Mode)${NC}"
     else
         echo -e "${H_BLUE}║${NC} ${BOLD}Network${NC}  : Global Default"
@@ -182,38 +184,41 @@ BASE_MODULES=(
 case "$DESKTOP_ENV" in
     shorinniri)
         BASE_MODULES+=("04-niri-setup.sh")
-        ;;
+    ;;
+    minimalniri)
+        BASE_MODULES+=("04j-minimal-niri.sh")
+    ;;
     kde)
         BASE_MODULES+=("04b-kdeplasma-setup.sh")
-        ;;
+    ;;
     end4)
         BASE_MODULES+=("04e-illogical-impulse-end4-quickshell.sh")
-        ;;
+    ;;
     dms)
         BASE_MODULES+=("04c-dms-quickshell.sh")
-        ;;
+    ;;
     shorindmsgit)
-    BASE_MODULES+=("04c-dms-quickshell.sh")
-    export SHORIN_DMS=1
-    ;;    
+        BASE_MODULES+=("04c-dms-quickshell.sh")
+        export SHORIN_DMS=1
+    ;;
     shorindms)
         BASE_MODULES+=("04h-shorindms-quickshell.sh")
-        ;;
+    ;;
     hyprniri)
         BASE_MODULES+=("04i-shorin-hyprniri-quickshell.sh")
-        ;;
+    ;;
     caelestia)
         BASE_MODULES+=("04g-caelestia-quickshell.sh")
-        ;;
+    ;;
     gnome)
         BASE_MODULES+=("04d-gnome.sh")
-        ;;
+    ;;
     none)
         log "Skipping Desktop Environment installation."
-        ;;
+    ;;
     *)
         warn "Unknown selection, skipping desktop setup."
-        ;;
+    ;;
 esac
 
 BASE_MODULES+=("05-verify-desktop.sh" "07-grub-theme.sh" "99-apps.sh")
@@ -238,10 +243,10 @@ else
     # --- Start Reflector Logic ---
     log "Checking Reflector..."
     exe pacman -S --noconfirm --needed reflector
-
+    
     CURRENT_TZ=$(readlink -f /etc/localtime)
     REFLECTOR_ARGS="--protocol https -a 12 -f 10 --sort rate --save /etc/pacman.d/mirrorlist --verbose"
-
+    
     if [[ "$CURRENT_TZ" == *"Shanghai"* ]]; then
         echo ""
         echo -e "${H_YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
@@ -283,7 +288,7 @@ else
         success "Mirrorlist optimized."
     fi
     # --- End Reflector Logic ---
-
+    
     # [MODIFIED] Record success so we don't ask again
     echo "REFLECTOR_DONE" >> "$STATE_FILE"
 fi
@@ -315,24 +320,24 @@ for module in "${MODULES[@]}"; do
         error "Module not found: $module"
         continue
     fi
-
+    
     # Checkpoint Logic: Auto-skip if in state file
     if grep -q "^${module}$" "$STATE_FILE"; then
         echo -e "   ${H_GREEN}✔${NC} Module ${BOLD}${module}${NC} already completed."
         echo -e "   ${DIM}   Skipping... (Delete .install_progress to force run)${NC}"
         continue
     fi
-
+    
     section "Module ${CURRENT_STEP}/${TOTAL_STEPS}" "$module"
-
+    
     bash "$script_path"
     exit_code=$?
-
+    
     if [ $exit_code -eq 0 ]; then
         # Only record success
         echo "$module" >> "$STATE_FILE"
         success "Module $module completed."
-    elif [ $exit_code -eq 130 ]; then
+        elif [ $exit_code -eq 130 ]; then
         echo ""
         warn "Script interrupted by user (Ctrl+C)."
         log "Exiting without rollback. You can resume later."
@@ -359,22 +364,22 @@ clean_intermediate_snapshots() {
         "Before Desktop Environments"
         "Before Niri Setup"
     )
-
+    
     if ! snapper -c "$config_name" list &>/dev/null; then
         return
     fi
-
+    
     log "Scanning junk snapshots in: $config_name..."
-
+    
     # 1. 获取起始点 ID
     local start_id
     start_id=$(snapper -c "$config_name" list --columns number,description | grep -F "$start_marker" | awk '{print $1}' | tail -n 1)
-
+    
     if [ -z "$start_id" ]; then
         warn "Marker '$start_marker' not found in '$config_name'. Skipping cleanup."
         return
     fi
-
+    
     # 2. 解析白名单 (IDS_TO_KEEP)
     local IDS_TO_KEEP=()
     for marker in "${KEEP_MARKERS[@]}"; do
@@ -386,7 +391,7 @@ clean_intermediate_snapshots() {
             log "Found protected snapshot: '$marker' (ID: $found_id)"
         fi
     done
-
+    
     local snapshots_to_delete=()
     
     # 3. 扫描并筛选需要删除的快照
@@ -398,7 +403,7 @@ clean_intermediate_snapshots() {
         # awk $1=number, $2=|, $3=type
         id=$(echo "$line" | awk '{print $1}')
         type=$(echo "$line" | awk '{print $3}')
-
+        
         if [[ "$id" =~ ^[0-9]+$ ]]; then
             if [ "$id" -gt "$start_id" ]; then
                 
@@ -415,7 +420,7 @@ clean_intermediate_snapshots() {
                     continue
                 fi
                 # -----------------
-
+                
                 # [修改重点] 仅删除 pre 和 post 类型的快照
                 # 去掉了 || "$type" == "single" 以保护用户手动创建的快照
                 if [[ "$type" == "pre" || "$type" == "post" ]]; then
@@ -424,7 +429,7 @@ clean_intermediate_snapshots() {
             fi
         fi
     done < <(snapper -c "$config_name" list --columns number,type)
-
+    
     # 4. 执行删除
     if [ ${#snapshots_to_delete[@]} -gt 0 ]; then
         log "Deleting ${#snapshots_to_delete[@]} junk snapshots in '$config_name'..."
@@ -460,8 +465,8 @@ done
 #--- 清理nmcli残留的连接配置
 
 if pacman -Qi networkmanager &> /dev/null; then
-
-    rm -rf /etc/NetworkManager/system-connections/* 
+    
+    rm -rf /etc/NetworkManager/system-connections/*
 fi
 # --- verify 配置残留清理 ---
 VERIFY_LIST="/tmp/shorin_install_verify.list"

@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<channel name="thunar" version="1.0">
+  <property name="last-view" type="string" value="ThunarIconView"/>
+  <property name="last-icon-view-zoom-level" type="string" value="THUNAR_ZOOM_LEVEL_100_PERCENT"/>
+  <property name="last-window-width" type="int" value="1256"/>
+  <property name="last-window-height" type="int" value="746"/>
+  <property name="last-window-maximized" type="bool" value="false"/>
+  <property name="last-show-hidden" type="bool" value="true"/>
+  <property name="last-separator-position" type="int" value="170"/>
+  <property name="last-side-pane" type="string" value="THUNAR_SIDEPANE_TYPE_SHORTCUTS"/>
+  <property name="last-menubar-visible" type="bool" value="false"/>
+  <property name="hidden-bookmarks" type="array">
+    <value type="string" value="computer:///"/>
+    <value type="string" value="file:///home/shorin"/>
+  </property>
+</channel>

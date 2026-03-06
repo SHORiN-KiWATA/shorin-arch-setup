@@ -53,19 +53,19 @@ detect_target_user() {
         export TARGET_USER HOME_DIR
         return 0
     fi
-
+    
     log "Detecting system users..."
-
+    
     # 2. 提取系统中所有普通用户 (UID 1000-60000)
     mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
-
+    
     # 3. 核心决策逻辑
     if [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
         echo -e "   ${H_YELLOW}>>> Multiple users detected. Who is the target?${NC}"
         
         local default_user=""
         local default_idx=""
-
+        
         # 遍历用户，生成 1 开始的序号，并捕获当前 Sudo 用户作为默认值
         for i in "${!HUMAN_USERS[@]}"; do
             local mark=""
@@ -79,7 +79,7 @@ detect_target_user() {
             
             echo -e "       [${display_idx}] ${mark}${HUMAN_USERS[$i]}"
         done
-
+        
         while true; do
             # 动态生成提示词
             if [[ -n "$default_user" ]]; then
@@ -96,7 +96,7 @@ detect_target_user() {
                 log "Defaulting to current user: ${H_CYAN}${TARGET_USER}${NC}"
                 break
             fi
-
+            
             # 验证输入是否为合法数字 (1 到 数组长度)
             if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le "${#HUMAN_USERS[@]}" ]; then
                 # 数组索引需要减 1 还原
@@ -106,11 +106,11 @@ detect_target_user() {
                 warn "Invalid selection. Please enter a valid number or press Enter for default."
             fi
         done
-
-    elif [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
+        
+        elif [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
         TARGET_USER="${HUMAN_USERS[0]}"
         log "Single user detected: ${H_CYAN}${TARGET_USER}${NC}"
-
+        
     else
         if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
             TARGET_USER="$SUDO_USER"
@@ -119,13 +119,13 @@ detect_target_user() {
             read -r TARGET_USER
         fi
     fi
-
+    
     # 4. 最终验证与持久化
     if [[ -z "$TARGET_USER" ]]; then
         error "Target user cannot be empty."
         exit 1
     fi
-
+    
     echo "$TARGET_USER" > "/tmp/shorin_install_user"
     HOME_DIR="/home/$TARGET_USER"
     export TARGET_USER HOME_DIR
@@ -210,7 +210,7 @@ exe() {
     write_log "EXEC" "$full_command"
     
     # Run the command
-    "$@" 
+    "$@"
     local status=$?
     
     if [ $status -eq 0 ]; then
@@ -243,24 +243,24 @@ select_flathub_mirror() {
         "https://mirrors.ustc.edu.cn/flathub"
         "https://dl.flathub.org/repo/"
     )
-
+    
     # 2. 动态计算菜单宽度 (基于无颜色的纯文本)
     local max_len=0
     local title_text="Select Flathub Mirror (60s Timeout)"
     
     max_len=${#title_text}
-
+    
     for name in "${names[@]}"; do
         # 预估显示长度："[x] Name - Recommended"
-        local item_len=$((${#name} + 4 + 14)) 
+        local item_len=$((${#name} + 4 + 14))
         if (( item_len > max_len )); then
             max_len=$item_len
         fi
     done
-
+    
     # 菜单总宽度
     local menu_width=$((max_len + 4))
-
+    
     # --- 3. 渲染菜单 (使用 echo -e 确保颜色变量被解析) ---
     echo ""
     
@@ -268,10 +268,10 @@ select_flathub_mirror() {
     local line_str=""
     printf -v line_str "%*s" "$menu_width" ""
     line_str=${line_str// /─}
-
+    
     # 打印顶部边框
     echo -e "${H_PURPLE}╭${line_str}╮${NC}"
-
+    
     # 打印标题 (计算居中填充)
     local title_padding_len=$(( (menu_width - ${#title_text}) / 2 ))
     local right_padding_len=$((menu_width - ${#title_text} - title_padding_len))
@@ -281,10 +281,10 @@ select_flathub_mirror() {
     local t_pad_r=""; printf -v t_pad_r "%*s" "$right_padding_len" ""
     
     echo -e "${H_PURPLE}│${NC}${t_pad_l}${BOLD}${title_text}${NC}${t_pad_r}${H_PURPLE}│${NC}"
-
+    
     # 打印中间分隔线
     echo -e "${H_PURPLE}├${line_str}┤${NC}"
-
+    
     # 打印选项
     for i in "${!names[@]}"; do
         local name="${names[$i]}"
@@ -294,7 +294,7 @@ select_flathub_mirror() {
         local color_str=""
         # 2. 构造用于计算长度的无颜色字符串
         local raw_str=""
-
+        
         if [ "$i" -eq 0 ]; then
             raw_str=" [$display_idx] $name - Recommended"
             color_str=" ${H_CYAN}[$display_idx]${NC} ${name} - ${H_GREEN}Recommended${NC}"
@@ -302,10 +302,10 @@ select_flathub_mirror() {
             raw_str=" [$display_idx] $name"
             color_str=" ${H_CYAN}[$display_idx]${NC} ${name}"
         fi
-
+        
         # 计算右侧填充空格
         local padding=$((menu_width - ${#raw_str}))
-        local pad_str=""; 
+        local pad_str="";
         if [ "$padding" -gt 0 ]; then
             printf -v pad_str "%*s" "$padding" ""
         fi
@@ -313,11 +313,11 @@ select_flathub_mirror() {
         # 打印：边框 + 内容 + 填充 + 边框
         echo -e "${H_PURPLE}│${NC}${color_str}${pad_str}${H_PURPLE}│${NC}"
     done
-
+    
     # 打印底部边框
     echo -e "${H_PURPLE}╰${line_str}╯${NC}"
     echo ""
-
+    
     # --- 4. 用户交互 ---
     local choice
     # 提示符
@@ -329,11 +329,11 @@ select_flathub_mirror() {
         log "Invalid choice or timeout. Defaulting to SJTU..."
         choice=1
     fi
-
+    
     local index=$((choice-1))
     local selected_name="${names[$index]}"
     local selected_url="${urls[$index]}"
-
+    
     log "Setting Flathub mirror to: ${H_GREEN}$selected_name${NC}"
     
     # 执行修改 (仅修改 flathub，不涉及 github)
@@ -345,7 +345,7 @@ select_flathub_mirror() {
 }
 
 as_user() {
-  runuser -u "$TARGET_USER" -- "$@"
+    runuser -u "$TARGET_USER" -- "$@"
 }
 
 
@@ -404,9 +404,9 @@ run_hide_desktop_file() {
         "org.kde.drkonqi.coredump.gui.desktop"
         "org.kde.kwrite.desktop"
         
-
+        
     )
-
+    
     echo "正在隐藏不需要的桌面图标..."
     
     # 用一个 for 循环搞定所有调用
@@ -414,76 +414,95 @@ run_hide_desktop_file() {
         hide_desktop_file "/usr/share/applications/$app"
     done
     chown -R "$TARGET_USER:" "$HOME_DIR/.local/share/applications"
-
+    
     echo "图标隐藏完成！"
 }
 
 configure_nautilus_user() {
-  local sys_file="/usr/share/applications/org.gnome.Nautilus.desktop"
-  local user_dir="$HOME_DIR/.local/share/applications"
-  local user_file="$user_dir/org.gnome.Nautilus.desktop"
-
-  # 1. 检查系统文件是否存在
-  if [ -f "$sys_file" ]; then
+    local sys_file="/usr/share/applications/org.gnome.Nautilus.desktop"
+    local user_dir="$HOME_DIR/.local/share/applications"
+    local user_file="$user_dir/org.gnome.Nautilus.desktop"
     
-    local need_modify=0
-    local env_vars="env"
-
-    # --- 逻辑 1: Niri 检测 (输入法修复) ---
-    if command -v niri >/dev/null 2>&1; then
-        # 只要有 niri，就强制使用 fcitx 模块
-        env_vars="$env_vars GTK_IM_MODULE=fcitx"
-        need_modify=1
-        log "检测到 Niri 环境，准备注入 GTK_IM_MODULE=fcitx"
-    fi
-
-    # --- 逻辑 2: 双显卡 NVIDIA 检测 (GSK 渲染修复) ---
-    local gpu_count=$(lspci | grep -E -i "vga|3d" | wc -l)
-    local has_nvidia=$(lspci | grep -E -i "nvidia" | wc -l)
-
-    if [ "$gpu_count" -gt 1 ] && [ "$has_nvidia" -gt 0 ]; then
-        # 叠加 GSK 渲染变量
-        env_vars="$env_vars GSK_RENDERER=gl"
-        need_modify=1
-        log "检测到双显卡 NVIDIA，准备注入 GSK_RENDERER=gl"
-
-        # 额外操作: 创建 gsk.conf
-        local env_conf_dir="$HOME_DIR/.config/environment.d"
-        if [ ! -f "$env_conf_dir/gsk.conf" ]; then
-            mkdir -p "$env_conf_dir"
-            echo "GSK_RENDERER=gl" > "$env_conf_dir/gsk.conf"
-            # 修复权限
-            if [ -n "$TARGET_USER" ]; then
-                chown -R "$TARGET_USER" "$env_conf_dir"
+    # 1. 检查系统文件是否存在
+    if [ -f "$sys_file" ]; then
+        
+        local need_modify=0
+        local env_vars="env"
+        
+        # --- 逻辑 1: Niri 检测 (输入法修复) ---
+        if command -v niri >/dev/null 2>&1; then
+            # 只要有 niri，就强制使用 fcitx 模块
+            env_vars="$env_vars GTK_IM_MODULE=fcitx"
+            need_modify=1
+            log "检测到 Niri 环境，准备注入 GTK_IM_MODULE=fcitx"
+        fi
+        
+        # --- 逻辑 2: 双显卡 NVIDIA 检测 (GSK 渲染修复) ---
+        local gpu_count=$(lspci | grep -E -i "vga|3d" | wc -l)
+        local has_nvidia=$(lspci | grep -E -i "nvidia" | wc -l)
+        
+        if [ "$gpu_count" -gt 1 ] && [ "$has_nvidia" -gt 0 ]; then
+            # 叠加 GSK 渲染变量
+            env_vars="$env_vars GSK_RENDERER=gl"
+            need_modify=1
+            log "检测到双显卡 NVIDIA，准备注入 GSK_RENDERER=gl"
+            
+            # 额外操作: 创建 gsk.conf
+            local env_conf_dir="$HOME_DIR/.config/environment.d"
+            if [ ! -f "$env_conf_dir/gsk.conf" ]; then
+                mkdir -p "$env_conf_dir"
+                echo "GSK_RENDERER=gl" > "$env_conf_dir/gsk.conf"
+                # 修复权限
+                if [ -n "$TARGET_USER" ]; then
+                    chown -R "$TARGET_USER" "$env_conf_dir"
+                fi
+                log "已添加用户级环境变量配置: $env_conf_dir/gsk.conf"
             fi
-            log "已添加用户级环境变量配置: $env_conf_dir/gsk.conf"
+        fi
+        
+        # --- 3. 执行修改 (如果命中了任意一个逻辑) ---
+        if [ "$need_modify" -eq 1 ]; then
+            
+            # 准备目录并复制
+            mkdir -p "$user_dir"
+            cp "$sys_file" "$user_file"
+            
+            # 修复所有者
+            if [ -n "$TARGET_USER" ]; then
+                chown "$TARGET_USER" "$user_file"
+            fi
+            
+            # 修改 Desktop 文件
+            # env_vars 此时可能是:
+            # - "env GTK_IM_MODULE=fcitx" (仅Niri)
+            # - "env GSK_RENDERER=gl" (仅双显卡)
+            # - "env GTK_IM_MODULE=fcitx GSK_RENDERER=gl" (两者都有)
+            sed -i "s|^Exec=|Exec=$env_vars |" "$user_file"
+            
+            log "已生成 Nautilus 用户配置: $user_file (参数: $env_vars)"
+            
         fi
     fi
-
-    # --- 3. 执行修改 (如果命中了任意一个逻辑) ---
-    if [ "$need_modify" -eq 1 ]; then
-      
-      # 准备目录并复制
-      mkdir -p "$user_dir"
-      cp "$sys_file" "$user_file"
-      
-      # 修复所有者
-      if [ -n "$TARGET_USER" ]; then
-          chown "$TARGET_USER" "$user_file"
-      fi
-
-      # 修改 Desktop 文件
-      # env_vars 此时可能是:
-      # - "env GTK_IM_MODULE=fcitx" (仅Niri)
-      # - "env GSK_RENDERER=gl" (仅双显卡)
-      # - "env GTK_IM_MODULE=fcitx GSK_RENDERER=gl" (两者都有)
-      sed -i "s|^Exec=|Exec=$env_vars |" "$user_file"
-      
-      log "已生成 Nautilus 用户配置: $user_file (参数: $env_vars)"
-      
-    fi
-  fi
 }
+
+force_copy() {
+    local src="$1"
+    local target_dir="$2"
+    
+    if [[ -z "$src" || -z "$target_dir" ]]; then
+        warn "force_copy: Missing arguments"
+        return 1
+    fi
+    
+    if [[ -d "${src%/}" ]]; then
+        (cd "$src" && find . -type d) | while read -r d; do
+            as_user rm -f "$target_dir/$d" 2>/dev/null
+        done
+    fi
+    
+    exe as_user cp -rf "$src" "$target_dir"
+}
+
 
 # ==============================================================================
 # check_dm_conflict - 检测现有的显示管理器冲突，并让用户选择是否启用新 DM
@@ -501,7 +520,7 @@ check_dm_conflict() {
             break
         fi
     done
-
+    
     if [ -n "$DM_FOUND" ]; then
         info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
         SKIP_DM=true
@@ -523,14 +542,14 @@ check_dm_conflict() {
 setup_greetd_tuigreet() {
     log "Installing greetd and tuigreet..."
     exe pacman -S --noconfirm --needed greetd greetd-tuigreet
-
+    
     # 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
     systemctl disable getty@tty1.service 2>/dev/null
-
+    
     # 配置 greetd (覆盖写入 config.toml)
     log "Configuring /etc/greetd/config.toml..."
     local GREETD_CONF="/etc/greetd/config.toml"
-
+    
     cat <<EOF > "$GREETD_CONF"
 [terminal]
 # 绑定到 TTY1
@@ -542,16 +561,17 @@ vt = 1
 command = "tuigreet --time --user-menu --remember --remember-user-session --asterisks"
 user = "greeter"
 EOF
-
+    
     # 修复 tuigreet 的 --remember 缓存目录权限
     log "Ensuring cache directory permissions for tuigreet..."
     mkdir -p /var/cache/tuigreet
     chown -R greeter:greeter /var/cache/tuigreet
     chmod 755 /var/cache/tuigreet
-
+    
     # 启用服务
     log "Enabling greetd service..."
     systemctl enable greetd.service
-
+    
     success "greetd with tuigreet frontend has been successfully configured!"
 }
+

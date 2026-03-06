@@ -21,7 +21,7 @@ TARGET_EDITOR="vim"
 if command -v nvim &> /dev/null; then
     TARGET_EDITOR="nvim"
     log "Neovim detected."
-elif command -v nano &> /dev/null; then
+    elif command -v nano &> /dev/null; then
     TARGET_EDITOR="nano"
     log "Nano detected."
 else
@@ -101,10 +101,10 @@ else
     if [ -L /etc/localtime ]; then
         LOCAL_TZ=$(readlink -f /etc/localtime)
     fi
-
+    
     echo "" >> /etc/pacman.conf
     echo "[archlinuxcn]" >> /etc/pacman.conf
-
+    
     if [[ "$LOCAL_TZ" == *"Asia/Shanghai"* ]]; then
         log "Timezone is Asia/Shanghai. Applying mainland mirrors..."
         cat <<EOT >> /etc/pacman.conf
@@ -147,7 +147,7 @@ section "Step 6/6" "Network Backend (iwd)"
 # Check if NetworkManager is installed before attempting configuration
 if pacman -Qi networkmanager &> /dev/null; then
     log "NetworkManager detected. Proceeding with iwd backend configuration..."
-
+    
     log "Configuring NetworkManager to use iwd backend..."
     exe pacman -S --noconfirm --needed iwd impala
     exe systemctl enable iwd
@@ -155,12 +155,12 @@ if pacman -Qi networkmanager &> /dev/null; then
     if [ ! -d /etc/NetworkManager/conf.d ]; then
         mkdir -p /etc/NetworkManager/conf.d
     fi
-    if [ -f /etc/NetworkManager/conf.d/wifi_backend.conf ];then 
+    if [ -f /etc/NetworkManager/conf.d/wifi_backend.conf ];then
         rm /etc/NetworkManager/conf.d/wifi_backend.conf
     fi
     if [ ! -f /etc/NetworkManager/conf.d/iwd.conf  ];then
-    echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
-    rm -rfv /etc/NetworkManager/system-connections/*
+        echo -e "[device]\nwifi.backend=iwd" >> /etc/NetworkManager/conf.d/iwd.conf
+        rm -rfv /etc/NetworkManager/system-connections/*
     fi
     log "Notice: NetworkManager restart deferred. Changes will apply after reboot."
     success "Network backend configured (iwd)."
