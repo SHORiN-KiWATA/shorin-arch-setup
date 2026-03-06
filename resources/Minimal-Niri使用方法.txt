@@ -1,0 +1,49 @@
+
+super+shift+/ 可以打开按键教程。
+
+【重要按键】
+super+T 打开终端
+super+E 打开文档管理器
+super+Z 开始菜单
+super+Q 关闭窗口
+super+R 按预设切换 宽度
+super+F 最大化
+Super+alt+F 全屏
+super+alt+V 开关剪贴板
+super+alt+A 截图
+super+右键 调整窗口大小
+super+左键 移动窗口
+super+V 切换浮动窗口
+super+F10 随机更换壁纸（壁纸存放在~/Pictures/Wallpapers目录）
+super+shift+F10 下载随机动漫壁纸
+super+alt+L 锁屏
+super+alt+P 关闭屏幕休眠
+所有按键看~/.config/niri/binds.kdl。
+
+
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
+
+【实用命令】
+pac 安装软件 (安装软件还可以用bazaar，这是flatpak软件商城)
+pacr 卸载软件
+mirror-update 更新镜像源
+sysup 更新系统
+clean 系统清理
+quicksave 快速存档
+运行shorin命令可以看到所有可用的便利命令
+
+reboot 重启
+poweroff 关机
+suspend 挂起
+
+【有趣实用的TUI软件（基于终端的用户交互程序）】
+命令：作用
+gdu：磁盘空间管理
+nmtui：网络配置工具
+impala：wifi连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
+btop：任务管理器
+yazi：文档管理器
+fastfetch：系统信息显示工具
+pulsemixer：tui音量调整工具

@@ -42,3 +42,8 @@ alias lt='eza --tree --level=2 --icons'
 alias fa='fastfetch'
 alias f='f'
 alias fnsfw='f --nsfw'
+
+alias reboot='systemctl reboot'
+alias poweroff='systemctl poweroff'
+alias suspend='systemctl suspend'
+
