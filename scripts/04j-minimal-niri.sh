@@ -85,7 +85,7 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed "${NIRI_PKGS[@]}"
 
 # --- 5. Terminal ---
 section "Minimal Niri" "Terminal"
-TERMINAL_PKGS=(zsh foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide zsh-syntax-highlighting zsh-autosuggestions zsh-completions imagemagick)
+TERMINAL_PKGS=(zsh foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide zsh-syntax-highlighting zsh-autosuggestions zsh-completions imagemagick jq)
 echo "${TERMINAL_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TERMINAL_PKGS[@]}"
 
