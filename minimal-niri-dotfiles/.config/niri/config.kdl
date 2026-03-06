@@ -9,7 +9,6 @@
 include "binds.kdl"
 include "rule.kdl"
 include "output.kdl"
-include "animation.kdl"
 include "layout.kdl"
 // 截图保存位置
 screenshot-path "~/Pictures/Screenshots/Niri-screenshots/%Y-%m-%d %H-%M-%S.png"
