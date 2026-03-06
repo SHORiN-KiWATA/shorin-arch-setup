@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# Function: apt (Smart Arch Package Manager Wrapper for Bash)
+# Description: Maps common Debian 'apt' commands to an intelligent Arch backend.
+# Features:
+#   - Fallback routing: paru > yay > pacman.
+#   - Automatic Sudo Handling: Prevents AUR helpers from running as root.
+#   - Anti-Partial-Upgrade: Merges update/upgrade into a safe -Syu operation.
+#   - Deep Clean Default: Merges remove/purge into -Rns for a pristine system.
+#   - UI Integration: Progressive enhancement with 'shorin' for interactive modes.
+#   - Safe orphan detection and i18n support.
+#   - Highly readable, colorized, and column-aligned help output.
+# Usage: apt {update|upgrade|install [ui]|remove [ui]|search|show|autoremove|clean|help|-h} [pkg...]
+# ==============================================================================
+
+# 启用严格模式：遇到错误退出、未定义变量退出、管道中任何命令失败则失败
+set -euo pipefail
+
+# 1. 极简的 Locale 探测 (纯Bash字符串匹配)
+is_zh=0
+if [[ "${LC_ALL:-}" == zh_* || "${LC_MESSAGES:-}" == zh_* || "${LANG:-}" == zh_* ]]; then
+    is_zh=1
+fi
+
+# 2. 探测 shorin UI 工具是否存在
+has_shorin=0
+if command -v shorin >/dev/null 2>&1; then
+    has_shorin=1
+fi
+
+# 3. 参数解析与默认行为
+if [[ $# -eq 0 ]]; then
+    action="help"
+    exit_code=1
+else
+    action="$1"
+    shift # 移除第一个参数，将剩余参数传给对应的命令
+    exit_code=0
+fi
+
+# 定义 ANSI 颜色转义序列 (KISS原则：不依赖 tput)
+c_cmd=$'\033[36m'   # Cyan
+c_hl=$'\033[33m'    # Yellow
+c_rst=$'\033[0m'    # Reset
+
+# 预定义基础错误信息 (本地化)
+msg_err_pkg="Error: Specify packages."
+msg_err_search="Error: Specify search term."
+msg_err_show="Error: Specify package to show."
+
+if [[ "$is_zh" -eq 1 ]]; then
+    msg_err_pkg="错误：请指定要操作的软件包。"
+    msg_err_search="错误：请指定搜索词。"
+    msg_err_show="错误：请指定要查看的软件包。"
+fi
+
+# 4. 帮助信息拦截与本地化排版
+if [[ "$action" == "help" || "$action" == "-h" || "$action" == "--help" ]]; then
+    if [[ "$is_zh" -eq 1 ]]; then
+        echo "Arch 包管理器包装器 (优先级: ${c_hl}paru > yay > pacman${c_rst})"
+        echo "用法: ${c_hl}apt${c_rst} <命令> [软件包...]"
+        echo ""
+        echo "命令:"
+        echo "  ${c_cmd}update(upgrade)${c_rst}  同步数据库并更新系统 (-Syu)"
+        echo "  ${c_cmd}install        ${c_rst}  安装软件包 (-S)"
+        if [[ "$has_shorin" -eq 1 ]]; then
+            echo "  ${c_cmd}install ui     ${c_rst}  打开交互式界面安装 (依赖: shorin-contrib-git)"
+        fi
+        echo "  ${c_cmd}remove         ${c_rst}  彻底卸载软件包、依赖及配置文件 (-Rns)"
+        if [[ "$has_shorin" -eq 1 ]]; then
+            echo "  ${c_cmd}remove ui      ${c_rst}  打开交互式界面卸载 (依赖: shorin-contrib-git)"
+        fi
+        echo "  ${c_cmd}search         ${c_rst}  搜索软件包 (-Ss)"
+        echo "  ${c_cmd}show           ${c_rst}  显示软件包详细信息 (-Si)"
+        echo "  ${c_cmd}autoremove     ${c_rst}  安全地清理系统中的孤立软件包"
+        echo "  ${c_cmd}clean          ${c_rst}  清理下载缓存 (-Sc)"
+        echo "  ${c_cmd}help, -h       ${c_rst}  显示此帮助信息"
+    else
+        echo "Smart Arch Package Wrapper (Routing: ${c_hl}paru > yay > pacman${c_rst})"
+        echo "Usage: ${c_hl}apt${c_rst} <command> [package...]"
+        echo ""
+        echo "Commands:"
+        echo "  ${c_cmd}update(upgrade)${c_rst}  Sync databases and update system (Safe -Syu)"
+        echo "  ${c_cmd}install        ${c_rst}  Install packages (-S)"
+        if [[ "$has_shorin" -eq 1 ]]; then
+            echo "  ${c_cmd}install ui     ${c_rst}  Open interactive installation UI (shorin pac)"
+        fi
+        echo "  ${c_cmd}remove         ${c_rst}  Remove packages, unneeded dependencies, and configs (-Rns)"
+        if [[ "$has_shorin" -eq 1 ]]; then
+            echo "  ${c_cmd}remove ui      ${c_rst}  Open interactive removal UI (shorin pacr)"
+        fi
+        echo "  ${c_cmd}search         ${c_rst}  Search for packages (-Ss)"
+        echo "  ${c_cmd}show           ${c_rst}  Show package details (-Si)"
+        echo "  ${c_cmd}autoremove     ${c_rst}  Remove orphaned packages safely"
+        echo "  ${c_cmd}clean          ${c_rst}  Clean package cache (-Sc)"
+        echo "  ${c_cmd}help, -h       ${c_rst}  Show this help message"
+    fi
+    exit "$exit_code"
+fi
+
+# 5. 核心路由与提权逻辑
+# 使用数组来存储命令，避免含有空格的参数被 Bash 错误拆分
+if command -v paru >/dev/null 2>&1; then
+    pkg_mgr="paru"
+    cmd=("paru")
+elif command -v yay >/dev/null 2>&1; then
+    pkg_mgr="yay"
+    cmd=("yay")
+else
+    pkg_mgr="pacman"
+    cmd=("sudo" "pacman")
+fi
+
+# 6. 动作映射 (Action Mapping)
+case "$action" in
+    update|upgrade)
+        "${cmd[@]}" -Syu
+        ;;
+    install)
+        if [[ $# -eq 0 ]]; then echo "$msg_err_pkg"; exit 1; fi
+        # 拦截 'install ui'，条件：且只输入了 ui 一个参数，且系统存在 shorin
+        if [[ "$1" == "ui" && $# -eq 1 && "$has_shorin" -eq 1 ]]; then
+            shorin pac
+            exit 0
+        fi
+        "${cmd[@]}" -S "$@"
+        ;;
+    remove)
+        if [[ $# -eq 0 ]]; then echo "$msg_err_pkg"; exit 1; fi
+        # 拦截 'remove ui'
+        if [[ "$1" == "ui" && $# -eq 1 && "$has_shorin" -eq 1 ]]; then
+            shorin pacr
+            exit 0
+        fi
+        "${cmd[@]}" -Rns "$@"
+        ;;
+    search)
+        if [[ $# -eq 0 ]]; then echo "$msg_err_search"; exit 1; fi
+        "$pkg_mgr" -Ss "$@"
+        ;;
+    show)
+        if [[ $# -eq 0 ]]; then echo "$msg_err_show"; exit 1; fi
+        "$pkg_mgr" -Si "$@"
+        ;;
+    autoremove)
+        # 巧妙处理: pacman -Qtdq 找不到包时会返回退出码1，使用 || true 避免触发 set -e 导致脚本直接终止
+        orphans=$(pacman -Qtdq || true)
+        
+        if [[ -n "$orphans" ]]; then
+            # 使用 mapfile 将多行字符串转换为安全数组，精准统计数量
+            mapfile -t orphan_arr <<< "$orphans"
+            if [[ "$is_zh" -eq 1 ]]; then
+                echo "找到 ${#orphan_arr[@]} 个孤立的软件包。正在通过 $pkg_mgr 卸载..."
+            else
+                echo "Found ${#orphan_arr[@]} orphaned package(s). Removing via $pkg_mgr..."
+            fi
+            "${cmd[@]}" -Rns "${orphan_arr[@]}"
+        else
+            if [[ "$is_zh" -eq 1 ]]; then
+                echo "系统很干净，没有需要清理的孤立软件包。"
+            else
+                echo "System is clean. No orphaned packages to remove."
+            fi
+        fi
+        ;;
+    clean)
+        "${cmd[@]}" -Sc
+        ;;
+    *)
+        if [[ "$is_zh" -eq 1 ]]; then
+            echo "错误：不支持的 apt 命令映射: $action"
+            echo "运行 'apt -h' 查看可用命令。"
+        else
+            echo "Error: Unsupported apt command mapped: $action"
+            echo "Run 'apt -h' for valid commands."
+        fi
+        exit 1
+        ;;
+esac

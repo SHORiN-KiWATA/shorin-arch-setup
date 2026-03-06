@@ -38,3 +38,7 @@ alias cd="z"
 alias ls='eza --icons'
 alias la='eza -al --icons --group-directories-first'
 alias lt='eza --tree --level=2 --icons'
+
+alias fa='fastfetch'
+alias f='f'
+alias f='f --nsfw'
