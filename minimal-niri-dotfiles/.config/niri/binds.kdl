@@ -14,7 +14,7 @@ binds {
     Mod+F9 hotkey-overlay-title="切换护眼模式 Toggle sunset" {spawn "~/.config/niri/scripts/toggle-wlsunset";}
 
     // 这一行是关闭waybar进程，释放资源占用。在意资源占用的时候使用。
-    Mod+F4 hotkey-overlay-title="开关任务栏 Toggle bar" {spawn-sh "pkill waybar && pkill cava || waybar ";}
+    Mod+F4 hotkey-overlay-title="开关任务栏 Toggle bar" {spawn-sh "pkill waybar || waybar ";}
     // 这一行是用waybar自己支持的信号功能隐藏waybar，但进程没有退出，资源占用依旧有
     Mod+Shift+F4 hotkey-overlay-title="隐藏任务栏 Hide bar" {spawn-sh "killall -SIGUSR1 waybar";}
     // 临时开一个浮动终端
