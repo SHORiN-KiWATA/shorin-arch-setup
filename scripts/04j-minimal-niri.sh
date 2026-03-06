@@ -74,7 +74,7 @@ OUTPUT_KDL="$HOME_DIR/.config/niri/output.kdl"
 if [[ "$TARGET_USER" != "shorin" ]]; then
     as_user touch "$OUTPUT_KDL"
 else
-    as_user cp "$DOTFILES_REPO/dotfiles/.config/niri/output-example.kdl" "$OUTPUT_KDL"
+    as_user cp "$PARENT_DIR/minimal-niri-dotfiles/.config/niri/output-example.kdl" "$OUTPUT_KDL"
 fi
 
 # --- 4. Core Components ---
@@ -117,7 +117,7 @@ configure_nautilus_user
 
 # --- 7. Tools ---
 section "Minimal Niri" "Tools"
-TOOLS_PKGS=(imv cliphist wl-clipboard shorinclip-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme)
+TOOLS_PKGS=(imv cliphist wl-clipboard shorinclip-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol)
 echo "${TOOLS_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TOOLS_PKGS[@]}"
 
