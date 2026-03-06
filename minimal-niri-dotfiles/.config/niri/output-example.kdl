@@ -1,0 +1,16 @@
+output "eDP-1"{
+//	off
+    mode "2560x1440@165"
+	scale 1.3
+	position x=0 y=0
+
+}
+output "DP-2"{
+	//主要显示器DP-2
+	mode "2560x1440@180"
+	scale 1
+	position x=0 y=0
+    focus-at-startup
+
+}
+
