@@ -133,7 +133,7 @@ if command -v flatpak &>/dev/null; then
     as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
     as_user flatpak override --user --filesystem=xdg-config/fontconfig
 fi
-
+run_hide_desktop_file
 section "Final" "Cleanup & Boot Configuration"
 
 log "Cleaning up legacy TTY autologin configs..."
