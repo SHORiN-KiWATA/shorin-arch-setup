@@ -85,7 +85,7 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed "${NIRI_PKGS[@]}"
 
 # --- 5. Terminal ---
 section "Minimal Niri" "Terminal"
-TERMINAL_PKGS=(zsh foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide)
+TERMINAL_PKGS=(zsh foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide zsh-syntax-highlighting zsh-autosuggestions zsh-completions)
 echo "${TERMINAL_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TERMINAL_PKGS[@]}"
 
@@ -132,4 +132,16 @@ if command -v flatpak &>/dev/null; then
     as_user flatpak override --user --filesystem=xdg-config/gtk-3.0
     as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
     as_user flatpak override --user --filesystem=xdg-config/fontconfig
+fi
+
+section "Final" "Cleanup & Boot Configuration"
+
+log "Cleaning up legacy TTY autologin configs..."
+rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+
+if [ "$SKIP_DM" = true ]; then
+    log "Display Manager setup skipped (Conflict found or user opted out)."
+    warn "You will need to start your session manually from the TTY."
+else
+    setup_greetd_tuigreet
 fi
