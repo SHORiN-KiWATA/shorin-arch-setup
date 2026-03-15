@@ -151,7 +151,7 @@ binds {
     
     // 开启colume的标签页模式
     Mod+Shift+X { toggle-column-tabbed-display; }
-    Mod+X { toggle-column-tabbed-display; }
+    //Mod+X { toggle-column-tabbed-display; }
     // mod+鼠标侧键 上下切换聚焦
     Mod+MouseForward { focus-window-up; }
     Mod+MouseBack    { focus-window-down; }
