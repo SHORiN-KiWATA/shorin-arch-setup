@@ -101,9 +101,11 @@ else
     log "Auditing dotfiles for ${DESKTOP_ENV^^}..."
     
     case "$DESKTOP_ENV" in
-        niri)
+        shorinniri)
             check_config_exists "$HOME_DIR/.config/niri"
             check_config_exists "$HOME_DIR/.config/waybar"
+            check_config_exists "$HOME_DIR/.config/matugen"
+            check_config_exists "$HOME_DIR/.config/waypaper"
         ;;
         shorindms|shorindmsgit)
             check_config_exists "$HOME_DIR/.config/niri/dms"
