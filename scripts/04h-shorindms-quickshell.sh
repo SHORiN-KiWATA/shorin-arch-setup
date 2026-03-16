@@ -47,7 +47,23 @@ AUR_HELPER="paru"
 section "Shorin DMS" "Core Components"
 log "Installing core shell components..."
 
-CORE_PKGS="quickshell dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome niri-sidebar-git nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats"
+QS_PKG="quickshell"
+DMS_PKG="dms-shell-bin"
+
+# 2. 检测环境变量，按需切换为 git 版
+if [[ "${SHORIN_DMS_GIT:-0}" == "1" ]]; then
+    log "Environment SHORIN_DMS_GIT=1 detected. Using git packages..."
+    QS_PKG="quickshell-git"
+    # DMS_PKG="dms-shell-git"
+else
+    log "Using pre-compiled stable packages..."
+fi
+
+log "Installing core shell components..."
+
+# 3. 组合包列表并执行安装
+CORE_PKGS="$QS_PKG $DMS_PKG niri xwayland-satellite kitty xdg-desktop-portal-gnome niri-sidebar-git nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia polkit-gnome satty mpv cups-pk-helper kimageformats"
+
 echo "$CORE_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
 
