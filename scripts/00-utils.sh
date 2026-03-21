@@ -531,7 +531,7 @@ check_dm_conflict() {
         SKIP_DM=true
     else
         # read -t 20 等待 20 秒，超时默认 Y
-        read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager (greetd)? [Y/n] (Default Y): ${NC}")" choice || true
+        read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice || true
         if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
             SKIP_DM=false
         else
