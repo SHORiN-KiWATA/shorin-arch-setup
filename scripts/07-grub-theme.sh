@@ -128,29 +128,30 @@ section "Step 2/7" "Sync Themes to System Directory"
 SOURCE_BASE="$PARENT_DIR/grub-themes"
 DEST_DIR="/boot/grub/themes"
 
-
-REAL_DEST=$(readlink -m "$DEST_DIR" || echo "$DEST_DIR")
-
-
-if [ ! -d "$REAL_DEST" ]; then
-    log "Creating target theme directory at $REAL_DEST..."
-    exe mkdir -p "$REAL_DEST"
+# 绝对防线：如果之前遗留了软链接，直接斩杀，防止 $root 劫持灾难
+if [ -L "$DEST_DIR" ]; then
+    warn "Found symlink at $DEST_DIR. Removing to prevent GRUB \$root hijacking..."
+    exe rm -f "$DEST_DIR"
 fi
 
+# 建立真正的物理目录
+if [ ! -d "$DEST_DIR" ]; then
+    exe mkdir -p "$DEST_DIR"
+fi
+
+# 执行物理拷贝
 if [ -d "$SOURCE_BASE" ]; then
-    log "Syncing repository themes to $DEST_DIR..."
+    log "Syncing repository themes to physical Btrfs directory ($DEST_DIR)..."
     for dir in "$SOURCE_BASE"/*; do
         if [ -d "$dir" ] && [ -f "$dir/theme.txt" ]; then
             THEME_BASENAME=$(basename "$dir")
-            # 同样，判断真实目录下有没有这个主题
-            if [ ! -d "$REAL_DEST/$THEME_BASENAME" ]; then
+            if [ ! -d "$DEST_DIR/$THEME_BASENAME" ]; then
                 log "Copying $THEME_BASENAME..."
-                # 注意这里的 DEST_DIR/ 加了尾斜杠，确保拷贝进链接内部
                 exe cp -r "$dir" "$DEST_DIR/"
             fi
         fi
     done
-    success "Local themes synced."
+    success "Local themes strictly copied (no symlinks) to preserve Btrfs compatibility."
 else
     warn "Directory 'grub-themes' not found in repo. Only online/existing themes available."
 fi
@@ -159,14 +160,13 @@ log "Scanning $DEST_DIR for available themes..."
 THEME_PATHS=()
 THEME_NAMES=()
 
-mapfile -t FOUND_DIRS < <(find "$DEST_DIR/" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
+mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
 
 for dir in "${FOUND_DIRS[@]:-}"; do
     if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
         DIR_NAME=$(basename "$dir")
         if [[ "$DIR_NAME" != "minegrub" && "$DIR_NAME" != "minegrub-world-selection" ]]; then
-            # 存入数组时去掉尾斜杠，保持路径整洁
-            THEME_PATHS+=("${dir%/}")
+            THEME_PATHS+=("$dir")
             THEME_NAMES+=("$DIR_NAME")
         fi
     fi
@@ -175,7 +175,6 @@ done
 if [ ${#THEME_NAMES[@]} -eq 0 ]; then
     log "No valid local theme folders found. Proceeding to online menu."
 fi
-
 # ------------------------------------------------------------------------------
 # 3. Select Theme (TUI Menu)
 # ------------------------------------------------------------------------------
