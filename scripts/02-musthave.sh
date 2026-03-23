@@ -123,7 +123,8 @@ EOF
         # 7. 重启快照监听服务
         exe systemctl enable --now grub-btrfsd
         exe systemctl restart grub-btrfsd
-        success "GRUB and grub-btrfs integration completed."    fi
+        success "GRUB and grub-btrfs integration completed."    
+    fi
 else
     log "Root is not Btrfs. Skipping Snapper setup."
 fi
