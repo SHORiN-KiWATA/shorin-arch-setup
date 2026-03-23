@@ -30,10 +30,10 @@ set_grub_value() {
     local conf_file="/etc/default/grub"
     local escaped_value
     escaped_value=$(printf '%s\n' "$value" | sed 's,[\/&],\\&,g')
-
+    
     if grep -q -E "^#\s*$key=" "$conf_file"; then
         exe sed -i -E "s,^#\s*$key=.*,$key=\"$escaped_value\"," "$conf_file"
-    elif grep -q -E "^$key=" "$conf_file"; then
+        elif grep -q -E "^$key=" "$conf_file"; then
         exe sed -i -E "s,^$key=.*,$key=\"$escaped_value\"," "$conf_file"
     else
         log "Appending new key: $key"
@@ -54,9 +54,9 @@ manage_kernel_param() {
     local param_key
     if [[ "$param" == *"="* ]]; then param_key="${param%%=*}"; else param_key="$param"; fi
     params=$(echo "$params" | sed -E "s/\b${param_key}(=[^ ]*)?\b//g")
-
+    
     if [ "$action" == "add" ]; then params="$params $param"; fi
-
+    
     params=$(echo "$params" | tr -s ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     exe sed -i "s,^GRUB_CMDLINE_LINUX_DEFAULT=.*,GRUB_CMDLINE_LINUX_DEFAULT=\"$params\"," "$conf_file"
 }
@@ -113,7 +113,7 @@ CPU_VENDOR=$(LC_ALL=C lscpu 2>/dev/null | awk '/Vendor ID:/ {print $3}' || true)
 if [ "${CPU_VENDOR:-}" == "GenuineIntel" ]; then
     log "Intel CPU detected. Disabling iTCO_wdt watchdog."
     manage_kernel_param "add" "modprobe.blacklist=iTCO_wdt"
-elif [ "${CPU_VENDOR:-}" == "AuthenticAMD" ]; then
+    elif [ "${CPU_VENDOR:-}" == "AuthenticAMD" ]; then
     log "AMD CPU detected. Disabling sp5100_tco watchdog."
     manage_kernel_param "add" "modprobe.blacklist=sp5100_tco"
 fi
@@ -128,8 +128,13 @@ section "Step 2/7" "Sync Themes to System Directory"
 SOURCE_BASE="$PARENT_DIR/grub-themes"
 DEST_DIR="/boot/grub/themes"
 
-if [ ! -d "$DEST_DIR" ]; then 
-    exe mkdir -p "$DEST_DIR"
+
+REAL_DEST=$(readlink -m "$DEST_DIR" || echo "$DEST_DIR")
+
+
+if [ ! -d "$REAL_DEST" ]; then
+    log "Creating target theme directory at $REAL_DEST..."
+    exe mkdir -p "$REAL_DEST"
 fi
 
 if [ -d "$SOURCE_BASE" ]; then
@@ -137,8 +142,10 @@ if [ -d "$SOURCE_BASE" ]; then
     for dir in "$SOURCE_BASE"/*; do
         if [ -d "$dir" ] && [ -f "$dir/theme.txt" ]; then
             THEME_BASENAME=$(basename "$dir")
-            if [ ! -d "$DEST_DIR/$THEME_BASENAME" ]; then
+            # 同样，判断真实目录下有没有这个主题
+            if [ ! -d "$REAL_DEST/$THEME_BASENAME" ]; then
                 log "Copying $THEME_BASENAME..."
+                # 注意这里的 DEST_DIR/ 加了尾斜杠，确保拷贝进链接内部
                 exe cp -r "$dir" "$DEST_DIR/"
             fi
         fi
@@ -152,13 +159,14 @@ log "Scanning $DEST_DIR for available themes..."
 THEME_PATHS=()
 THEME_NAMES=()
 
-mapfile -t FOUND_DIRS < <(find "$DEST_DIR" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
+mapfile -t FOUND_DIRS < <(find "$DEST_DIR/" -mindepth 1 -maxdepth 1 -type d | sort 2>/dev/null || true)
 
 for dir in "${FOUND_DIRS[@]:-}"; do
     if [ -n "$dir" ] && [ -f "$dir/theme.txt" ]; then
         DIR_NAME=$(basename "$dir")
         if [[ "$DIR_NAME" != "minegrub" && "$DIR_NAME" != "minegrub-world-selection" ]]; then
-            THEME_PATHS+=("$dir")
+            # 存入数组时去掉尾斜杠，保持路径整洁
+            THEME_PATHS+=("${dir%/}")
             THEME_NAMES+=("$DIR_NAME")
         fi
     fi
@@ -223,7 +231,7 @@ fi
 if [ "$USER_CHOICE" -eq "$SKIP_IDX" ]; then
     SKIP_THEME=true
     info_kv "Selected" "None (Clear Theme)"
-elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
+    elif [ "$USER_CHOICE" -eq "$MINEGRUB_IDX" ]; then
     INSTALL_MINEGRUB=true
     info_kv "Selected" "Minegrub (Online Repository)"
 else
@@ -257,8 +265,8 @@ if [ "$SKIP_THEME" == "true" ]; then
             log "No active GRUB_THEME found to disable."
         fi
     fi
-
-elif [ "$INSTALL_MINEGRUB" == "true" ]; then
+    
+    elif [ "$INSTALL_MINEGRUB" == "true" ]; then
     log "Preparing to install Minegrub theme..."
     
     if ! command -v git >/dev/null 2>&1; then
@@ -287,14 +295,14 @@ elif [ "$INSTALL_MINEGRUB" == "true" ]; then
         fi
         [ -n "$TEMP_MG_DIR" ] && rm -rf "$TEMP_MG_DIR"
     fi
-
+    
 else
     cleanup_minegrub
-
+    
     if [ -f "$GRUB_CONF" ]; then
         if grep -q "^GRUB_THEME=" "$GRUB_CONF"; then
             exe sed -i "s|^GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
-        elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
+            elif grep -q "^#GRUB_THEME=" "$GRUB_CONF"; then
             exe sed -i "s|^#GRUB_THEME=.*|GRUB_THEME=\"$THEME_PATH\"|" "$GRUB_CONF"
         else
             echo "GRUB_THEME=\"$THEME_PATH\"" >> "$GRUB_CONF"
