@@ -15,63 +15,115 @@ log ">>> Starting Phase 2: Essential (Must-have) Software & Drivers"
 # ------------------------------------------------------------------------------
 section "Step 1/8" "Btrfs Extras & GRUB"
 
+# 检测根文件系统类型
 ROOT_FSTYPE=$(findmnt -n -o FSTYPE /)
 
+# 如果是 Btrfs
 if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     log "Btrfs filesystem detected."
     exe pacman -S --noconfirm --needed snapper btrfs-assistant xorg-xhost
     success "Snapper tools installed."
 
-    # GRUB Integration
-if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
+    
+    # 如果用的是grub
+    if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         log "Checking GRUB..."
         
-         FOUND_EFI_GRUB=""
+        # ----------------------------------------------------------------------
+        # 核心逻辑：动态寻找 ESP 分区中的 GRUB，并自动应用“存根 (Stub)”分离架构
+        # ----------------------------------------------------------------------
+        FOUND_ESP_GRUB=""
         
-        # 1. 使用 findmnt 查找所有 vfat 类型的挂载点 (通常 ESP 是 vfat)
-        # -n: 不输出标题头
-        # -l: 列表格式输出
-        # -o TARGET: 只输出挂载点路径
-        # -t vfat: 限制文件系统类型
-        # sort -r: 反向排序，这样 /boot/efi 会排在 /boot 之前（如果同时存在），优先匹配深层路径
-        VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat)
+        # 1. 查找所有 vfat 类型的挂载点 (排除 /boot 本身就是 vfat 的情况，因为那样无法做 Btrfs 快照)
+        VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat | grep -v "^/boot$")
 
+        # 查找esp里的grub，获取grub的安装目录。
         if [ -n "$VFAT_MOUNTS" ]; then
-            # 2. 遍历这些 vfat 分区，寻找 grub 目录
-            # 使用 while read 循环处理多行输出
             while read -r mountpoint; do
-                # 检查这个挂载点下是否有 grub 目录
                 if [ -d "$mountpoint/grub" ]; then
-                    FOUND_EFI_GRUB="$mountpoint/grub"
-                    log "Found GRUB directory in ESP mountpoint: $mountpoint"
+                    FOUND_ESP_GRUB="$mountpoint/grub"
+                    log "Found GRUB core directory in ESP: $FOUND_ESP_GRUB"
                     break 
                 fi
             done <<< "$VFAT_MOUNTS"
         fi
 
-        # 3. 如果找到了位于 ESP 中的 GRUB 真实路径
-        if [ -n "$FOUND_EFI_GRUB" ]; then
-            
-            # -e 判断存在, -L 判断是软链接 
-            if [ -e "/boot/grub" ] || [ -L "/boot/grub" ]; then
-                warn "Skip" "/boot/grub already exists. No symlink created."
-            else
-                # 5. 仅当完全不存在时，创建软链接
-                warn "/boot/grub is missing. Linking to $FOUND_EFI_GRUB..."
-                exe ln -sf "$FOUND_EFI_GRUB" /boot/grub
-                success "Symlink created: /boot/grub -> $FOUND_EFI_GRUB"
-            fi
-        else
-            log "No 'grub' directory found in any active vfat mounts. Skipping symlink check."
-        fi
-        # --- 核心修改结束 ---
-
+        # 快照启动项
         exe pacman -Syu --noconfirm --needed grub-btrfs inotify-tools
-        exe systemctl enable --now grub-btrfsd
 
-        log "Regenerating GRUB..."
+        if [ -n "$FOUND_ESP_GRUB" ]; then
+            log "Applying Advanced Btrfs-GRUB Decoupling Architecture (Stub Method)..."
+
+            # 2. 清理历史遗留：斩断可能存在的软链接
+            if [ -L "/boot/grub" ]; then
+                warn "Found /boot/grub symlink. Removing to decouple Btrfs and FAT32..."
+                exe rm -f /boot/grub
+            fi
+            # 确保 Btrfs 上有真正的 /boot/grub 目录用于存放快照和主菜单
+            if [ ! -d "/boot/grub" ]; then
+                exe mkdir -p /boot/grub
+            fi
+
+            # 3. 动态计算 Btrfs 根分区 UUID 和子卷路径
+            BTRFS_UUID=$(findmnt -n -o UUID /)
+            SUBVOL_NAME=$(findmnt -n -o OPTIONS / | tr ',' '\n' | grep '^subvol=' | cut -d= -f2)
+            
+            if [ "$SUBVOL_NAME" == "/" ] || [ -z "$SUBVOL_NAME" ]; then
+                BTRFS_BOOT_PATH="/boot/grub"
+            else
+                # 处理subvol=@的情况
+                [[ "$SUBVOL_NAME" != /* ]] && SUBVOL_NAME="/${SUBVOL_NAME}"
+                BTRFS_BOOT_PATH="${SUBVOL_NAME}/boot/grub"
+            fi
+            log "Resolved Btrfs absolute path for main config: ${BTRFS_BOOT_PATH}"
+
+            # 4. 生成统一存根 (Stub) 覆盖 ESP 中的配置
+            log "Writing GRUB Stub to ${FOUND_ESP_GRUB}/grub.cfg..."
+            cat <<EOF | sudo tee "${FOUND_ESP_GRUB}/grub.cfg" > /dev/null
+# 由安装脚本自动生成的存根
+# 将启动逻辑 (Btrfs) 与环境状态 (FAT32) 解耦
+search --no-floppy --fs-uuid --set=root $BTRFS_UUID
+configfile ${BTRFS_BOOT_PATH}/grub.cfg
+EOF
+            success "GRUB Stub generated at ${FOUND_ESP_GRUB}."
+
+            # 5. 修改 grub-btrfs 的跨区搜索路径
+            if [ -f "/etc/default/grub-btrfs/config" ]; then
+                log "Patching grub-btrfs config for Btrfs search path..."
+                sed -i "s|^#*GRUB_BTRFS_GBTRFS_SEARCH_DIRNAME=.*|GRUB_BTRFS_GBTRFS_SEARCH_DIRNAME=\"${BTRFS_BOOT_PATH}\"|" /etc/default/grub-btrfs/config
+            fi
+
+            # ==================================================================
+            # 开启 GRUB 启动项记忆功能
+            # ==================================================================
+            log "Enabling GRUB 'save default' feature (Supported by FAT32 grubenv)..."
+            
+            # 将 GRUB_DEFAULT 改为 saved
+            sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
+            
+            # 确保 GRUB_SAVEDEFAULT=true 被正确设置
+            if grep -q "^#*GRUB_SAVEDEFAULT=" /etc/default/grub; then
+                # 如果该行存在（无论是否被注释），直接替换
+                sed -i 's/^#*GRUB_SAVEDEFAULT=.*/GRUB_SAVEDEFAULT=true/' /etc/default/grub
+            else
+                # 如果该行完全不存在，则追加到文件末尾
+                echo "GRUB_SAVEDEFAULT=true" >> /etc/default/grub
+            fi
+            success "GRUB boot entry memory enabled."
+
+        else
+            log "No separate ESP GRUB directory found. Proceeding with standard configuration..."
+            # 如果 GRUB 完全安装在 Btrfs 上（没有分离），脚本会聪明地跳过开启记忆功能，避免报错
+        fi
+
+        # 6. 生成真正的主菜单到 Btrfs 分区 (此时会读取刚刚修改的 /etc/default/grub)
+        log "Regenerating Main GRUB Config..."
         exe grub-mkconfig -o /boot/grub/grub.cfg
-    fi
+
+        # 7. 重启快照监听服务
+        exe systemctl enable --now grub-btrfsd
+        exe systemctl restart grub-btrfsd
+        success "GRUB and grub-btrfs integration completed."    fi
 else
     log "Root is not Btrfs. Skipping Snapper setup."
 fi
