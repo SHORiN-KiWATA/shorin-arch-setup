@@ -152,7 +152,18 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed $THEME_PKGS
 log "Configuring Firefox Pywalfox policy..."
 POL_DIR="/etc/firefox/policies"
 exe mkdir -p "$POL_DIR"
-echo '{ "policies": { "Extensions": { "Install": ["https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi"] } } }' >"$POL_DIR/policies.json"
+cat << 'EOF' > "$POL_DIR/policies.json"
+{
+  "policies": {
+    "Extensions": {
+      "Install": [
+        "https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi",
+        "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      ]
+    }
+  }
+}
+EOF
 exe chmod 755 "$POL_DIR"
 exe chmod 644 "$POL_DIR/policies.json"
 
