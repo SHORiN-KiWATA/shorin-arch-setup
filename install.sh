@@ -74,21 +74,17 @@ select_desktop() {
     while true; do
         show_banner
         
-        # 1. 定义选项 (包含空行和 Random)
         local MENU_ITEMS=(
             "No-Desktop |none"
             "Random (Surprise Me!) |random"
-            ""
             "Minimal-Niri |minimalniri"
             "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
             "Shorin-Noctalia-Niri |shorinnocniri"
             "Shorin-DMS-Niri |shorindms"
             "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
             "Shorin-DMS-Hyprland-Scrolling |hyprniri"
-            ""
             "KDE-Plasma ${H_YELLOW}(Recommended)${NC} |kde"
             "GNOME |gnome"
-            ""
             "Quickshell: End4--illogical-impulse (Hyprland)|end4"
             "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
             "Quickshell: Caelestia (Hyprland)|caelestia"
