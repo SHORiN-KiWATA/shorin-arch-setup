@@ -76,8 +76,7 @@ select_desktop() {
         "Minimal-Niri|minimalniri"
         "Shorin-Niri|shorinniri"
         "Shorin-Noctalia-Niri|shorinnocniri"
-        "Shorin-DMS-Niri|shorindms"
-        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC}|shorindmsgit"
+        "Shorin-DMS-Niri ${H_YELLOW}(Recommended)${NC}|shorindmsgit"
         "Shorin-DMS-Hyprland-Scrolling|hyprniri"
         ""
         "KDE-Plasma ${H_YELLOW}(Recommended)${NC}|kde"
@@ -222,9 +221,6 @@ case "$DESKTOP_ENV" in
     shorindmsgit)
         BASE_MODULES+=("04h-shorindms-quickshell.sh")
         export SHORIN_DMS_GIT=1
-    ;;
-    shorindms)
-        BASE_MODULES+=("04h-shorindms-quickshell.sh")
     ;;
     hyprniri)
         BASE_MODULES+=("04i-shorin-hyprniri-quickshell.sh")
