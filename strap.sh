@@ -55,7 +55,7 @@ TARBALL_URL="https://github.com/SHORiN-KiWATA/shorin-arch-setup/archive/refs/hea
 TARGET_DIR="/tmp/shorin-arch-setup"
 
 # 【极客魔法】预估源码压缩包体积。实际测得约为 60MB，这里预留一点余量设定为 65M，确保进度条平滑且不卡顿。
-EXPECTED_SIZE="65M"
+EXPECTED_SIZE="75M"
 
 printf "%b>>> Preparing to install from branch: %s on %s%b\n" "$BLUE" "$TARGET_BRANCH" "$ARCH_NAME" "$NC"
 

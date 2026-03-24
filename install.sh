@@ -78,7 +78,7 @@ select_desktop() {
             "No-Desktop |none"
             "Random (Surprise Me!) |random"
             "Minimal-Niri |minimalniri"
-            "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
+            "Shorin-Niri |shorinniri"
             "Shorin-Noctalia-Niri |shorinnocniri"
             "Shorin-DMS-Niri |shorindms"
             "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
