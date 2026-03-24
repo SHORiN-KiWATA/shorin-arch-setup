@@ -403,7 +403,7 @@ run_hide_desktop_file() {
         "designer.desktop"
         "org.kde.drkonqi.coredump.gui.desktop"
         "org.kde.kwrite.desktop"
-        "org.freedesktop.MaicontentControl.desktop"
+        "org.freedesktop.MalcontentControl.desktop"
     )
     
     echo "正在隐藏不需要的桌面图标..."
