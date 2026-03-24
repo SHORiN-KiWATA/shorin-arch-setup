@@ -71,7 +71,7 @@ select_desktop() {
     
     local MENU_ITEMS=(
         "No_Desktop|none"
-        "Random (Surprise Me!)|random"
+        "Surprise Me!|random"
         "" # 这些空行现在会被代码自动忽略
         "Minimal_Niri|minimalniri"
         "Shorin_Niri|shorinniri"
@@ -82,9 +82,9 @@ select_desktop() {
         "KDE_Plasma ${H_YELLOW}(Recommended)${NC}|kde"
         "GNOME |gnome"
         ""
-        "Quickshell: End4--illogical_impulse (Hyprland)|end4"
-        "Quickshell: DMS--DankMaterialShell (Niri/Hyprland)|dms"
-        "Quickshell: Caelestia (Hyprland)|caelestia"
+        "Quickshell: End4--illogical_impulse|end4"
+        "Quickshell: DMS--DankMaterialShell|dms"
+        "Quickshell: Caelestia|caelestia"
     )
     
     while true; do
