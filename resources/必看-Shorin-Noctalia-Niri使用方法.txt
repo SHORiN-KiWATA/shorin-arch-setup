@@ -35,6 +35,7 @@ super+A/D 左右移动窗口（合并列）
 【必要设置】
 1.更换壁纸
 Mod+Alt+W打开壁纸切换器，切换一次壁纸，此时会自动生成所有的主题颜色。
+如果要取消开启时随机更换壁纸的功能可以编辑~/.config/niri/config.kdl，删除自动切换壁纸的spawn-sh-at-stratup。
 
 2.Firefox颜色同步
 打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
