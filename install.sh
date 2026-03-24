@@ -2,7 +2,7 @@
 
 export SHELL=$(command -v bash)
 # ==============================================================================
-# Shorin Arch Setup - Main Installer (v1.1))
+# Shorin Arch Setup - Main Installer (v1.1)
 # ==============================================================================
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -65,69 +65,120 @@ show_banner() {
         0) banner1 ;;
         1) banner2 ;;
     esac
+    echo -e "${NC}"
     echo ""
 }
 
 # --- Desktop Selection Menu ---
 select_desktop() {
-    show_banner
-    
-    # 1. 定义选项 (显示名称|内部ID)
-    local OPTIONS=(
-        "No-Desktop |none"
-        "Minimal-Niri |minimalniri"
-        "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
-        "Shorin-Noctalia-Niri |shorinnocniri"
-        "Shorin-DMS-Niri |shorindms"
-        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
-        "Shorin-DMS-Hyprland-Scrolling |hyprniri"
-        "KDE-Plasma ${H_YELLOW}(Recommended)${NC} |kde"
-        "GNOME |gnome"
-        "Quickshell: End4--illogical-impulse (Hyprland)|end4"
-        "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
-        "Quickshell: Caelestia (Hyprland)|caelestia"
+    while true; do
+        show_banner
         
-    )
-    
-    # 2. 绘制菜单 (半开放式风格)
-    # 定义一条足够长的横线，或者固定长度
-    local HR="──────────────────────────────────────────────────"
-    
-    echo -e "${H_PURPLE}╭${HR}${NC}"
-    echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}"
-    echo -e "${H_PURPLE}│${NC}" # 空行分隔
-    
-    local idx=1
-    for opt in "${OPTIONS[@]}"; do
-        local name="${opt%%|*}"
-        # 直接打印，无需计算填充空格
-        echo -e "${H_PURPLE}│${NC}  ${H_CYAN}[${idx}]${NC} ${name}"
-        ((idx++))
+        # 1. 定义选项 (包含空行和 Random)
+        local MENU_ITEMS=(
+            "No-Desktop |none"
+            "Random (Surprise Me!) |random"
+            ""
+            "Minimal-Niri |minimalniri"
+            "Shorin-Niri ${H_YELLOW}(Recommended)${NC} |shorinniri"
+            "Shorin-Noctalia-Niri |shorinnocniri"
+            "Shorin-DMS-Niri |shorindms"
+            "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
+            "Shorin-DMS-Hyprland-Scrolling |hyprniri"
+            ""
+            "KDE-Plasma ${H_YELLOW}(Recommended)${NC} |kde"
+            "GNOME |gnome"
+            ""
+            "Quickshell: End4--illogical-impulse (Hyprland)|end4"
+            "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
+            "Quickshell: Caelestia (Hyprland)|caelestia"
+        )
+        
+        # 2. 绘制菜单
+        local HR="────────────────────────────────────────────────────────"
+        
+        echo -e "${H_PURPLE}╭${HR}${NC}"
+        echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}"
+        echo -e "${H_PURPLE}│${NC}"
+        
+        local idx=1
+        local VALID_OPTIONS=()
+        
+        for item in "${MENU_ITEMS[@]}"; do
+            if [[ -z "$item" ]]; then
+                echo -e "${H_PURPLE}│${NC}"
+            else
+                local name="${item%%|*}"
+                # 处理 1-9 与 10+ 的对齐
+                if [ $idx -lt 10 ]; then
+                    echo -e "${H_PURPLE}│${NC}   ${H_CYAN}[${idx}]${NC}  ${name}"
+                else
+                    echo -e "${H_PURPLE}│${NC}   ${H_CYAN}[${idx}]${NC} ${name}"
+                fi
+                VALID_OPTIONS+=("$item")
+                ((idx++))
+            fi
+        done
+        echo -e "${H_PURPLE}│${NC}"
+        echo -e "${H_PURPLE}╰${HR}${NC}"
+        echo ""
+        
+        # 3. 输入处理
+        local total_opts=${#VALID_OPTIONS[@]}
+        echo -e "   ${DIM}Waiting for input...${NC}"
+        read -p "$(echo -e "   ${H_YELLOW}Select [1-${total_opts}]: ${NC}")" choice
+        
+        if [ -z "$choice" ]; then
+            echo -e "\n${H_RED}No selection. Retrying...${NC}"
+            sleep 1
+            continue
+        fi
+        
+        # 4. 验证并提取 ID
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$total_opts" ]; then
+            local selected_opt="${VALID_OPTIONS[$((choice-1))]}"
+            export DESKTOP_ENV="${selected_opt##*|}"
+            local selected_name="${selected_opt%%|*}"
+            
+            # --- 处理 Random 逻辑 ---
+            if [ "$DESKTOP_ENV" == "random" ]; then
+                local POOL=()
+                for opt in "${VALID_OPTIONS[@]}"; do
+                    local oid="${opt##*|}"
+                    if [[ "$oid" != "none" && "$oid" != "random" ]]; then
+                        POOL+=("$opt")
+                    fi
+                done
+                
+                local rand_idx=$(( RANDOM % ${#POOL[@]} ))
+                local final_opt="${POOL[$rand_idx]}"
+                export DESKTOP_ENV="${final_opt##*|}"
+                local final_name="${final_opt%%|*}"
+                
+                echo -e "\n   ${H_CYAN}>>> Surprise! Randomly selected:${NC} ${BOLD}${final_name}${NC}"
+                read -p "$(echo -e "   ${H_YELLOW}Continue with this selection? [Y/n]: ${NC}")" confirm
+                
+                if [[ "${confirm,,}" == "n" ]]; then
+                    continue # 重新回到大循环，刷新主菜单
+                else
+                    log "Selected: ${final_name}"
+                    sleep 0.5
+                    break # 确认选择，跳出循环继续执行脚本
+                fi
+            else
+                log "Selected: ${selected_name}"
+                sleep 0.5
+                break # 正常选择，跳出循环继续执行脚本
+            fi
+            # ------------------------
+        else
+            echo -e "   ${H_RED}Invalid selection. Please try again.${NC}"
+            sleep 1
+            continue
+        fi
     done
-    echo -e "${H_PURPLE}│${NC}" # 空行分隔
-    echo -e "${H_PURPLE}╰${HR}${NC}"
-    echo ""
-    
-    # 3. 输入处理
-    echo -e "   ${DIM}Waiting for input...${NC}"
-    read -p "$(echo -e "   ${H_YELLOW}Select [1-${#OPTIONS[@]}]: ${NC}")" choice
-    
-    if [ -z "$choice" ]; then
-        echo -e "\n${H_RED}Timeout or no selection.${NC}"
-        exit 1
-    fi
-    
-    # 4. 验证并提取 ID
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#OPTIONS[@]}" ]; then
-        local selected_opt="${OPTIONS[$((choice-1))]}"
-        export DESKTOP_ENV="${selected_opt##*|}" # 提取 ID
-        log "Selected: ${selected_opt%%|*}"
-    else
-        error "Invalid selection."
-        exit 1
-    fi
-    sleep 0.5
 }
+
 sys_dashboard() {
     echo -e "${H_BLUE}╔════ SYSTEM DIAGNOSTICS ══════════════════════════════╗${NC}"
     echo -e "${H_BLUE}║${NC} ${BOLD}Kernel${NC}   : $(uname -r)"
@@ -411,8 +462,6 @@ clean_intermediate_snapshots() {
                 fi
                 # -----------------
                 
-                # [修改重点] 仅删除 pre 和 post 类型的快照
-                # 去掉了 || "$type" == "single" 以保护用户手动创建的快照
                 if [[ "$type" == "pre" || "$type" == "post" ]]; then
                     snapshots_to_delete+=("$id")
                 fi
@@ -453,9 +502,7 @@ for dir in /var/cache/pacman/pkg/download-*/; do
 done
 
 #--- 清理nmcli残留的连接配置
-
 if pacman -Qi networkmanager &> /dev/null; then
-    
     rm -rf /etc/NetworkManager/system-connections/*
 fi
 # --- verify 配置残留清理 ---
