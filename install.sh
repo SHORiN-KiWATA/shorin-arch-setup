@@ -56,29 +56,16 @@ cat << "EOF"
   ██████  ██   ██  ██████  ██   ██ ██ ██   ████
 EOF
 }
-banner3() {
-cat << "EOF"
-   ______ __ __   ___   ____   ____  _   _
-  / ___/|  |  | /   \ |    \ |    || \ | |
- (   \_ |  |  ||     ||  D  ) |  | |  \| |
-  \__  ||  _  ||  O  ||    /  |  | |     |
-  /  \ ||  |  ||     ||    \  |  | | |\  |
-  \    ||  |  ||     ||  .  \ |  | | | \ |
-   \___||__|__| \___/ |__|\_||____||_| \_|
-EOF
-}
 
 show_banner() {
     clear
-    local r=$(( $RANDOM % 3 ))
+    local r=$(( $RANDOM % 2 ))
     echo -e "${H_CYAN}"
     case $r in
         0) banner1 ;;
         1) banner2 ;;
-        2) banner3 ;;
     esac
     echo -e "${NC}"
-    echo -e "${DIM}   :: Arch Linux Automation Protocol :: v1.1 ::${NC}"
     echo ""
 }
 
