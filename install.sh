@@ -39,16 +39,6 @@ chmod +x "$SCRIPTS_DIR"/*.sh
 # --- ASCII Banners ---
 banner1() {
 cat << "EOF"
-   _____ __  ______  ____  _____   __
-  / ___// / / / __ \/ __ \/  _/ | / /
-  \__ \/ /_/ / / / / /_/ // //  |/ /
- ___/ / __  / /_/ / _, _// // /|  /
-/____/_/ /_/\____/_/ |_/___/_/ |_/
-EOF
-}
-
-banner2() {
-cat << "EOF"
   ██████  ██   ██  ██████  ███████ ██ ███    ██
   ██      ██   ██ ██    ██ ██   ██    ██ ██  ██
   ███████ ███████ ██    ██ ██████  ██ ██ ██  ██
@@ -57,124 +47,122 @@ cat << "EOF"
 EOF
 }
 
+
+export SHORIN_BANNER_IDX=0
+
 show_banner() {
     clear
-    local r=$(( $RANDOM % 2 ))
     echo -e "${H_CYAN}"
-    case $r in
+    case $SHORIN_BANNER_IDX in
         0) banner1 ;;
-        1) banner2 ;;
     esac
     echo -e "${NC}"
-    echo ""
+    echo -e "${DIM}   :: Arch Linux Automation ::${NC}"
+    echo -e ""
 }
 
-# --- Desktop Selection Menu ---
+# --- Desktop Selection Menu (FZF Powered) ---
 select_desktop() {
+    # 确保 fzf 已安装
+    if ! command -v fzf &> /dev/null; then
+        echo -e "   ${DIM}Installing fzf for interactive menu...${NC}"
+        pacman -Sy --noconfirm --needed fzf >/dev/null 2>&1
+    fi
+    
+    local MENU_ITEMS=(
+        "No-Desktop|none"
+        "Random (Surprise Me!)|random"
+        "" # 这些空行现在会被代码自动忽略
+        "Minimal-Niri|minimalniri"
+        "Shorin-Niri ${H_YELLOW}(Recommended)${NC}|shorinniri"
+        "Shorin-Noctalia-Niri|shorinnocniri"
+        "Shorin-DMS-Niri|shorindms"
+        "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC}|shorindmsgit"
+        "Shorin-DMS-Hyprland-Scrolling|hyprniri"
+        ""
+        "KDE-Plasma ${H_YELLOW}(Recommended)${NC}|kde"
+        "GNOME|gnome"
+        ""
+        "Quickshell: End4--illogical-impulse (Hyprland)|end4"
+        "Quickshell: DMS--DankMaterialShell (Niri/Hyprland)|dms"
+        "Quickshell: Caelestia (Hyprland)|caelestia"
+    )
+    
     while true; do
         show_banner
         
-        local MENU_ITEMS=(
-            "No-Desktop |none"
-            "Random (Surprise Me!) |random"
-            "Minimal-Niri |minimalniri"
-            "Shorin-Niri |shorinniri"
-            "Shorin-Noctalia-Niri |shorinnocniri"
-            "Shorin-DMS-Niri |shorindms"
-            "Shorin-DMS-Niri-git ${H_YELLOW}(Recommended)${NC} |shorindmsgit"
-            "Shorin-DMS-Hyprland-Scrolling |hyprniri"
-            "KDE-Plasma ${H_YELLOW}(Recommended)${NC} |kde"
-            "GNOME |gnome"
-            "Quickshell: End4--illogical-impulse (Hyprland)|end4"
-            "Quickshell: DMS--DankMaterialShell (Niri or Hyprland)|dms"
-            "Quickshell: Caelestia (Hyprland)|caelestia"
-        )
-        
-        # 2. 绘制菜单
-        local HR="────────────────────────────────────────────────────────"
-        
-        echo -e "${H_PURPLE}╭${HR}${NC}"
-        echo -e "${H_PURPLE}│${NC} ${BOLD}Choose your Desktop Environment:${NC}"
-        echo -e "${H_PURPLE}│${NC}"
-        
+        local fzf_list=()
         local idx=1
-        local VALID_OPTIONS=()
-        
         for item in "${MENU_ITEMS[@]}"; do
-            if [[ -z "$item" ]]; then
-                echo -e "${H_PURPLE}│${NC}"
+            # --- 核心修改：如果是空行，直接跳过 ---
+            [[ -z "$item" ]] && continue
+            
+            local name="${item%%|*}"
+            local val="${item##*|}"
+            local colored_idx="${H_CYAN}[${idx}]${NC}"
+            
+            if [ $idx -lt 10 ]; then
+                fzf_list+=("${colored_idx}   ${name}\t${val}\t${name}")
             else
-                local name="${item%%|*}"
-                # 处理 1-9 与 10+ 的对齐
-                if [ $idx -lt 10 ]; then
-                    echo -e "${H_PURPLE}│${NC}   ${H_CYAN}[${idx}]${NC}  ${name}"
-                else
-                    echo -e "${H_PURPLE}│${NC}   ${H_CYAN}[${idx}]${NC} ${name}"
-                fi
-                VALID_OPTIONS+=("$item")
-                ((idx++))
+                fzf_list+=("${colored_idx}  ${name}\t${val}\t${name}")
             fi
+            ((idx++))
         done
-        echo -e "${H_PURPLE}│${NC}"
-        echo -e "${H_PURPLE}╰${HR}${NC}"
-        echo ""
         
-        # 3. 输入处理
-        local total_opts=${#VALID_OPTIONS[@]}
-        echo -e "   ${DIM}Waiting for input...${NC}"
-        read -p "$(echo -e "   ${H_YELLOW}Select [1-${total_opts}]: ${NC}")" choice
+        # 在传给 fzf 之前，再次用 sed 确保没有任何残留的空白行
+        local selected
+        selected=$(printf "%b\n" "${fzf_list[@]}" | sed '/^[[:space:]]*$/d' | fzf \
+            --ansi \
+            --delimiter='\t' \
+            --with-nth=1 \
+            --info=hidden \
+            --layout=reverse \
+            --border="rounded" \
+            --header=" Choose your Desktop Environment (Use j/k to navigate, Enter to select)" \
+            --pointer=">" \
+            --bind 'j:down,k:up,ctrl-c:abort,esc:abort' \
+        --height=~20)
         
-        if [ -z "$choice" ]; then
-            echo -e "\n${H_RED}No selection. Retrying...${NC}"
-            sleep 1
-            continue
+        local fzf_status=$?
+        
+        # 处理 Ctrl+C 退出
+        if [ $fzf_status -eq 130 ]; then
+            echo -e "\n   ${H_RED}>>> Installation aborted by user.${NC}"
+            exit 130
         fi
         
-        # 4. 验证并提取 ID
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$total_opts" ]; then
-            local selected_opt="${VALID_OPTIONS[$((choice-1))]}"
-            export DESKTOP_ENV="${selected_opt##*|}"
-            local selected_name="${selected_opt%%|*}"
-            
-            # --- 处理 Random 逻辑 ---
-            if [ "$DESKTOP_ENV" == "random" ]; then
-                local POOL=()
-                for opt in "${VALID_OPTIONS[@]}"; do
-                    local oid="${opt##*|}"
-                    if [[ "$oid" != "none" && "$oid" != "random" ]]; then
-                        POOL+=("$opt")
-                    fi
-                done
-                
-                local rand_idx=$(( RANDOM % ${#POOL[@]} ))
-                local final_opt="${POOL[$rand_idx]}"
-                export DESKTOP_ENV="${final_opt##*|}"
-                local final_name="${final_opt%%|*}"
-                
-                echo -e "\n   ${H_CYAN}>>> Surprise! Randomly selected:${NC} ${BOLD}${final_name}${NC}"
-                read -p "$(echo -e "   ${H_YELLOW}Continue with this selection? [Y/n]: ${NC}")" confirm
-                
-                if [[ "${confirm,,}" == "n" ]]; then
-                    continue # 重新回到大循环，刷新主菜单
-                else
-                    log "Selected: ${final_name}"
-                    sleep 0.5
-                    break # 确认选择，跳出循环继续执行脚本
+        if [ -z "$selected" ]; then continue; fi
+        
+        export DESKTOP_ENV="$(echo "$selected" | awk -F'\t' '{print $2}')"
+        local selected_name="$(echo "$selected" | awk -F'\t' '{print $3}')"
+        
+        # --- Random 抽奖逻辑 ---
+        if [ "$DESKTOP_ENV" == "random" ]; then
+            local POOL=()
+            for item in "${MENU_ITEMS[@]}"; do
+                [[ -z "$item" ]] && continue # 抽奖池也要过滤空行
+                local oid="${item##*|}"
+                if [[ "$oid" != "none" && "$oid" != "random" ]]; then
+                    POOL+=("$item")
                 fi
-            else
-                log "Selected: ${selected_name}"
-                sleep 0.5
-                break # 正常选择，跳出循环继续执行脚本
-            fi
-            # ------------------------
+            done
+            
+            local rand_idx=$(( RANDOM % ${#POOL[@]} ))
+            local final_item="${POOL[$rand_idx]}"
+            local final_name="${final_item%%|*}"
+            export DESKTOP_ENV="${final_item##*|}"
+            
+            echo -e "\n   ${H_CYAN}>>> Randomly selected:${NC} ${BOLD}${final_name}${NC}"
+            read -p "$(echo -e "   ${H_YELLOW}Continue with this selection? [Y/n]: ${NC}")" confirm
+            
+            if [[ "${confirm,,}" == "n" ]]; then continue; else break; fi
         else
-            echo -e "   ${H_RED}Invalid selection. Please try again.${NC}"
-            sleep 1
-            continue
+            log "Selected: ${selected_name}"
+            sleep 0.5
+            break
         fi
     done
 }
-
 sys_dashboard() {
     echo -e "${H_BLUE}╔════ SYSTEM DIAGNOSTICS ══════════════════════════════╗${NC}"
     echo -e "${H_BLUE}║${NC} ${BOLD}Kernel${NC}   : $(uname -r)"
