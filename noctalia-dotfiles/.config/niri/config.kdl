@@ -81,7 +81,6 @@ input {
     }
 }
 // 自动启动
-// 启动dms，同时禁用它自带的polkit
 spawn-sh-at-startup "qs -c noctalia-shell"
 // 询问管理员权限功能（身份验证）
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
