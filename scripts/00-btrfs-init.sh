@@ -144,7 +144,7 @@ UNDO_SRC="$PARENT_DIR/undochange.sh"
 DE_UNDO_SRC="$SCRIPT_DIR/de-undochange.sh"
 
 exe mkdir -p "$BIN_DIR"
-if [ -f "$UNDO_SRC" ]; then exe cp "$UNDO_SRC" "$BIN_DIR/shorin-undochange" && exe chmod +x "$BIN_DIR/shorin-undochange"; fi
-if [ -f "$DE_UNDO_SRC" ]; then exe cp "$DE_UNDO_SRC" "$BIN_DIR/shorin-de-undochange" && exe chmod +x "$BIN_DIR/shorin-de-undochange"; fi
+if [ -f "$UNDO_SRC" ]; then exe force_copy "$UNDO_SRC" "$BIN_DIR/shorin-undochange" && exe chmod +x "$BIN_DIR/shorin-undochange"; fi
+if [ -f "$DE_UNDO_SRC" ]; then exe force_copy "$DE_UNDO_SRC" "$BIN_DIR/shorin-de-undochange" && exe chmod +x "$BIN_DIR/shorin-de-undochange"; fi
 
 log "Module 00 completed. Pure base system secured."
