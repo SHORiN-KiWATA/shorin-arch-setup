@@ -13,49 +13,57 @@ check_root
 section "Phase 0" "System Snapshot Initialization"
 
 # ------------------------------------------------------------------------------
-# 1. Configure Root (/)
+# 0. Early Exit Check (Guard Clause)
 # ------------------------------------------------------------------------------
 log "Checking Root filesystem..."
 ROOT_FSTYPE=$(findmnt -n -o FSTYPE /)
 
-if [ "$ROOT_FSTYPE" == "btrfs" ]; then
-    log "Root is Btrfs. Installing Snapper..."
-    # Minimal install for snapshot capability
-    exe pacman -Syu --noconfirm --needed snapper less
-    
-    log "Configuring Snapper for Root..."
-    if ! snapper list-configs | grep -q "^root "; then
-        # Cleanup existing dir to allow subvolume creation
-        if [ -d "/.snapshots" ]; then
-            exe_silent umount /.snapshots
-            exe_silent rm -rf /.snapshots
-        fi
-        
-        if exe snapper -c root create-config /; then
-            success "Config 'root' created."
-            
-            # Apply Retention Policy
-            exe snapper -c root set-config \
-                ALLOW_GROUPS="wheel" \
-                TIMELINE_CREATE="yes" \
-                TIMELINE_CLEANUP="yes" \
-                NUMBER_LIMIT="10" \
-                NUMBER_MIN_AGE="0" \
-                NUMBER_LIMIT_IMPORTANT="5" \
-                TIMELINE_LIMIT_HOURLY="3" \
-                TIMELINE_LIMIT_DAILY="0" \
-                TIMELINE_LIMIT_WEEKLY="0" \
-                TIMELINE_LIMIT_MONTHLY="0" \
-                TIMELINE_LIMIT_YEARLY="0"
+if [ "$ROOT_FSTYPE" != "btrfs" ]; then
+    warn "Root filesystem is not Btrfs ($ROOT_FSTYPE detected)."
+    log "Skipping Btrfs snapshot initialization entirely."
+    # 退出当前脚本，返回状态码 0 保证主程序继续往下走
+    exit 0 
+fi
 
-            exe systemctl enable snapper-cleanup.timer
-            exe systemctl enable snapper-timeline.timer
-        fi
-    else
-        log "Config 'root' already exists."
+log "Root is Btrfs. Proceeding with Snapshot Safety Net setup..."
+
+# ------------------------------------------------------------------------------
+# 1. Configure Root (/)
+# ------------------------------------------------------------------------------
+# 从这里开始，我们 100% 确定环境是 Btrfs
+log "Installing Snapper and dependencies..."
+exe pacman -Syu --noconfirm --needed snapper rsync less
+
+log "Configuring Snapper for Root..."
+if ! snapper list-configs | grep -q "^root "; then
+    # Cleanup existing dir to allow subvolume creation
+    if [ -d "/.snapshots" ]; then
+        exe_silent umount /.snapshots
+        exe_silent rm -rf /.snapshots
+    fi
+    
+    if exe snapper -c root create-config /; then
+        success "Config 'root' created."
+        
+        # Apply Retention Policy
+        exe snapper -c root set-config \
+            ALLOW_GROUPS="wheel" \
+            TIMELINE_CREATE="yes" \
+            TIMELINE_CLEANUP="yes" \
+            NUMBER_LIMIT="10" \
+            NUMBER_MIN_AGE="0" \
+            NUMBER_LIMIT_IMPORTANT="5" \
+            TIMELINE_LIMIT_HOURLY="3" \
+            TIMELINE_LIMIT_DAILY="0" \
+            TIMELINE_LIMIT_WEEKLY="0" \
+            TIMELINE_LIMIT_MONTHLY="0" \
+            TIMELINE_LIMIT_YEARLY="0"
+
+        exe systemctl enable snapper-cleanup.timer
+        exe systemctl enable snapper-timeline.timer
     fi
 else
-    warn "Root is not Btrfs. Skipping Root snapshot."
+    log "Config 'root' already exists."
 fi
 
 # ------------------------------------------------------------------------------
@@ -63,12 +71,10 @@ fi
 # ------------------------------------------------------------------------------
 log "Checking Home filesystem..."
 
-# Check if /home is a mountpoint and is btrfs
 if findmnt -n -o FSTYPE /home | grep -q "btrfs"; then
     log "Home is Btrfs. Configuring Snapper for Home..."
     
     if ! snapper list-configs | grep -q "^home "; then
-        # Cleanup .snapshots in home if exists
         if [ -d "/home/.snapshots" ]; then
             exe_silent umount /home/.snapshots
             exe_silent rm -rf /home/.snapshots
@@ -77,7 +83,6 @@ if findmnt -n -o FSTYPE /home | grep -q "btrfs"; then
         if exe snapper -c home create-config /home; then
             success "Config 'home' created."
             
-            # Apply same policy to home
             exe snapper -c home set-config \
                 ALLOW_GROUPS="wheel" \
                 TIMELINE_CREATE="yes" \
@@ -97,6 +102,7 @@ if findmnt -n -o FSTYPE /home | grep -q "btrfs"; then
 else
     log "/home is not a separate Btrfs volume. Skipping."
 fi
+
 # ------------------------------------------------------------------------------
 # 2.5 Backup ESP (FAT32)
 # ------------------------------------------------------------------------------
@@ -106,7 +112,6 @@ VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat)
 
 if [ -n "$VFAT_MOUNTS" ]; then
     log "Found FAT32 partitions. Creating backups in /var/backups/before-shorin-setup-esp..."
-    # 使用与快照描述完全一致的命名
     BACKUP_BASE="/var/backups/before-shorin-setup-esp"
     exe mkdir -p "$BACKUP_BASE"
     
@@ -114,7 +119,7 @@ if [ -n "$VFAT_MOUNTS" ]; then
         safe_name=$(echo "$mountpoint" | tr '/' '_')
         log "Backing up $mountpoint to $BACKUP_BASE/esp${safe_name}/ ..."
         
-        # rsync 备份
+        exe mkdir -p "$BACKUP_BASE/esp${safe_name}/"
         exe rsync -a --delete "$mountpoint/" "$BACKUP_BASE/esp${safe_name}/"
     done <<< "$VFAT_MOUNTS"
     
@@ -122,15 +127,15 @@ if [ -n "$VFAT_MOUNTS" ]; then
 else
     warn "No FAT32 partitions found. Skipping ESP backup."
 fi
+
 # ------------------------------------------------------------------------------
 # 3. Create Initial Safety Snapshots
 # ------------------------------------------------------------------------------
 section "Safety Net" "Creating Initial Snapshots"
 
-# Snapshot Root
 if snapper list-configs | grep -q "root "; then
     if snapper -c root list --columns description | grep -q "Before Shorin Setup"; then
-        log "Snapshot already created."
+        log "Root snapshot already created."
     else
         log "Creating Root snapshot..."
         if exe snapper -c root create --description "Before Shorin Setup"; then
@@ -143,17 +148,15 @@ if snapper list-configs | grep -q "root "; then
     fi
 fi
 
-# Snapshot Home
 if snapper list-configs | grep -q "home "; then
     if snapper -c home list --columns description | grep -q "Before Shorin Setup"; then
-        log "Snapshot already created."
+        log "Home snapshot already created."
     else
         log "Creating Home snapshot..."
         if exe snapper -c home create --description "Before Shorin Setup"; then
             success "Home snapshot created."
         else
             error "Failed to create Home snapshot."
-            # This is less critical than root, but should still be a failure.
             exit 1
         fi
     fi
@@ -169,12 +172,8 @@ UNDO_SRC="$PARENT_DIR/undochange.sh"
 DE_UNDO_SRC="$SCRIPT_DIR/de-undochange.sh"
 
 log "Installing undo utilities to $BIN_DIR..."
+exe mkdir -p "$BIN_DIR"
 
-if [ ! -d "$BIN_DIR" ]; then
-    exe mkdir -p "$BIN_DIR"
-fi
-
-# 部署主撤销脚本
 if [ -f "$UNDO_SRC" ]; then
     exe cp "$UNDO_SRC" "$BIN_DIR/shorin-undochange"
     exe chmod +x "$BIN_DIR/shorin-undochange"
@@ -183,7 +182,6 @@ else
     warn "Could not find $UNDO_SRC. Skipping."
 fi
 
-# 部署桌面环境撤销脚本
 if [ -f "$DE_UNDO_SRC" ]; then
     exe cp "$DE_UNDO_SRC" "$BIN_DIR/shorin-de-undochange"
     exe chmod +x "$BIN_DIR/shorin-de-undochange"
