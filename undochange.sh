@@ -101,11 +101,3 @@ echo -e "${GREEN}System rollback successful.${NC}"
 echo -e "${YELLOW}Rebooting in 3 seconds...${NC}"
 sleep 3
 reboot
-
-
-
-# 5. Reboot
-echo -e "${GREEN}System rollback successful.${NC}"
-echo -e "${YELLOW}Rebooting in 3 seconds...${NC}"
-sleep 3
-reboot
