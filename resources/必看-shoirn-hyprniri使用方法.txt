@@ -1,9 +1,10 @@
 
 【可以查阅的文档】
-ArchWiki： https://wiki.archlinux.org/title/Main_page
-DMSWiki： https://danklinux.com/
-ShorinArch： https://shorin.xyz/wiki
-Shorin一键配置脚本： https://shorin.xyz/wiki/archsetup
+ArchWiki: https://wiki.archlinux.org/title/Main_page
+DMSWiki: https://danklinux.com/
+HyprlandWiki: https://wiki.hypr.land/
+ShorinWiki: https://shorin.xyz/wiki
+Shorin一键配置脚本: https://shorin.xyz/wiki/archsetup
 
 如果出现了两个任务栏可以运行以下命令关掉：
 systemctl --user disable --now  dms
@@ -52,6 +53,9 @@ sysup 更新系统
 clean 系统清理
 quicksave 快速存档
 
+【Ai助手】
+如果你没有跳过常用软件安装步骤的话，会安装一个叫作opencode的开源ai助手，有免费模型可以用，你有api的话也可以自己导入。如果你有查找文件之类的需求直接询问这个Ai助手会很方便。想修改配置的话请谨慎辨别ai信息是否准确，谨慎使用ai修改文件。不喜欢的话可以删除：pacr opencode 
+
 【有趣实用的TUI软件（基于终端的用户交互程序）】
 命令：作用
 gdu：磁盘空间管理
@@ -75,5 +79,4 @@ clean命令可以清理软件包缓存、回收站、截图、录屏、超数量
 
 3. 快速存档
 活用btrfs快照存档，我的quicksave命令可以快速创建描述为quicksave的快照，做不了解的事情记得先快速存档（Mod+F5），我设置了合理的快照数量限制，不用担心快照占用磁盘空间，放心存。
-
 
