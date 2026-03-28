@@ -1,9 +1,10 @@
 
 【可以查阅的文档】
-ArchWiki： https://wiki.archlinux.org/title/Main_page
-DMSWiki： https://danklinux.com/
-ShorinArch： https://shorin.xyz/wiki
-Shorin一键配置脚本： https://shorin.xyz/wiki/archsetup
+ArchWiki: https://wiki.archlinux.org/title/Main_page
+DMSWiki: https://danklinux.com/
+NiriWiki: https://github.com/niri-wm/niri/wiki
+ShorinArch: https://shorin.xyz/wiki
+Shorin一键配置脚本: https://shorin.xyz/wiki/archsetup
 
 如果出现了两个任务栏可以运行以下命令关掉：
 systemctl --user disable --now  dms
@@ -66,6 +67,9 @@ mirror-update 更新镜像源
 sysup 更新系统
 clean 系统清理
 quicksave 快速存档
+
+【Ai助手】
+如果你没有跳过常用软件安装步骤的话，会安装一个叫作opencode的开源ai助手，有免费模型可以用，你有api的话也可以自己导入。如果你有查找文件之类的需求直接询问这个Ai助手会很方便。想修改配置的话请谨慎辨别ai信息是否准确，谨慎使用ai修改文件。不喜欢的话可以删除：pacr opencode
 
 【有趣实用的TUI软件（基于终端的用户交互程序）】
 命令：作用
