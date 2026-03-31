@@ -46,17 +46,13 @@ trap cleanup_sudo EXIT INT TERM
 AUR_HELPER="paru"
 section "Shorin DMS" "Core Components"
 log "Installing core shell components..."
-CORE_PKGS="quickshell-git dms-shell-bin niri xwayland-satellite kitty xdg-desktop-portal-gnome niri-sidebar-git nwg-look cava cliphist wl-clipboard dgop dsearch-bin qt5-multimedia satty mpv cups-pk-helper kimageformats"
+CORE_PKGS="quickshell-git shorin-dms-niri-meta shorin-dms-niri-dotfiels-git"
 
 echo "$CORE_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
 
 # --- Dotfiles & Wallpapers ---
-section "Shorin DMS" "Dotfiles & Wallpapers"
-log "Deploying user dotfiles..."
-DOTFILES_SRC="$PARENT_DIR/dms-dotfiles"
-chown -R "$TARGET_USER:" "$DOTFILES_SRC"
-force_copy "$DOTFILES_SRC/." "$HOME_DIR"
+section "Shorin DMS" "Wallpapers"
 
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
@@ -65,27 +61,9 @@ chown -R "$TARGET_USER:" "$WALLPAPER_SOURCE_DIR"
 as_user mkdir -p "$WALLPAPER_DIR"
 force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
 
-# --- File Manager & Terminal Setup ---
-section "Shorin DMS" "File Manager & Terminal"
-
-log "Installing Nautilus, Thunar and dependencies..."
-FM_PKGS1="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
-FM_PKGS2="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf"
-
-echo "$FM_PKGS1" >> "$VERIFY_LIST"
-echo "$FM_PKGS2" >> "$VERIFY_LIST"
-
-exe pacman -S --noconfirm --needed $FM_PKGS1
-exe as_user "$AUR_HELPER" -S --noconfirm --needed $FM_PKGS2
-
-log "Installing terminal utilities..."
-TERM_PKGS="xdg-terminal-exec bat fuzzel wf-recorder wl-screenrec-git ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git slurp"
-
-echo "$TERM_PKGS" >> "$VERIFY_LIST"
-exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
-
 # shorin-contrib
 as_user shorin link
+as_user shorindms init
 
 log "Configuring default terminal and templates..."
 # 默认终端处理
