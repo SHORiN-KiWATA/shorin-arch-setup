@@ -67,9 +67,9 @@ if [ "$GPU_COUNT" -ge 2 ]; then
     info_kv "GPU Layout" "Dual/Multi-GPU Detected (Count: $GPU_COUNT)"
     # 安装 vulkan-mesa-layers 以支持 vk-device-select
     PKGS+=("vulkan-mesa-layers" "lib32-vulkan-mesa-layers")
-
-    if [[ $HAS_NVIDIA == true ]]; then 
-    PKGS+=("nvidia-prime" "switcheroo-control")
+    
+    if [[ $HAS_NVIDIA == true ]]; then
+        PKGS+=("nvidia-prime" "switcheroo-control")
         # fix gtk4 issue with nvidia dual gpu
         if grep -q "GSK_RENDERER" "/etc/environment"; then
             echo 'GSK_RENDERER=gl' >> /etc/environment
@@ -77,7 +77,7 @@ if [ "$GPU_COUNT" -ge 2 ]; then
     fi
 fi
 # ==============================================================================
-# 3. Conditional 包判断 
+# 3. Conditional 包判断
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -100,9 +100,9 @@ if [ "$HAS_NVIDIA" = true ]; then
     
     # 初始化一个标志位，只有匹配到支持的显卡才设为 true
     DRIVER_SELECTED=false
-
+    
     # ==========================================================================
-    #  nvidia-open 
+    #  nvidia-open
     # ==========================================================================
     if echo "$NV_MODEL" | grep -q -E -i "RTX|GTX 16"; then
         log "   -> NVIDIA: Modern GPU detected (Turing+). Using Open Kernel Modules."
@@ -110,32 +110,32 @@ if [ "$HAS_NVIDIA" = true ]; then
         # 核心驱动包
         PKGS+=("nvidia-open-dkms" "nvidia-utils" "lib32-nvidia-utils" "opencl-nvidia" "lib32-opencl-nvidia" "libva-nvidia-driver" "vulkan-icd-loader" "lib32-vulkan-icd-loader" "opencl-icd-loader" "lib32-opencl-icd-loader")
         DRIVER_SELECTED=true
-
-    # ==========================================================================
-    # nvidia-580xx-dkms
-    # ==========================================================================
-    elif echo "$NV_MODEL" | grep -q -E -i "GTX 10|GTX 950|GTX 960|GTX 970|GTX 980|GTX 745|GTX 750|GTX 750 Ti|GTX 840M|GTX 845M|GTX 850M|GTX 860M|GTX 950M|GTX 960M|GeForce 830M|GeForce 840M|GeForce 930M|GeForce 940M|GeForce GTX Titan X|Tegra X1|NVIDIA Titan X|NVIDIA Titan Xp|NVIDIA Titan V|NVIDIA Quadro GV100"; then
+        
+        # ==========================================================================
+        # nvidia-580xx-dkms
+        # ==========================================================================
+        elif echo "$NV_MODEL" | grep -q -E -i "GTX 10|GTX 950|GTX 960|GTX 970|GTX 980|GTX 745|GTX 750|GTX 750 Ti|GTX 840M|GTX 845M|GTX 850M|GTX 860M|GTX 950M|GTX 960M|GeForce 830M|GeForce 840M|GeForce 930M|GeForce 940M|GeForce GTX Titan X|Tegra X1|NVIDIA Titan X|NVIDIA Titan Xp|NVIDIA Titan V|NVIDIA Quadro GV100"; then
         log "   -> NVIDIA: Pascal/Maxwell GPU detected. Using Proprietary DKMS."
         PKGS+=("nvidia-580xx-dkms" "nvidia-580xx-utils" "opencl-nvidia-580xx" "lib32-opencl-nvidia-580xx" "lib32-nvidia-580xx-utils" "libva-nvidia-driver" "vulkan-icd-loader" "lib32-vulkan-icd-loader" "opencl-icd-loader" "lib32-opencl-icd-loader" )
         DRIVER_SELECTED=true
-
-    # ==========================================================================
-    # nvidia-470xx-dkms
-    # ==========================================================================
-    elif echo "$NV_MODEL" | grep -q -E -i "GTX 6[0-9][0-9]|GTX 760|GTX 765|GTX 770|GTX 775|GTX 780|GTX 860M|GT 6[0-9][0-9]|GT 710M|GT 720|GT 730M|GT 735M|GT 740|GT 745M|GT 750M|GT 755M|GT 920M|Quadro 410|Quadro K500|Quadro K510|Quadro K600|Quadro K610|Quadro K1000|Quadro K1100|Quadro K2000|Quadro K2100|Quadro K3000|Quadro K3100|Quadro K4000|Quadro K4100|Quadro K5000|Quadro K5100|Quadro K6000|Tesla K10|Tesla K20|Tesla K40|Tesla K80|NVS 510|NVS 1000|Tegra K1|Titan|Titan Z"; then
-
+        
+        # ==========================================================================
+        # nvidia-470xx-dkms
+        # ==========================================================================
+        elif echo "$NV_MODEL" | grep -q -E -i "GTX 6[0-9][0-9]|GTX 760|GTX 765|GTX 770|GTX 775|GTX 780|GTX 860M|GT 6[0-9][0-9]|GT 710M|GT 720|GT 730M|GT 735M|GT 740|GT 745M|GT 750M|GT 755M|GT 920M|Quadro 410|Quadro K500|Quadro K510|Quadro K600|Quadro K610|Quadro K1000|Quadro K1100|Quadro K2000|Quadro K2100|Quadro K3000|Quadro K3100|Quadro K4000|Quadro K4100|Quadro K5000|Quadro K5100|Quadro K6000|Tesla K10|Tesla K20|Tesla K40|Tesla K80|NVS 510|NVS 1000|Tegra K1|Titan|Titan Z"; then
+        
         log "   -> NVIDIA:  Kepler GPU detected. Using nvidia-470xx-dkms."
         PKGS+=("nvidia-470xx-dkms" "nvidia-470xx-utils" "opencl-nvidia-470xx" "vulkan-icd-loader" "lib32-nvidia-470xx-utils" "lib32-opencl-nvidia-470xx" "lib32-vulkan-icd-loader" "libva-nvidia-driver" "opencl-icd-loader" "lib32-opencl-icd-loader")
         DRIVER_SELECTED=true
-
-    # ==========================================================================
-    # others
-    # ========================================================================== 
+        
+        # ==========================================================================
+        # others
+        # ==========================================================================
     else
         warn "   -> NVIDIA: Legacy GPU detected ($NV_MODEL)."
         warn "   -> Please manually install GPU driver."
     fi
-
+    
     # ==========================================================================
     # headers
     # ==========================================================================
@@ -144,7 +144,7 @@ if [ "$HAS_NVIDIA" = true ]; then
         
         # 1. 获取所有以 linux 开头的候选包
         CANDIDATES=$(pacman -Qq | grep "^linux" | grep -vE "headers|firmware|api|docs|tools|utils|qq")
-
+        
         for kernel in $CANDIDATES; do
             # 2. 验证：只有在 /boot 下存在对应 vmlinuz 文件的才算是真内核
             if [ -f "/boot/vmlinuz-${kernel}" ]; then
@@ -156,8 +156,8 @@ if [ "$HAS_NVIDIA" = true ]; then
     fi
 fi
 
-if systemd-detect-virt -q; then 
-
+if systemd-detect-virt -q; then
+    
     log "virtualmachine detected"
     PKGS+=("spice-vdagent")
 fi
@@ -200,6 +200,9 @@ if [ ${#PKGS[@]} -gt 0 ]; then
     log "Enabling services (if supported)..."
     systemctl enable --now nvidia-powerd &>/dev/null || true
     systemctl enable switcheroo-control.service &>/dev/null || true
+    systemctl enable nvidia-suspend.service &>/dev/null || true
+    systemctl enable nvidia-hibernate.service &>/dev/null || true
+    systemctl enable nvidia-resume.service &>/dev/null || true
     success "GPU Drivers processed successfully."
 else
     warn "No GPU drivers matched or needed."
