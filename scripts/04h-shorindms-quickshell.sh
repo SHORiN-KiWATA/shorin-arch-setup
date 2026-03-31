@@ -46,7 +46,7 @@ trap cleanup_sudo EXIT INT TERM
 AUR_HELPER="paru"
 section "Shorin DMS" "Core Components"
 log "Installing core shell components..."
-CORE_PKGS="quickshell-git shorin-dms-niri-meta shorin-dms-niri-dotfiels-git"
+CORE_PKGS="quickshell-git shorin-dms-niri-meta shorin-dms-niri-dotfiles-git"
 
 echo "$CORE_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $CORE_PKGS
