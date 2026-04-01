@@ -5,6 +5,10 @@ NiriWiki: https://github.com/niri-wm/niri/wiki
 ShorinArch: https://shorin.xyz/wiki
 Shorin一键配置脚本: https://shorin.xyz/wiki/archsetup
 
+【重要工具】
+shorinniri命令可以对shorinniri桌面进行初始化、更新、卸载等操作。详情看shorinniri命令的帮助信息。
+
+
 【重要按键】
 super+shift+/ 打开按键教程
 super+T 打开终端

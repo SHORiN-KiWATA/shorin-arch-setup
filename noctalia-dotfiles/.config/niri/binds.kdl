@@ -78,10 +78,13 @@ binds {
     // super+ctrl+a/d 向左/右移动列
     Mod+Ctrl+A  { move-column-left; }
     Mod+Ctrl+D { move-column-right; }
-    // mod+S/W 上下切换窗口
-    Mod+S { move-window-down; }
-    Mod+W { move-window-up; }
-    
+       // mod+S/W 上下切换窗口聚焦
+    Mod+W     { focus-window-up; }
+    Mod+S      { focus-window-down; }
+    // 移动窗口
+    Mod+Ctrl+S { move-window-down; }
+    Mod+Ctrl+W { move-window-up; }
+ 
     // 切换到第一个colume
     Mod+Home { focus-column-first; }
     // 切换到最后一个colume

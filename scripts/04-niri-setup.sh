@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 04-niri-setup.sh - Niri Desktop (Restored FZF & Robust AUR)
+# 04-niri-setup.sh - Niri Desktop (Refactored & Pre-Verify)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,606 +10,92 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 VERIFY_LIST="/tmp/shorin_install_verify.list"
 rm -f "$VERIFY_LIST"
-DEBUG=${DEBUG:-0}
-CN_MIRROR=${CN_MIRROR:-0}
-UNDO_SCRIPT="$SCRIPT_DIR/de-undochange.sh"
 
 check_root
-
-# --- [HELPER FUNCTIONS] ---
-
-
-# 2. Critical Failure Handler (The "Big Red Box")
-# 2. Critical Failure Handler (The "Big Red Box")
-critical_failure_handler() {
-  local failed_reason="$1"
-  trap - ERR
-
-  echo ""
-  echo -e "\033[0;31m################################################################\033[0m"
-  echo -e "\033[0;31m#                                                              #\033[0m"
-  echo -e "\033[0;31m#   CRITICAL INSTALLATION FAILURE DETECTED                     #\033[0m"
-  echo -e "\033[0;31m#                                                              #\033[0m"
-  echo -e "\033[0;31m#   Reason: $failed_reason\033[0m"
-  echo -e "\033[0;31m#                                                              #\033[0m"
-  echo -e "\033[0;31m#   OPTIONS:                                                   #\033[0m"
-  echo -e "\033[0;31m#   1. Restore snapshot (Undo changes & Exit)                  #\033[0m"
-  echo -e "\033[0;31m#   2. Retry / Re-run script                                   #\033[0m"
-  echo -e "\033[0;31m#   3. Abort (Exit immediately)                                #\033[0m"
-  echo -e "\033[0;31m#                                                              #\033[0m"
-  echo -e "\033[0;31m################################################################\033[0m"
-  echo ""
-
-  while true; do
-    read -p "Select an option [1-3]: " -r choice
-    case "$choice" in
-    1)
-      # Option 1: Restore Snapshot
-      if [ -f "$UNDO_SCRIPT" ]; then
-        warn "Executing recovery script..."
-        bash "$UNDO_SCRIPT"
-        exit 1
-      else
-        error "Recovery script missing! You are on your own."
-        exit 1
-      fi
-      ;;
-    2)
-      # Option 2: Re-run Script
-      warn "Restarting installation script..."
-      echo "-----------------------------------------------------"
-      sleep 1
-      exec "$0" "$@"
-      ;;
-    3)
-      # Option 3: Exit
-      warn "User chose to abort."
-      warn "Please fix the issue manually before re-running."
-      error "Installation aborted."
-      exit 1
-      ;;
-    *) 
-      echo "Invalid input. Please enter 1, 2, or 3." 
-      ;;
-    esac
-  done
-}
-
-# 3. Robust Package Installation with Retry Loop
-ensure_package_installed() {
-  local pkg="$1"
-  local context="$2" # e.g., "Repo" or "AUR"
-  local max_attempts=3
-  local attempt=1
-  local install_success=false
-
-  # 1. Check if already installed
-  if pacman -Q "$pkg" &>/dev/null; then
-    return 0
-  fi
-
-  # 2. Retry Loop
-  while [ $attempt -le $max_attempts ]; do
-    if [ $attempt -gt 1 ]; then
-      warn "Retrying '$pkg' ($context)... (Attempt $attempt/$max_attempts)"
-      sleep 3 # Cooldown
-    else
-      log "Installing '$pkg' ($context)..."
-    fi
-
-    # Try installation
-    if as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None "$pkg"; then
-      install_success=true
-      break
-    else
-      warn "Attempt $attempt/$max_attempts failed for '$pkg'."
-    fi
-
-    ((attempt++))
-  done
-
-  # 3. Final Verification
-  if [ "$install_success" = true ] && pacman -Q "$pkg" &>/dev/null; then
-    success "Installed '$pkg'."
-  else
-    critical_failure_handler "Failed to install '$pkg' after $max_attempts attempts."
-  fi
-}
-
-section "Phase 4" "Niri Desktop Environment"
-
-# ==============================================================================
-# STEP 0: Safety Checkpoint
-# ==============================================================================
-
-# Enable Trap
-trap 'critical_failure_handler "Script Error at Line $LINENO"' ERR
-
-# ==============================================================================
-# STEP 1: Identify User & DM Check
-# ==============================================================================
 detect_target_user
-info_kv "Target" "$TARGET_USER"
-
-# DM Check
 check_dm_conflict
-# ==============================================================================
-# STEP 2: Core Components
-# ==============================================================================
-section "Step 1/9" "Core Components"
-PKGS="niri xdg-desktop-portal-gnome fuzzel kitty firefox libnotify mako polkit-gnome"
-# 記錄到清單
-echo "$PKGS" >> "$VERIFY_LIST"
-exe pacman -S --noconfirm --needed $PKGS
-
-log "Configuring Firefox Policies..."
-POL_DIR="/etc/firefox/policies"
-exe mkdir -p "$POL_DIR"
-cat << 'EOF' > "$POL_DIR/policies.json"
-{
-  "policies": {
-    "Extensions": {
-      "Install": [
-        "https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi",
-        "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
-      ]
-    }
-  }
-}
-EOF
-exe chmod 755 "$POL_DIR" && exe chmod 644 "$POL_DIR/policies.json"
-
-# ==============================================================================
-# STEP 3: File Manager
-# ==============================================================================
-section "Step 2/9" "File Manager"
-FM_PKGS1="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus"
-FM_PKGS2="xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf"
-
-# 記錄到清單
-echo "$FM_PKGS1" >> "$VERIFY_LIST"
-echo "$FM_PKGS2" >> "$VERIFY_LIST"
-
-exe pacman -S --noconfirm --needed $FM_PKGS1
-exe pacman -S --noconfirm --needed $FM_PKGS2
-
-
-# 默认终端处理
-echo "xdg-terminal-exec" >> "$VERIFY_LIST"
-exe as_user paru -S --noconfirm --needed xdg-terminal-exec
-if ! grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then
-  echo 'kitty.desktop' >> "$HOME_DIR/.config/xdg-terminals.list"
-fi
-
-# if [ ! -f /usr/local/bin/gnome-terminal ] || [ -L /usr/local/bin/gnome-terminal ]; then
-#   exe ln -sf /usr/bin/kitty /usr/local/bin/gnome-terminal
-# fi
-sudo -u "$TARGET_USER" dbus-run-session gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty
-
-# Nautilus Nvidia/Input Fix
-configure_nautilus_user
-
-section "Step 3/9" "Temp sudo file"
 
 SUDO_TEMP_FILE="/etc/sudoers.d/99_shorin_installer_temp"
 echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" >"$SUDO_TEMP_FILE"
 chmod 440 "$SUDO_TEMP_FILE"
-log "Temp sudo file created..."
-# ==============================================================================
-# STEP 5: Dependencies (RESTORED FZF)
-# ==============================================================================
-section "Step 4/9" "Dependencies"
-LIST_FILE="$PARENT_DIR/niri-applist.txt"
 
-# Ensure tools
-command -v fzf &>/dev/null || pacman -S --noconfirm fzf >/dev/null 2>&1
+cleanup_sudo() { rm -f "$SUDO_TEMP_FILE"; }
+trap cleanup_sudo EXIT INT TERM
 
-if [ -f "$LIST_FILE" ]; then
-  mapfile -t DEFAULT_LIST < <(grep -vE "^\s*#|^\s*$" "$LIST_FILE" | sed 's/#.*//; s/AUR://g' | xargs -n1)
-
-  if [ ${#DEFAULT_LIST[@]} -eq 0 ]; then
-    warn "App list is empty. Skipping."
-    PACKAGE_ARRAY=()
-  else
-    echo -e "\n   ${H_YELLOW}>>> Default installation in 60s. Press ANY KEY to customize...${NC}"
-
-    if read -t 60 -n 1 -s -r; then
-      # --- [RESTORED] Original FZF Selection Logic ---
-      clear
-      log "Loading package list..."
-
-      SELECTED_LINES=$(grep -vE "^\s*#|^\s*$" "$LIST_FILE" |
-        sed -E 's/[[:space:]]+#/\t#/' |
-        fzf --multi \
-          --layout=reverse \
-          --border \
-          --margin=1,2 \
-          --prompt="Search Pkg > " \
-          --pointer=">>" \
-          --marker="* " \
-          --delimiter=$'\t' \
-          --with-nth=1 \
-          --bind 'load:select-all' \
-          --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
-          --info=inline \
-          --header="[TAB] TOGGLE | [ENTER] INSTALL | [CTRL-D] DE-ALL | [CTRL-A] SE-ALL" \
-          --preview "echo {} | cut -f2 -d$'\t' | sed 's/^# //'" \
-          --preview-window=down:50%:wrap \
-          --color=dark \
-          --color=fg+:white,bg+:black \
-          --color=hl:blue,hl+:blue:bold \
-          --color=header:yellow:bold \
-          --color=info:magenta \
-          --color=prompt:cyan,pointer:cyan:bold,marker:green:bold \
-          --color=spinner:yellow)
-
-      clear
-
-      if [ -z "$SELECTED_LINES" ]; then
-        warn "User cancelled selection. Installing NOTHING."
-        PACKAGE_ARRAY=()
-      else
-        PACKAGE_ARRAY=()
-        while IFS= read -r line; do
-          raw_pkg=$(echo "$line" | cut -f1 -d$'\t' | xargs)
-          clean_pkg="${raw_pkg#AUR:}"
-          [ -n "$clean_pkg" ] && PACKAGE_ARRAY+=("$clean_pkg")
-        done <<<"$SELECTED_LINES"
-      fi
-      # -----------------------------------------------
-    else
-      log "Auto-confirming ALL packages."
-      PACKAGE_ARRAY=("${DEFAULT_LIST[@]}")
-    fi
-  fi
-
-  # --- Installation Loop ---
-  if [ ${#PACKAGE_ARRAY[@]} -gt 0 ]; then
-    BATCH_LIST=()
-    AUR_LIST=()
-    info_kv "Target" "${#PACKAGE_ARRAY[@]} packages scheduled."
-    # 記錄到清單 (將陣列展開並寫入)
-    echo "${PACKAGE_ARRAY[@]}" >> "$VERIFY_LIST"
-    for pkg in "${PACKAGE_ARRAY[@]}"; do
-      [ "$pkg" == "imagemagic" ] && pkg="imagemagick"
-      [[ "$pkg" == "AUR:"* ]] && AUR_LIST+=("${pkg#AUR:}") || BATCH_LIST+=("$pkg")
-    done
-
-    # 1. Batch Install Repo Packages
-    if [ ${#BATCH_LIST[@]} -gt 0 ]; then
-      log "Phase 1: Batch Installing Repo Packages..."
-      as_user yay -Syu --noconfirm --needed --answerdiff=None --answerclean=None "${BATCH_LIST[@]}" || true
-
-      # Verify Each
-      for pkg in "${BATCH_LIST[@]}"; do
-        ensure_package_installed "$pkg" "Repo"
-      done
-    fi
-
-    # 2. Sequential AUR Install
-    if [ ${#AUR_LIST[@]} -gt 0 ]; then
-      log "Phase 2: Installing AUR Packages (Sequential)..."
-      for pkg in "${AUR_LIST[@]}"; do
-        ensure_package_installed "$pkg" "AUR"
-      done
-    fi
-
-    # Waybar fallback
-    if ! command -v waybar &>/dev/null; then
-      warn "Waybar missing. Installing stock..."
-      exe pacman -S --noconfirm --needed waybar
-    fi
-  else
-    warn "No packages selected."
-  fi
-else
-  warn "niri-applist.txt not found."
-fi
-
-# ==============================================================================
-# STEP 6: Dotfiles (Smart Recursive Symlink)
-# ==============================================================================
-section "Step 5/9" "Deploying Dotfiles"
-
-REPO_GITHUB="https://github.com/SHORiN-KiWATA/Shorin-ArchLinux-Guide.git"
-
-# 1. 仓库位置：放在 .local/share 下，不污染 home 根目录
-DOTFILES_REPO="$HOME_DIR/.local/share/shorin-niri"
-
-# --- Smart Linking Function ---
-# 核心逻辑：只链接“叶子”节点，对于“容器”目录（.config, .local, share）则递归进入
-link_recursive() {
-  local src_dir="$1"
-  local dest_dir="$2"
-  local exclude_list="$3"
-
-  as_user mkdir -p "$dest_dir"
-
-  find "$src_dir" -mindepth 1 -maxdepth 1 -not -path '*/.git*' | while read -r src_path; do
-    local item_name
-    item_name=$(basename "$src_path")
-
-    # 0. 排除检查
-    if echo "$exclude_list" | grep -qw "$item_name"; then
-      log "Skipping excluded: $item_name"
-      continue
-    fi
-
-    # 1. 判断是否是需要“穿透”的系统目录
-    local need_recurse=false
-
-    if [ "$item_name" == ".config" ]; then
-        need_recurse=true
-    elif [ "$item_name" == ".local" ]; then
-        need_recurse=true
-    # 只有当父目录名字是以 .local 结尾时，才穿透 share (bin 被移除了)
-    elif [[ "$src_dir" == *".local" ]] && [ "$item_name" == "share" ]; then
-        need_recurse=true
-    fi
-
-    if [ "$need_recurse" = true ]; then
-        # 递归进入：传入当前路径作为新的源和目标
-        log "  Entering container: $item_name"
-        link_recursive "$src_path" "$dest_dir/$item_name" "$exclude_list"
-    else
-        # 2. 具体的配置文件夹/文件（如 fcitx5, niri, .zshrc, .local/bin） -> 执行链接
-        local target_path="$dest_dir/$item_name"
-        
-        # 先清理旧的目标（无论是文件、文件夹还是死链）
-        if [ -e "$target_path" ] || [ -L "$target_path" ]; then
-            log "  Overwriting: $item_name"
-            as_user rm -rf "$target_path"
-        fi
-        
-        # 创建软链接
-        info_kv "Linking" "$item_name -> $dest_dir"
-        as_user ln -sf "$src_path" "$target_path"
-    fi
-  done
+critical_failure_handler() {
+    local failed_reason="$1"
+    trap - ERR
+    echo -e "\n\033[0;31m[CRITICAL FAILURE] $failed_reason\033[0m\n"
+    exit 1
 }
+trap 'critical_failure_handler "Script Error at Line $LINENO"' ERR
 
-# --- Execution ---
+# ==============================================================================
+# STEP 1: Install Meta Package & Initialize Environment
+# ==============================================================================
+section "Step 1/3" "Install Environment & Dotfiles"
 
-# 1. 准备仓库
-prepare_repository() {
-  local TARGET_DIRS=("dotfiles" "wallpapers")
-  local BRANCH_NAME="main"
-  
-  # --- 1. 检查是否存在旧仓库 ---
-  if [ -d "$DOTFILES_REPO" ]; then
-    if ! as_user git -C "$DOTFILES_REPO" rev-parse --is-inside-work-tree &>/dev/null; then
-      warn "Found incomplete or broken repository folder. Cleaning up..."
-      rm -rf "$DOTFILES_REPO"
-    else
-      log "Repository already exists. Checking for updates..."
-      if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME"; then
-         warn "Update failed (network issue?), cleaning up..."
-         rm -rf "$DOTFILES_REPO"
-      fi
-    fi
-  fi
+AUR_HELPER="paru"
+CORE_PKG="shorin-niri-git"
 
-  # --- 2. 初始化新仓库 ---
-  if [ ! -d "$DOTFILES_REPO" ]; then
-    log "Initializing Sparse & Shallow Checkout to $DOTFILES_REPO..."
-    cd "$HOME_DIR"
+# --- 在安装发生【之前】动态提取依赖写入 VERIFY_LIST ---
+log "Fetching dependency list from AUR for verification..."
+echo "$CORE_PKG" >> "$VERIFY_LIST"
 
-    # ================= [修改开始：智能安全创建目录] =================
-    # 逻辑：
-    # 1. 优先尝试用 as_user (sudo -u) 创建，这是最干净的。
-    # 2. 如果失败，通常是因为父目录 (.local 或 .local/share) 被 Root 占用了。
-    # 3. 此时只修正父目录的 Owner (不递归)，然后再试。
-    
-    if ! as_user mkdir -p "$DOTFILES_REPO" 2>/dev/null; then
-        local parent_dir=$(dirname "$DOTFILES_REPO")
-        log "User creation failed. Fixing parent permissions: $parent_dir"
-        
-        # 确保父目录存在，并修正父目录权限 (非递归，瞬间完成)
-        if [ ! -d "$parent_dir" ]; then
-            mkdir -p "$parent_dir"
-        fi
-        chown "$TARGET_USER:" "$parent_dir"
-        
-        # 再次尝试以用户身份创建
-        if ! as_user mkdir -p "$DOTFILES_REPO"; then
-            # 最后的兜底：实在不行就用 Root 创建，然后只修这个新目录的权限
-            warn "Fallback to root creation..."
-            mkdir -p "$DOTFILES_REPO"
-            chown -R "$TARGET_USER:" "$DOTFILES_REPO"
-        fi
-    fi
-    # ================= [修改结束] =================
-
-    as_user git -C "$DOTFILES_REPO" init
-    # 强制将本地分支名设为 main
-    as_user git -C "$DOTFILES_REPO" branch -m "$BRANCH_NAME"
-    
-    as_user git -C "$DOTFILES_REPO" config core.sparseCheckout true
-    local sparse_file="$DOTFILES_REPO/.git/info/sparse-checkout"
-    for item in "${TARGET_DIRS[@]}"; do
-      log "  Configuring sparse-checkout: $item"
-      echo "$item" | as_user tee -a "$sparse_file" >/dev/null
-    done
-    
-    log "  Adding remote origin: $REPO_GITHUB"
-    as_user git -C "$DOTFILES_REPO" remote add origin "$REPO_GITHUB"
-    
-    log "Downloading latest snapshot (Github)..."
-    if ! as_user git -C "$DOTFILES_REPO" pull origin "$BRANCH_NAME" --depth 1 ; then 
-      error "Failed to download dotfiles." 
-      warn "Cleaning up empty directory to prevent errors on retry..."
-      rm -rf "$DOTFILES_REPO" 
-      critical_failure_handler "Failed to download dotfiles (Sparse+Shallow failed)."
-    else 
-      # 这里可以保留作为双重保险，或者因为上面已经处理好了权限，这行其实是可选的
-      chown -R "$TARGET_USER:" "$DOTFILES_REPO"
-      
-      as_user git -C "$DOTFILES_REPO" branch --set-upstream-to=origin/main main
-      # 这是一个常见痛点：因为 git 也是 sudo -u 运行的，这步是为了防止 git 报错 "dubious ownership"
-      as_user git config --global --add safe.directory "$DOTFILES_REPO"
-      success "Repository prepared."
-    fi
-  else
-    log "Dotfiles repo already exists. Skipping clone."
-  fi
-}
-
-prepare_repository
-
-# 2. 执行链接
-if [ -d "$DOTFILES_REPO/dotfiles" ]; then
-  EXCLUDE_LIST=""
-  if [ "$TARGET_USER" != "shorin" ]; then
-    EXCLUDE_FILE="$PARENT_DIR/exclude-dotfiles.txt"
-    if [ -f "$EXCLUDE_FILE" ]; then
-      log "Loading exclusions..."
-      EXCLUDE_LIST=$(grep -vE "^\s*#|^\s*$" "$EXCLUDE_FILE" | tr '\n' ' ')
-    fi
-  fi
-
-  log "Backing up existing configs..."
-  as_user tar -czf "$HOME_DIR/config_backup_$(date +%s).tar.gz" -C "$HOME_DIR" .config
-
-  # 调用递归函数：从 dotfiles 根目录开始，目标是 HOME
-  link_recursive "$DOTFILES_REPO/dotfiles" "$HOME_DIR" "$EXCLUDE_LIST"
-
-  as_user chmod -R +x $HOME_DIR/.local/bin
-
-  # 创建shorin工具的链接
-  as_user shorin link
-  
-  # --- Post-Process (防止污染 git 的修正) ---
-  OUTPUT_EXAMPLE_KDL="$HOME_DIR/.config/niri/output-example.kdl"
-  OUTPUT_KDL="$HOME_DIR/.config/niri/output.kdl"
-  if [ "$TARGET_USER" != "shorin" ]; then
-
-    as_user touch $OUTPUT_KDL
-
-    # 修复 Bookmarks (转为实体文件并修改)
-    BOOKMARKS_FILE="$HOME_DIR/.config/gtk-3.0/bookmarks"
-    REPO_BOOKMARKS="$DOTFILES_REPO/dotfiles/.config/gtk-3.0/bookmarks"
-    if [ -f "$REPO_BOOKMARKS" ]; then
-        as_user sed -i "s/shorin/$TARGET_USER/g" "$REPO_BOOKMARKS"
-        log "Updated GTK bookmarks."
-    fi
-
-  else
-    as_user cp "$DOTFILES_REPO/dotfiles/.config/niri/output-example.kdl" "$OUTPUT_KDL"
-  fi
-
-  # GTK Theme Symlinks (Fix internal links)
-  GTK4="$HOME_DIR/.config/gtk-4.0"
-  THEME="$HOME_DIR/.local/share/themes/adw-gtk3-dark/gtk-4.0"
-  if [ -d "$GTK4" ]; then
-      as_user rm -f "$GTK4/gtk.css" "$GTK4/gtk-dark.css"
-  fi
-  
-  # Flatpak overrides
-  if command -v flatpak &>/dev/null; then
-    as_user flatpak override --user --filesystem=xdg-data/themes
-    as_user flatpak override --user --filesystem="$HOME_DIR/.themes"
-    as_user flatpak override --user --filesystem=xdg-config/gtk-4.0
-    as_user flatpak override --user --filesystem=xdg-config/gtk-3.0
-    as_user flatpak override --user --env=GTK_THEME=adw-gtk3-dark
-    as_user flatpak override --user --filesystem=xdg-config/fontconfig
-  fi
-  success "Dotfiles Linked."
+if as_user "$AUR_HELPER" -Si "$CORE_PKG" &>/dev/null; then
+    as_user "$AUR_HELPER" -Si "$CORE_PKG" | grep "^Depends On" | cut -d':' -f2- | tr -s ' ' '\n' | sed -e 's/[<>=].*//g' -e '/^$/d' -e '/None/d' >> "$VERIFY_LIST"
+    log "Dependencies added to $VERIFY_LIST."
 else
-  warn "Dotfiles missing in repo directory."
+    warn "Could not fetch remote dependency info for $CORE_PKG. Skipping verify list append."
+fi
+# --------------------------------------------------------
+
+# 1. 委托 AUR 助手安装大包
+log "Installing $CORE_PKG and all its dependencies via AUR..."
+if ! as_user "$AUR_HELPER" -S --noconfirm --needed "$CORE_PKG"; then
+    critical_failure_handler "Failed to install '$CORE_PKG' from AUR."
 fi
 
-# === niri blur ====
-curl -L shorin.xyz/niri-blur-toggle | as_user bash 
+# 2. 调用 CLI 脚本完成初始化
+log "Running shorinniri initialization..."
+exe as_user shorinniri init
 
 # ==============================================================================
-# STEP 7: Wallpapers
+# STEP 2: Deploy Static Resources
 # ==============================================================================
-section "Step 6/9" "Wallpapers"
-# 更新引用路径
-if [ -d "$DOTFILES_REPO/wallpapers" ]; then
-  as_user ln -sf "$DOTFILES_REPO/wallpapers" "$HOME_DIR/Pictures/Wallpapers"
-  
-  as_user mkdir -p "$HOME_DIR/Templates"
-  as_user touch "$HOME_DIR/Templates/new"
-  echo "#!/bin/bash" | as_user tee "$HOME_DIR/Templates/new.sh" >/dev/null
-  as_user chmod +x "$HOME_DIR/Templates/new.sh"
-  success "Installed."
+section "Step 2/3" "Static Resources"
+
+log "Deploying wallpapers..."
+WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
+WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
+if [ -d "$WALLPAPER_SOURCE_DIR" ]; then
+    as_user mkdir -p "$WALLPAPER_DIR"
+    force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
+    chown -R "$TARGET_USER:" "$WALLPAPER_DIR"
 fi
 
-# === remove gtk bottom =======
-as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":close"
-# ==============================================================================
-# STEP 8: Hardware Tools
-# ==============================================================================
-section "Step 7/9" "Hardware"
-if pacman -Q ddcutil &>/dev/null; then
-  gpasswd -a "$TARGET_USER" i2c
-  lsmod | grep -q i2c_dev || echo "i2c-dev" >/etc/modules-load.d/i2c-dev.conf
+log "Copying tutorial file to home directory..."
+TUTORIAL_SRC="$PARENT_DIR/resources/必看-shoirn-Niri使用方法.txt"
+TUTORIAL_DEST="$HOME_DIR/必看-Shoirn-Niri使用方法.txt"
+if [ -f "$TUTORIAL_SRC" ]; then
+    as_user cp "$TUTORIAL_SRC" "$TUTORIAL_DEST"
 fi
-if pacman -Q swayosd &>/dev/null; then
-  systemctl enable --now swayosd-libinput-backend.service >/dev/null 2>&1
-fi
-success "Tools configured."
 
-section "Config" "Hiding useless .desktop files"
-log "Hiding useless .desktop files"
-run_hide_desktop_file
+# ==============================================================================
+# STEP 3: Display Manager & Cleanup
+# ==============================================================================
+section "Step 3/3" "Cleanup & Boot Configuration"
 
 rm -f "$SUDO_TEMP_FILE"
 
-
-# === 教程文件 ===
-log "Copying tutorial file on desktop..."
-as_user cp "$PARENT_DIR/resources/必看-shoirn-Niri使用方法.txt" "$HOME_DIR/必看-Shoirn-Niri使用方法.txt"
-# ==============================================================================
-# STEP 9: Cleanup & Auto-Login
-# ==============================================================================
-# section "Final" "Cleanup & Boot"
-# SVC_DIR="$HOME_DIR/.config/systemd/user"
-# SVC_FILE="$SVC_DIR/niri-autostart.service"
-# LINK="$SVC_DIR/default.target.wants/niri-autostart.service"
-
-# if [ "$SKIP_DM" = true ]; then
-#   log "Auto-login skipped."
-#   as_user rm -f "$LINK" "$SVC_FILE"
-# else
-#   log "Configuring TTY Auto-login..."
-#   mkdir -p "/etc/systemd/system/getty@tty1.service.d"
-#   echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --noreset --noclear --autologin $TARGET_USER - \${TERM}" >"/etc/systemd/system/getty@tty1.service.d/autologin.conf"
-
-#   as_user mkdir -p "$(dirname "$LINK")"
-#   cat <<EOT >"$SVC_FILE"
-# [Unit]
-# Description=Niri Session Autostart
-# After=graphical-session-pre.target
-# [Service]
-# ExecStart=/usr/bin/niri-session
-# Restart=on-failure
-# [Install]
-# WantedBy=default.target
-# EOT
-#   as_user ln -sf "../niri-autostart.service" "$LINK"
-#   chown -R "$TARGET_USER" "$SVC_DIR"
-#   success "Enabled."
-# fi
-
-
-# ==============================================================================
-# STEP 9: Display Manager (greetd + tuigreet) & Cleanup
-# ==============================================================================
-section "Final" "Cleanup & Boot Configuration"
-
-# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
 log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
 if [ "$SKIP_DM" = true ]; then
-  log "Display Manager setup skipped (Conflict found or user opted out)."
-  warn "You will need to start your session manually from the TTY."
+    warn "You will need to start your session manually from the TTY."
 else
-
-  setup_ly
+    setup_ly
 fi
 
 trap - ERR
-log "Module 04 completed."
+success "Module 04 completed successfully. Shorin Niri is ready!"

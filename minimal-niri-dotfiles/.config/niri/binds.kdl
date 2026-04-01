@@ -246,9 +246,13 @@ binds {
     // mod+A/D 同效果
     Mod+A hotkey-overlay-title="向左移动窗口 Move window to left between columes" { consume-or-expel-window-left; }
     Mod+D hotkey-overlay-title="向右移动窗口 Move window to right between columes" { consume-or-expel-window-right; }
-    // mod+S/W 上下切换窗口
-    Mod+S { move-window-down; }
-    Mod+W { move-window-up; }
+    // mod+S/W 上下切换窗口聚焦
+    Mod+W     { focus-window-up; }
+    Mod+S      { focus-window-down; }
+    // 移动窗口
+    Mod+Ctrl+S { move-window-down; }
+    Mod+Ctrl+W { move-window-up; }
+
 
     // mod+逗号/句号 把窗口合并或者踢出当前的colume
     Mod+Comma  { consume-window-into-column; }

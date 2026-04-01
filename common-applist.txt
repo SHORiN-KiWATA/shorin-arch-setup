@@ -39,8 +39,8 @@ AUR:lsfg-vk-bin                          # yellow duck frame generator
 AUR:mangojuice-bin                       # GUI for mangohud                
 AUR:video-downloader                     # Download youtube or bilibili videos
 AUR:visual-studio-code-bin               # vscode 
+AUR:pins-git			         # Manage .desktop
 
 # --- Flatpak Packages ---       
 flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire 
-flatpak:io.github.fabrialberio.pinapp    # PinApp (modify .desktop files)
 flatpak:it.mijorus.gearlever             # AppImage Manager
