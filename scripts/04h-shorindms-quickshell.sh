@@ -97,6 +97,8 @@ fi
 #   exe ln -sf /usr/bin/kitty /usr/local/bin/gnome-terminal
 # fi
 sudo -u "$TARGET_USER" dbus-run-session gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty
+sudo -u "$TARGET_USER" dbus-run-session gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+sudo -u "$TARGET_USER" dbus-run-session gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark"
 
 as_user mkdir -p "$HOME_DIR/Templates"
 as_user touch "$HOME_DIR/Templates/new" "$HOME_DIR/Templates/new.sh"
