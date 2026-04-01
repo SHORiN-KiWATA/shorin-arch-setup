@@ -1,0 +1,70 @@
+
+【可以查阅的文档】
+ArchWiki： https://wiki.archlinux.org/title/Main_page
+ShorinArch： https://shorin.xyz/wiki
+Shorin一键配置脚本： https://shorin.xyz/wiki/archsetup
+Labwc官方文档：https://labwc.github.io/
+
+【重要按键】
+super+T 打开终端
+super+E 打开文档管理器
+super+Z 开始菜单
+super+Q 关闭窗口
+super+F 最大化
+Super+alt+F 全屏
+super+alt+V 开关剪贴板
+super+alt+A 截图
+super+Shift+S 截图后编辑
+super+右键 调整窗口大小
+super+左键 移动窗口
+super+m 最小化
+alt+tab 切换聚焦
+alt+空格 显示窗口菜单
+super+alt+w 切换壁纸工具
+super+alt+L 锁屏
+super+alt+P 锁屏休眠
+所有按键看~/.config/labwc/rc.xml。
+
+
+如果出现网络问题可以进行以下操作更换wifi后端：
+sudo rm /etc/NetworkManager/conf.d/iwd.conf
+sudo systemctl restart NetworkManager
+
+【实用命令】
+pac 安装软件 (安装软件还可以用bazaar，这是flatpak软件商城)
+pacr 卸载软件
+mirror-update 更新镜像源
+sysup 更新系统
+clean 系统清理
+quicksave 快速存档
+运行shorin命令可以看到所有可用的便利命令
+
+reboot 重启
+poweroff 关机
+suspend 挂起
+
+【有趣实用的TUI软件（基于终端的用户交互程序）】
+命令：作用
+gdu：磁盘空间管理
+nmtui：网络配置工具
+impala：wifi连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
+btop：任务管理器
+yazi：文档管理器
+fastfetch：系统信息显示工具
+pulsemixer：tui音量调整工具
+
+【如果不想要了或者安装失败了可以回档】
+/usr/local/bin下有两个脚本可以用来回档到运行脚本之前的状态。
+回到安装桌面前：shorin-de-undochange
+回到运行脚本前：shorin-undochange
+
+【关于系统维护】
+1. 系统更新
+请一定使用sysup命令更新系统，不要直接pacman -Syu。更新时要注意是否有重要新闻，sysup命令会在更新前自动创建quicksave-sysup快照，如果更新后出现问题可以从任意快照启动项进入系统运行quickload命令回档。
+
+2. 系统清理
+clean命令可以清理软件包缓存、回收站、截图、录屏、超数量上限的快照、btrfs备份子卷等内容。clean all命令可以更进一步，清理所有软件包缓存和所有快照。home目录下的.cache文件内的文件也都是可以安全删除的缓存，不过一股脑删除可能会少用户登录什么的，可以使用gdu寻找大文件删除。
+
+3. 快速存档
+活用btrfs快照存档，我的quicksave命令可以快速创建描述为quicksave的快照，做不了解的事情记得先快速存档（Mod+F5），我设置了合理的快照数量限制，不用担心快照占用磁盘空间，放心存。
+

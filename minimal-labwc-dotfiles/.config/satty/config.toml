@@ -1,0 +1,15 @@
+[general]
+copy-command = "wl-copy"
+focus-toggles-toolbars= true
+initial-tool = "brush"
+zoom-factor=1.1
+
+[font]
+family = "Roboto"
+style = "Regular"
+fallback = [
+    "Noto Sans CJK SC",
+    "Noto Sans CJK JP",
+    "Noto Sans CJK TC",
+    "Noto Sans CJK KR"
+]

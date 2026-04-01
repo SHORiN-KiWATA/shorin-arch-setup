@@ -78,6 +78,7 @@ select_desktop() {
         "Shorin_Noctalia_Niri|shorinnocniri"
         "Shorin_Niri|shorinniri"
         "Minimal_Niri|minimalniri"
+        "Minimal_Labwc|minimallabwc"
         "Shorin_DMS_Hyprland_Scrolling|hyprniri"
         ""
         "GNOME |gnome"
@@ -278,6 +279,7 @@ case "$DESKTOP_ENV" in
     shorinnocniri) ALL_MODULES+=("04k-shorin-noctalia-quickshell.sh") ;;
     caelestia)     ALL_MODULES+=("04g-caelestia-quickshell.sh") ;;
     gnome)         ALL_MODULES+=("04d-gnome.sh") ;;
+    minimallabwc)  ALL_MODULES+=("04l-minimal-labwc.sh") ;;
     none)          log "Skipping Desktop Environment installation." ;;
     *)             warn "Unknown selection, skipping desktop setup." ;;
 esac

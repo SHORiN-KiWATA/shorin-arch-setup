@@ -1,0 +1,15 @@
+
+fcitx5 -d  &
+
+waybar &
+mako &
+
+waypaper --restore &>/dev/null &
+
+wl-paste --watch cliphist store &
+
+foot -s &
+
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+
+

@@ -1,0 +1,257 @@
+<?xml version="1.0" ?>
+<labwc_config>
+
+
+  <core>
+    <decoration>server</decoration>
+    <gap>5</gap>
+    <adaptiveSync>no</adaptiveSync>
+    <allowTearing>no</allowTearing>
+    <autoEnableOutputs>yes</autoEnableOutputs>
+    <reuseOutputMode>no</reuseOutputMode>
+    <xwaylandPersistence>no</xwaylandPersistence>
+    <primarySelection>yes</primarySelection>
+    <!--
+      # See labwc-config(5) for details
+      <promptCommand></promptCommand>
+    -->
+  </core>
+
+
+  <focus>
+    <followMouse>no</followMouse>
+    <followMouseRequiresMovement>yes</followMouseRequiresMovement>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+
+    <desktops>
+      <popupTime>500</popupTime>
+      <initial>1</initial>
+      <names>
+        <name>1</name>
+        <name>2</name>
+        <name>3</name>
+        <name>4</name>
+        <name>5</name>
+      </names>
+    </desktops>
+
+
+
+  <keyboard>
+    <layoutScope>global</layoutScope>
+    <repeatRate>25</repeatRate>
+    <repeatDelay>600</repeatDelay>
+    <!-- =====================  -->
+    <!-- 默认键位  -->
+    <!-- W 代表super -->
+    <!-- =====================  -->
+    <numlock>off</numlock>
+    <keybind key="W-S-E">
+      <action name="Exit" />
+    </keybind>
+    <keybind key="A-Tab">
+      <action name="NextWindow" />
+    </keybind>
+    <keybind key="A-S-Tab">
+      <action name="PreviousWindow" />
+    </keybind>
+    <keybind key="W-Tab">
+      <action name="ShowMenu" menu="client-list-combined-menu" />
+      <position>
+        <x>center</x>
+        <y>center</y>
+      </position>
+    </keybind>
+    <keybind key="W-t">
+      <action name="Execute" command="lab-sensible-terminal" />
+    </keybind>
+    <keybind key="A-F4">
+      <action name="Close" />
+    </keybind>
+    <keybind key="W-q">
+      <action name="Close" />
+    </keybind>
+     <!-- 最大化和全屏 -->
+    <keybind key="W-f">
+      <action name="ToggleMaximize" />
+    </keybind>
+    <keybind key="W-A-f">
+      <action name="ToggleFullscreen" />
+    </keybind>
+    <!-- 窗口最小化 -->
+    <keybind key="W-m">
+      <action name="Iconify" /> 
+    </keybind>
+
+     <!-- super方向键四角平铺 -->
+    <keybind key="W-Left">
+      <action name="SnapToEdge" direction="left" combine="yes" />
+    </keybind>
+    <keybind key="W-Right">
+      <action name="SnapToEdge" direction="right" combine="yes" />
+    </keybind>
+    <keybind key="W-Up">
+      <action name="SnapToEdge" direction="up" combine="yes" />
+    </keybind>
+    <keybind key="W-Down">
+      <action name="SnapToEdge" direction="down" combine="yes" />
+    </keybind>
+     <!-- supser wasd 四角平铺 -->
+    <keybind key="W-a">
+      <action name="SnapToEdge" direction="left" combine="yes" />
+    </keybind>
+    <keybind key="W-d">
+      <action name="SnapToEdge" direction="right" combine="yes" />
+    </keybind>
+    <keybind key="W-w">
+      <action name="SnapToEdge" direction="up" combine="yes" />
+    </keybind>
+    <keybind key="W-s">
+      <action name="SnapToEdge" direction="down" combine="yes" />
+    </keybind>
+    <keybind key="A-Space">
+      <action name="ShowMenu" menu="client-menu" atCursor="yes" />
+    </keybind>
+    
+     <!-- 小键盘四角 -->
+    <keybind key="W-KP_7">
+      <action name="SnapToRegion" region="top-left" />
+    </keybind>
+    <keybind key="W-KP_8">
+      <action name="SnapToRegion" region="top" />
+    </keybind>
+    <keybind key="W-KP_9">
+      <action name="SnapToRegion" region="top-right" />
+    </keybind>
+    <keybind key="W-KP_4">
+      <action name="SnapToRegion" region="left" />
+    </keybind>
+    <keybind key="W-KP_5">
+      <action name="SnapToRegion" region="center" />
+    </keybind>
+    <keybind key="W-KP_6">
+      <action name="SnapToRegion" region="right" />
+    </keybind>
+    <keybind key="W-KP_1">
+      <action name="SnapToRegion" region="bottom-left" />
+    </keybind>
+    <keybind key="W-KP_2">
+      <action name="SnapToRegion" region="bottom" />
+    </keybind>
+    <keybind key="W-KP_3">
+      <action name="SnapToRegion" region="bottom-right" />
+    </keybind>
+
+     <!-- 多媒体控制 -->
+    <keybind key="XF86_AudioLowerVolume">
+      <action name="Execute" command="amixer sset Master 5%-" />
+    </keybind>
+    <keybind key="XF86_AudioRaiseVolume">
+      <action name="Execute" command="amixer sset Master 5%+" />
+    </keybind>
+    <keybind key="XF86_AudioMute">
+      <action name="Execute" command="amixer sset Master toggle" />
+    </keybind>
+    <keybind key="XF86_MonBrightnessUp">
+      <action name="Execute" command="brightnessctl set +10%" />
+    </keybind>
+    <keybind key="XF86_MonBrightnessDown">
+      <action name="Execute" command="brightnessctl set 10%-" />
+    </keybind>
+
+     <!-- 工作区切换 -->
+    <keybind key="W-1">
+      <action name="GoToDesktop" to="1" />
+    </keybind>
+    <keybind key="W-2">
+      <action name="GoToDesktop" to="2" />
+    </keybind>
+    <keybind key="W-3">
+      <action name="GoToDesktop" to="3" />
+    </keybind>
+    <keybind key="W-4">
+      <action name="GoToDesktop" to="4" />
+    </keybind>
+    <keybind key="W-5">
+      <action name="GoToDesktop" to="5" />
+    </keybind>
+     <!-- super+u/i 快捷切换工作区 -->
+    <keybind key="W-u">
+      <action name="GoToDesktop" to="right" wrap="no" />
+    </keybind>
+    <keybind key="W-i">
+      <action name="GoToDesktop" to="left" wrap="no" />
+    </keybind>
+     <!-- 移动窗口到工作区 -->
+    <keybind key="C-W-1">
+      <action name="SendToDesktop" to="1" follow="yes" />
+    </keybind>
+    <keybind key="C-W-2">
+      <action name="SendToDesktop" to="2" follow="yes" />
+    </keybind>
+    <keybind key="C-W-3">
+      <action name="SendToDesktop" to="3" follow="yes" />
+    </keybind>
+    <keybind key="C-W-4">
+      <action name="SendToDesktop" to="4" follow="yes" />
+    </keybind>
+    <keybind key="C-W-5">
+      <action name="SendToDesktop" to="5" follow="yes" />
+    </keybind>
+    <keybind key="C-W-u">
+      <action name="SendToDesktop" to="right" follow="yes" />
+    </keybind>
+    <keybind key="C-W-i">
+      <action name="SendToDesktop" to="left" follow="yes" />
+    </keybind>
+    <!-- 窗口移动和聚焦  -->
+    <keybind key="W-c">
+      <action name="AutoPlace" policy="center" />
+    </keybind>
+    <keybind key="W-h">
+      <action name="Focus" />
+    </keybind>
+
+
+    <!-- =====================  -->
+    <!-- Custom Keybinds -->
+    <!-- =====================  -->
+    <keybind key="W-z">
+      <action name="Execute" command="fuzzel" />
+    </keybind>
+    <keybind key="W-b">
+      <action name="Execute" command="firefox" />
+    </keybind>
+    <keybind key="W-e">
+      <action name="Execute" command="Thunar" />
+    </keybind>
+    <keybind key="W-A-v">
+      <action name="Execute" command="footclient shorinclip" />
+    </keybind>
+    <keybind key="W-A-a">
+      <action name="Execute" command="~/.config/labwc/scripts/screenshot select" />
+    </keybind>
+    <keybind key="W-S-s">
+      <action name="Execute" command="~/.config/labwc/scripts/screenshot edit" />
+    </keybind>
+    <keybind key="W-A-w">
+      <action name="Execute" command="waypaper" />
+    </keybind>
+    <keybind key="W-A-l">
+      <action name="Execute" command="hyprlock -c ~/.config/labwc/hyprlock.conf" />
+    </keybind>
+    <keybind key="W-A-p">
+      <action name="Execute" command="hyprlock -c ~/.config/labwc/hyprlock.conf && systemctl suspend" />
+    </keybind>
+
+    
+    <!-- 特殊功能键位  -->
+    	<!-- 重启 fcitx5 输入法  -->
+    <keybind key="W-F1">
+      <action name="Execute" command="fcitx5 -r -d " />
+    </keybind>
+    
+  </keyboard>
+
+</labwc_config>

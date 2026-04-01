@@ -1,0 +1,10 @@
+#!/bin/bash
+
+case "$1" in 
+	select)
+		grim -g  "$(slurp)" - | wl-copy
+	;;
+	edit)
+		grim -g "$(slurp)" - | satty -f -
+	;;
+esac
