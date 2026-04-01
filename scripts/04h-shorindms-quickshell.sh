@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# 04-dms-setup.sh - DMS Desktop (Refactored for AUR + shorindms CLI + Verify)
+# 04-dms-setup.sh - DMS Desktop (Pre-install separated + Pre-Verify)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -44,34 +44,61 @@ cleanup_sudo() {
 }
 trap cleanup_sudo EXIT INT TERM
 
-# ==============================================================================
-# 核心安装逻辑：委托给 AUR 和 shorindms CLI
-# ==============================================================================
-AUR_HELPER="paru"
-CORE_PKG="shorin-dms-niri-git"
-section "Shorin DMS" "Installing Meta Environment"
-
-# 1. 委托 AUR 助手安装大包
-log "Installing $CORE_PKG environment via AUR..."
-if ! as_user "$AUR_HELPER" -S --noconfirm --needed "$CORE_PKG"; then
-    error "Failed to install $CORE_PKG"
+critical_failure_handler() {
+    local failed_reason="$1"
+    trap - ERR
+    echo -e "\n\033[0;31m[CRITICAL FAILURE] $failed_reason\033[0m\n"
+    # 这里省略了你原有的报错大框框，保持原有逻辑即可
     exit 1
+}
+trap 'critical_failure_handler "Script Error at Line $LINENO"' ERR
+
+AUR_HELPER="paru"
+
+# ==============================================================================
+# STEP 1: Pre-requisites Installation
+# ==============================================================================
+section "Shorin DMS" "Installing Pre-requisites"
+
+PRE_PKGS="quickshell-git vulkan-headers xdg-desktop-portal-gnome"
+
+log "Generating verify list for pre-requisites..."
+echo "$PRE_PKGS" | tr ' ' '\n' >> "$VERIFY_LIST"
+
+log "Installing pre-requisites explicitly..."
+if ! as_user "$AUR_HELPER" -S --noconfirm --needed $PRE_PKGS; then
+    critical_failure_handler "Failed to install pre-requisites: $PRE_PKGS"
 fi
 
-# --- 动态生成 VERIFY_LIST ---
-log "Generating dynamic verification list from Pacman DB..."
-echo "$CORE_PKG" >> "$VERIFY_LIST"
-# 提取依赖并写入
-pacman -Qi "$CORE_PKG" | grep "^Depends On" | cut -d':' -f2- | tr -s ' ' '\n' | sed -e 's/[<>=].*//g' -e '/^$/d' -e '/None/d' >> "$VERIFY_LIST"
-log "Added $(wc -l < "$VERIFY_LIST") packages to $VERIFY_LIST."
-# -----------------------------
+# ==============================================================================
+# STEP 2: Core Meta Environment
+# ==============================================================================
+section "Shorin DMS" "Installing Core Environment"
+CORE_PKG="shorin-dms-niri-git"
 
-# 2. 调用 shorindms 初始化环境
+log "Fetching dependency list from AUR for verification..."
+echo "$CORE_PKG" >> "$VERIFY_LIST"
+# 使用 -Si 查询远程信息，提前写入清单 (剥离版本号 <>=)
+if as_user "$AUR_HELPER" -Si "$CORE_PKG" &>/dev/null; then
+    as_user "$AUR_HELPER" -Si "$CORE_PKG" | grep "^Depends On" | cut -d':' -f2- | tr -s ' ' '\n' | sed -e 's/[<>=].*//g' -e '/^$/d' -e '/None/d' >> "$VERIFY_LIST"
+    log "Dependencies added to $VERIFY_LIST."
+else
+    warn "Could not fetch remote dependency info for $CORE_PKG. Skipping verify list append."
+fi
+
+log "Installing $CORE_PKG environment via AUR..."
+if ! as_user "$AUR_HELPER" -S --noconfirm --needed "$CORE_PKG"; then
+    critical_failure_handler "Failed to install $CORE_PKG"
+fi
+
+# ==============================================================================
+# STEP 3: Initialize Dotfiles & Environment
+# ==============================================================================
 log "Initializing User Dotfiles and Environment..."
 exe as_user shorindms init
 
 # ==============================================================================
-# 静态资源部署
+# STEP 4: Static Resources
 # ==============================================================================
 section "Shorin DMS" "Wallpapers & Tutorials"
 
@@ -101,7 +128,6 @@ log "Cleaning up legacy TTY autologin configs..."
 rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
 if [ "$SKIP_DM" = true ]; then
-    log "Display Manager setup skipped (Conflict found or user opted out)."
     warn "You will need to start your session manually from the TTY."
 else
     setup_ly
