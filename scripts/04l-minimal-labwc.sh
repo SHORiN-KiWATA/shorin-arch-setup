@@ -76,7 +76,7 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed "${NIRI_PKGS[@]}"
 
 # --- 5. Terminal ---
 section "Minimal Labwc" "Terminal"
-TERMINAL_PKGS=(fish foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide imagemagick jq bat)
+TERMINAL_PKGS=(fish foot ttf-jetbrains-maple-mono-nf-xx-xx starship eza zoxide imagemagick jq bat xdg-terminal-exec)
 echo "${TERMINAL_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TERMINAL_PKGS[@]}"
 
@@ -89,18 +89,14 @@ echo "${FM_PKGS2[*]}" >> "$VERIFY_LIST"
 exe pacman -S --noconfirm --needed "${FM_PKGS1[@]}"
 exe pacman -S --noconfirm --needed "${FM_PKGS2[@]}"
 
-echo "xdg-terminal-exec" >> "$VERIFY_LIST"
-exe as_user "$AUR_HELPER" -S --noconfirm --needed xdg-terminal-exec
-
-# 修复：如果不包含 foot，则追加
-XDG_TERMS_LIST="$HOME_DIR/.config/xdg-terminals.list"
-if ! grep -qs "foot" "$XDG_TERMS_LIST"; then
-    # 确保目录存在
-    mkdir -p "$(dirname "$XDG_TERMS_LIST")"
-    echo 'foot.desktop' >> "$XDG_TERMS_LIST"
-    chown "$TARGET_USER:" "$XDG_TERMS_LIST" 2>/dev/null || true
+log "Deploying wallpapers..."
+WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
+WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
+if [ -d "$WALLPAPER_SOURCE_DIR" ]; then
+    as_user mkdir -p "$WALLPAPER_DIR"
+    force_copy "$WALLPAPER_SOURCE_DIR/." "$WALLPAPER_DIR/"
+    chown -R "$TARGET_USER:" "$WALLPAPER_DIR"
 fi
-
 
 # --- 7. Tools ---
 section "Minimal Labwc" "Tools"

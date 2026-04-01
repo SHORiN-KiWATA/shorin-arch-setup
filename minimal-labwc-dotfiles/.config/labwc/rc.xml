@@ -242,7 +242,7 @@
       <action name="Execute" command="hyprlock -c ~/.config/labwc/hyprlock.conf" />
     </keybind>
     <keybind key="W-A-p">
-      <action name="Execute" command="hyprlock -c ~/.config/labwc/hyprlock.conf && systemctl suspend" />
+      <action name="Execute" command="systemctl suspend" />
     </keybind>
 
     
