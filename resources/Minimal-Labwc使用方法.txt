@@ -22,7 +22,7 @@ alt+tab 切换聚焦
 alt+空格 显示窗口菜单
 super+alt+w 切换壁纸工具
 super+alt+L 锁屏
-super+alt+P 锁屏休眠
+super+alt+P 休眠
 所有按键看~/.config/labwc/rc.xml。
 
 
