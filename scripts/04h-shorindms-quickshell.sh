@@ -50,7 +50,7 @@ section "Shorin DMS" "Installing Meta Environment"
 # 1. 只需要安装这一个包！PKGBUILD 会自动拉取那几百个依赖软件和配置文件模板
 log "Installing quickshell and core dependencies via AUR..."
 BASE_PACKAGES=(
-    "vulkan-header"
+    "vulkan-headers"
     "quickshell-git"
     "xdg-desktop-portal-gnome"
 )
