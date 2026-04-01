@@ -48,6 +48,14 @@ AUR_HELPER="paru"
 section "Shorin DMS" "Installing Meta Environment"
 
 # 1. 只需要安装这一个包！PKGBUILD 会自动拉取那几百个依赖软件和配置文件模板
+log "Installing quickshell and core dependencies via AUR..."
+BASE_PACKAGES=(
+    "vulkan-header"
+    "quickshell-git"
+    "xdg-desktop-portal-gnome"
+)
+echo "${BASE_PACKAGES[@]}" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed "${BASE_PACKAGES[@]}"
 log "Installing shorin-dms-niri environment..."
 echo "shorin-dms-niri-git" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed shorin-dms-niri-git
@@ -56,7 +64,6 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed shorin-dms-niri-git
 log "Initializing User Dotfiles and Environment..."
 exe as_user shorindms init
 # ==============================================================================
-
 
 # --- Wallpapers & Static Resources (不属于包管理的静态大文件) ---
 section "Shorin DMS" "Wallpapers & Tutorials"
