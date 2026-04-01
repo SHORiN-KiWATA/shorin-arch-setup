@@ -111,26 +111,18 @@ if [ -d "$WALLPAPER_SOURCE_DIR" ]; then
     chown -R "$TARGET_USER:" "$WALLPAPER_DIR"
 fi
 
-log "Copying tutorial files..."
-TUTORIAL_SRC="$PARENT_DIR/resources/必看-Shorin-DMS-Niri使用方法.txt"
-TUTORIAL_DEST="$HOME_DIR/必看-Shorin-DMS-Niri使用方法.txt"
-if [ -f "$TUTORIAL_SRC" ]; then
-    as_user cp "$TUTORIAL_SRC" "$TUTORIAL_DEST"
-fi
-
 # ==============================================================================
 # Finalization & Auto-Login
 # ==============================================================================
 section "Final" "Auto-Login & Cleanup"
-rm -f "$SUDO_TEMP_FILE"
+
 
 log "Cleaning up legacy TTY autologin configs..."
-rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
 
 if [ "$SKIP_DM" = true ]; then
     warn "You will need to start your session manually from the TTY."
 else
     setup_ly
 fi
-
+rm -f "$SUDO_TEMP_FILE"
 success "Shorin DMS Niri Installation Complete!"
