@@ -12,4 +12,4 @@ foot -s &
 
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
-
+xhost +si:localuser:root &
