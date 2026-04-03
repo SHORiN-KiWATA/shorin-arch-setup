@@ -21,6 +21,8 @@ binds {
     Mod+Slash hotkey-overlay-title="临时终端 Quick Terminal" {spawn "footclient" "-a" "quickterminal";}
     //打开浏览器
     Mod+B hotkey-overlay-title="浏览器 Browser" { spawn "firefox"; }        
+    //opencode ai助手
+    Mod+Alt+O hotkey-overlay-title="AI助手 opencode agent" { spawn "foot" "opencode"; }        
     
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.

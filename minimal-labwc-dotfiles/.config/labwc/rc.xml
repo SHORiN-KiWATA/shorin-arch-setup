@@ -244,6 +244,9 @@
     <keybind key="W-A-p">
       <action name="Execute" command="systemctl suspend" />
     </keybind>
+    <keybind key="W-A-0">
+      <action name="Execute" command="foot opencode" />
+    </keybind>
 
     
     <!-- 特殊功能键位  -->

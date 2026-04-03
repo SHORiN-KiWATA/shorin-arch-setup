@@ -53,6 +53,9 @@ yazi：文档管理器
 fastfetch：系统信息显示工具
 pulsemixer：tui音量调整工具
 
+【Ai助手】
+有一个叫作opencode的开源ai助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个Ai助手。PS: 谨慎使用ai修改文件。
+
 【如果不想要了或者安装失败了可以回档】
 /usr/local/bin下有两个脚本可以用来回档到运行脚本之前的状态。
 回到安装桌面前：shorin-de-undochange

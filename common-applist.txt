@@ -10,7 +10,6 @@ firefox                                  # the best browser on linux
 transmission-gtk                         # BitTorrent Client
 localsend                                # send files to other devices
 nm-connection-editor                     # Advanced network editor
-opencode                                 # open source ai agent 
 gnome-calendar                           # calendar
 gnome-clocks                             # clocks
 gamescope                                # gaming compositor made by Valve
