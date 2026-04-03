@@ -529,12 +529,18 @@ check_dm_conflict() {
         info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
         SKIP_DM=true
     else
-        # read -t 20 等待 20 秒，超时默认 Y
-        read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice || true
-        if [[ "${choice:-Y}" =~ ^[Yy]$ ]]; then
-            SKIP_DM=false
+        
+        if read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice; then
+            
+            if [[ "$choice" =~ ^[[:space:]]*[Nn](o|O)?[[:space:]]*$ ]]; then
+                SKIP_DM=true
+            else
+                SKIP_DM=false
+            fi
         else
-            SKIP_DM=true
+            
+            echo " Y (Auto-default)"
+            SKIP_DM=false
         fi
     fi
 }
