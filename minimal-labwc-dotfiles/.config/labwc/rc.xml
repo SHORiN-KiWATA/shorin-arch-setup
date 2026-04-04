@@ -47,7 +47,7 @@
     <!-- =====================  -->
     <numlock>off</numlock>
     <keybind key="W-S-E">
-      <action name="Exit" />
+      <action name="Execute" command="~/.config/labwc/scripts/exit-menu" />
     </keybind>
     <keybind key="A-Tab">
       <action name="NextWindow" />

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# 定义选项
+OPTIONS="取消 (Cancel)\n确定退出 (Yes, Exit)"
+
+# 使用 fuzzel 弹出选择框
+# --dmenu: 开启 dmenu 模式以读取管道输入
+# --prompt: 设置提示词
+# --lines 2: 因为只有两个选项，所以只显示 2 行
+# --width 30: 限制窗口宽度，让它看起来像个对话框
+CHOICE=$(printf "$OPTIONS" | fuzzel --dmenu --prompt "真的要退出 labwc 吗？ " --lines 2 --width 30)
+
+# 根据用户的选择执行操作
+case "$CHOICE" in
+    "确定退出 (Yes, Exit)")
+        labwc --exit
+        ;;
+    *)
+        # 选择了取消，或者按 Esc 键关闭了 fuzzel
+        exit 0
+        ;;
+esac
