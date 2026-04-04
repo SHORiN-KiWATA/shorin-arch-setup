@@ -2,7 +2,8 @@
 【可以查阅的文档】
 ArchWiki： https://wiki.archlinux.org/title/Main_page
 ShorinArch： https://shorin.xyz/wiki
-Shorin一键配置脚本： https://shorin.xyz/wiki/archsetup
+Shorin一键配置脚本： https://shorin.xyz/wiki/archsetu
+ShorinLabwc文档：https://github.com/SHORiN-KiWATA/Shorin-ArchLinux-Guide/wiki/%E5%AE%89%E8%A3%85Labwc
 Labwc官方文档：https://labwc.github.io/
 
 【重要按键】

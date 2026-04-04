@@ -70,9 +70,9 @@ fi
 
 # --- 4. Core Components ---
 section "Minimal Labwc" "Core Components"
-NIRI_PKGS=(labwc xdg-desktop-portal-wlr fuzzel waybar mako swaybg waypaper polkit-gnome)
-echo "${NIRI_PKGS[*]}" >> "$VERIFY_LIST"
-exe as_user "$AUR_HELPER" -S --noconfirm --needed "${NIRI_PKGS[@]}"
+LABWC_PKGS=(labwc xdg-desktop-portal-wlr fuzzel waybar mako swaybg waypaper polkit-gnome wlr-randr)
+echo "${LABWC_PKGS[*]}" >> "$VERIFY_LIST"
+exe as_user "$AUR_HELPER" -S --noconfirm --needed "${LABWC_PKGS[@]}"
 
 # --- 5. Terminal ---
 section "Minimal Labwc" "Terminal"
