@@ -93,6 +93,7 @@ INIR_ENV_CONFIG="$INIR_CONFIG_DIR/40-environment.kdl"
 if ! grep -q "+si:localuser:root" "$INIR_AUTOSTART_CONFIG"; then
     log "Enabling DMS autostart in niri config.kdl..."
     echo 'spawn-at-startup "xhost" "+si:localuser:root"' >> "$INIR_AUTOSTART_CONFIG"
+    echo 'spawn-at-startup "inir" "run"' >> "$INIR_AUTOSTART_CONFIG"
 fi
 
 
