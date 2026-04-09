@@ -518,12 +518,9 @@ check_dm_conflict() {
     export SKIP_DM=false
     local DM_FOUND=""
     
-    echo -e "\n[DEBUG-1] 开始检测 pacman..."
-    
     for dm in "${KNOWN_DMS[@]}"; do
         if pacman -Q "$dm" &>/dev/null; then
             DM_FOUND="$dm"
-            echo "[DEBUG-2] pacman 查到了冲突的包: $dm"
             break
         fi
     done
@@ -531,79 +528,26 @@ check_dm_conflict() {
     if [ -n "$DM_FOUND" ]; then
         info_kv "Conflict" "${H_RED}$DM_FOUND${NC}"
         export SKIP_DM=true
-        echo "[DEBUG-3] 命中了冲突逻辑，SKIP_DM 已被设置为 true，因为找到了: $DM_FOUND"
     else
-        echo "[DEBUG-4] 没有找到任何冲突 DM，准备执行 read 命令..."
         
         if read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice </dev/tty; then
-            echo "[DEBUG-5] read 命令执行成功！捕获到的用户输入为: ->$choice<-"
             
             if [[ "$choice" =~ ^[[:space:]]*[Nn](o|O)?[[:space:]]*$ ]]; then
                 export SKIP_DM=true
-                echo "[DEBUG-6] 正则匹配到了 'N' 或 'n'，SKIP_DM 已被设置为 true"
             else
                 export SKIP_DM=false
-                echo "[DEBUG-7] 正则没有匹配到 N，执行默认逻辑，SKIP_DM 被设置为 false"
             fi
         else
+            
             echo " Y (Auto-default)"
             export SKIP_DM=false
-            echo "[DEBUG-8] read 命令失败或超时，自动默认，SKIP_DM 被设置为 false"
         fi
     fi
-    
-    echo -e "[DEBUG-FINAL] 函数即将退出时，SKIP_DM 的最终值是: $SKIP_DM \n"
-}
-
-# ==============================================================================
-# setup_greetd_tuigreet - 安装并配置 greetd + tuigreet
-# ==============================================================================
-# 使用方法: setup_greetd_tuigreet
-setup_greetd_tuigreet() {
-    log "Installing greetd and tuigreet..."
-    exe pacman -S --noconfirm --needed greetd greetd-tuigreet
-    
-    # 禁用可能存在的默认 getty@tty1，把 TTY1 彻底让给 greetd
-    systemctl disable getty@tty1.service 2>/dev/null
-    
-    # 配置 greetd (覆盖写入 config.toml)
-    log "Configuring /etc/greetd/config.toml..."
-    local GREETD_CONF="/etc/greetd/config.toml"
-    
-    cat <<EOF > "$GREETD_CONF"
-[terminal]
-# 绑定到 TTY1
-vt = 1
-
-[default_session]
-# 使用 tuigreet 作为前端
-# 自动扫描 /usr/share/wayland-sessions/，支持时间显示、密码星号、记住上次选择
-command = "tuigreet --time --user-menu --remember --remember-user-session --asterisks"
-user = "greeter"
-EOF
-    
-    # 修复 tuigreet 的 --remember 缓存目录权限
-    log "Ensuring cache directory permissions for tuigreet..."
-    mkdir -p /var/cache/tuigreet
-    chown -R greeter:greeter /var/cache/tuigreet
-    chmod 755 /var/cache/tuigreet
-    
-    # 启用服务
-    log "Enabling greetd service..."
-    systemctl enable greetd.service
-    
-    success "greetd with tuigreet frontend has been successfully configured!"
 }
 
 # ==============================================================================
 # setup_ly - 安装并配置 ly 显示管理器
 # ==============================================================================
-# 功能列表:
-# 1. 安装 ly 软件包
-# 2. 禁用其他可能冲突的 TTY 登录服务 (getty/greetd)
-# 3. 编辑 /etc/ly/config.ini，开启 Matrix (代码雨) 背景动画
-# 4. 启用 ly.service 开机自启
-# 使用方法: setup_ly
 setup_ly() {
     log "Installing ly display manager..."
     exe pacman -S --noconfirm --needed ly
