@@ -530,7 +530,7 @@ check_dm_conflict() {
         export SKIP_DM=true
     else
         
-        if read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice; then
+        if read -t 20 -p "$(echo -e "   ${H_CYAN}Enable Display Manager ? [Y/n] (Default Y): ${NC}")" choice </dev/tty; then
             
             if [[ "$choice" =~ ^[[:space:]]*[Nn](o|O)?[[:space:]]*$ ]]; then
                 export SKIP_DM=true
@@ -597,18 +597,6 @@ EOF
 setup_ly() {
     log "Installing ly display manager..."
     exe paru -S --noconfirm --needed ly
-    
-    # # 配置 ly (非破坏性修改 config.ini)
-    # log "Configuring /etc/ly/config.ini for Matrix animation..."
-    # local LY_CONF="/etc/ly/config.ini"
-    
-    # if [[ -f "$LY_CONF" ]]; then
-    #     # 使用 sed 精准替换：
-    #     # 1. 将注释掉的或现有的 animation = none 替换为 animation = matrix
-    #     sed -i 's/^[#[:space:]]*animation[[:space:]]*=.*/animation = matrix/' "$LY_CONF"
-    # else
-    #     log "Warning: $LY_CONF not found! Please check ly installation."
-    # fi
     
     # 启用服务
     log "Enabling ly service..."
