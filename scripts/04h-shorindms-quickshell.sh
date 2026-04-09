@@ -21,6 +21,7 @@ rm -f "$VERIFY_LIST"
 # --- Identify User & DM Check ---
 log "Identifying target user..."
 detect_target_user
+log "DM Check result $SKIP_DM"
 
 if [[ -z "$TARGET_USER" || ! -d "$HOME_DIR" ]]; then
     error "Target user invalid or home directory does not exist."
@@ -119,7 +120,7 @@ section "Final" "Auto-Login & Cleanup"
 
 log "Cleaning up legacy TTY autologin configs..."
 
-if [ "$SKIP_DM" = false ]; then
+if [[ "$SKIP_DM" == false ]]; then
     setup_ly
 fi
 
