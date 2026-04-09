@@ -596,7 +596,7 @@ EOF
 # 使用方法: setup_ly
 setup_ly() {
     log "Installing ly display manager..."
-    exe paru -S --noconfirm --needed ly
+    exe pacman -S --noconfirm --needed ly
     
     # 启用服务
     log "Enabling ly service..."
