@@ -33,8 +33,8 @@ input {
     keyboard {
         xkb {
         }
-	repeat-delay 400
-	repeat-rate 50
+	repeat-delay 250
+	repeat-rate 35
     }
 
     touchpad {
