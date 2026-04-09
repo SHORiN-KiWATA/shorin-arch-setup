@@ -93,7 +93,7 @@ spawn-at-startup "xhost" "+si:localuser:root"
 // 开启时自动随机更换一次壁纸
 spawn-sh-at-startup "sleep 3 && qs -c noctalia-shell ipc call wallpaper random all"
 // x11<--> 剪贴板同步
-spawn-at-startup "systemctl" "--usr" "start" "clipsync"
+spawn-at-startup "systemctl" "--user" "start" "clipsync"
 
 // 取消启动niri时自动开启快捷键教程
 hotkey-overlay {
