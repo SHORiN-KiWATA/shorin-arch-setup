@@ -127,10 +127,6 @@ run_hide_desktop_file
 # ==============================================================================
 section "Config" "Display Manager"
 
-# 1. 清理旧的 TTY 自动登录残留（无论是否启用 greetd，旧版残留都应清除）
-log "Cleaning up legacy TTY autologin configs..."
-rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
-
 if [ "$SKIP_DM" = true ]; then
     log "Display Manager setup skipped (Conflict found or user opted out)."
     warn "You will need to start your session manually from the TTY."
