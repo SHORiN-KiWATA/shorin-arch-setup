@@ -43,7 +43,7 @@ check_root() {
 check_root
 
 # ==============================================================================
-# detect_target_user - 识别目标用户 (支持 1-based 序号与回车默认选择)
+# detect_target_user - 识别目标用户 (支持 1-based 序号、回车默认、及新建用户)
 # ==============================================================================
 detect_target_user() {
     # 1. 缓存检查
@@ -60,13 +60,16 @@ detect_target_user() {
     mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
     
     # 3. 核心决策逻辑
-    if [[ ${#HUMAN_USERS[@]} -gt 1 ]]; then
-        echo -e "   ${H_YELLOW}>>> Multiple users detected. Who is the target?${NC}"
+    if [[ ${#HUMAN_USERS[@]} -gt 0 ]]; then
+        echo -e "   ${H_YELLOW}>>> Existing users detected. Select target or create new:${NC}"
         
         local default_user=""
         local default_idx=""
         
-        # 遍历用户，生成 1 开始的序号，并捕获当前 Sudo 用户作为默认值
+        # 增加 [0] 选项用于显式创建新用户
+        echo -e "       [0] ${H_GREEN}++ Create a NEW user ++${NC}"
+        
+        # 遍历用户，生成 1 开始的序号
         for i in "${!HUMAN_USERS[@]}"; do
             local mark=""
             local display_idx=$((i + 1))
@@ -81,11 +84,10 @@ detect_target_user() {
         done
         
         while true; do
-            # 动态生成提示词
             if [[ -n "$default_user" ]]; then
-                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}] (Default ${default_idx}): ${NC}"
+                echo -ne "   ${H_CYAN}Select user ID [0-${#HUMAN_USERS[@]}] (Default ${default_idx}): ${NC}"
             else
-                echo -ne "   ${H_CYAN}Select user ID [1-${#HUMAN_USERS[@]}]: ${NC}"
+                echo -ne "   ${H_CYAN}Select user ID [0-${#HUMAN_USERS[@]}]: ${NC}"
             fi
             
             read -r idx
@@ -97,39 +99,48 @@ detect_target_user() {
                 break
             fi
             
-            # 验证输入是否为合法数字 (1 到 数组长度)
-            if [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le "${#HUMAN_USERS[@]}" ]; then
-                # 数组索引需要减 1 还原
+            # 验证输入
+            if [[ "$idx" == "0" ]]; then
+                # 用户选择了创建新账户
+                TARGET_USER=""
+                break
+                elif [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -ge 1 ] && [ "$idx" -le "${#HUMAN_USERS[@]}" ]; then
                 TARGET_USER="${HUMAN_USERS[$((idx - 1))]}"
                 break
             else
-                warn "Invalid selection. Please enter a valid number or press Enter for default."
+                warn "Invalid selection. Please enter a valid number."
             fi
         done
-        
-        elif [[ ${#HUMAN_USERS[@]} -eq 1 ]]; then
-        TARGET_USER="${HUMAN_USERS[0]}"
-        log "Single user detected: ${H_CYAN}${TARGET_USER}${NC}"
-        
     else
+        # 0 个普通用户的情况
         if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
             TARGET_USER="$SUDO_USER"
         else
-            echo -ne "   ${H_YELLOW}No standard user found. Enter intended username:${NC} "
-            read -r TARGET_USER
+            echo -e "   ${H_YELLOW}No standard user found in the system.${NC}"
+            TARGET_USER=""
         fi
     fi
     
-    # 4. 最终验证与持久化
+    # 如果此时 TARGET_USER 为空，说明系统无用户，或者用户手动选择了 [0]
     if [[ -z "$TARGET_USER" ]]; then
-        error "Target user cannot be empty."
-        exit 1
+        while true; do
+            echo -ne "   ${H_GREEN}Please enter a username to CREATE:${NC} "
+            read -r NEW_USER
+            
+            # 基础正则校验：以小写字母开头，只能包含小写字母、数字、破折号和下划线
+            if [[ "$NEW_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+                TARGET_USER="$NEW_USER"
+                break
+            else
+                warn "Invalid username format. Use lowercase letters, numbers, '-' or '_'."
+            fi
+        done
     fi
     
+    # 4. 最终验证与持久化
     echo "$TARGET_USER" > "/tmp/shorin_install_user"
     HOME_DIR="/home/$TARGET_USER"
     export TARGET_USER HOME_DIR
-    
 }
 
 # 日志文件

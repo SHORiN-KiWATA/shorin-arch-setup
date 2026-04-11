@@ -19,18 +19,19 @@ section "Phase 3" "User Account Setup"
 
 
 # 清理缓存
-if [ -f "/tmp/shorin_install_user" ]; then 
+if [ -f "/tmp/shorin_install_user" ]; then
     rm "/tmp/shorin_install_user"
 fi
 # 调用全局函数，确定目标用户
 detect_target_user
 
-# 检查系统是否已经真的创建了这个账户
+# 安全检查：检查系统是否已经拥有这个账户 (无论它是选出来的还是准备新建的)
 if id "$TARGET_USER" &>/dev/null; then
-    success "User '${TARGET_USER}' already exists in the system."
+    success "Target user '${TARGET_USER}' exists. Proceeding with configuration..."
     SKIP_CREATION=true
 else
-    log "User '${TARGET_USER}' does not exist. Preparing for creation..."
+    # 语境改变：这里不再是发现它不存在，而是明确准备去创建它
+    log "Preparing to create new user account: '${H_CYAN}${TARGET_USER}${NC}'..."
     SKIP_CREATION=false
 fi
 
@@ -59,9 +60,9 @@ else
     PASSWORD_STATUS=$?
     echo -e "   ${H_GRAY}--------------------------------------------------${NC}"
     
-    if [ $PASSWORD_STATUS -eq 0 ]; then 
+    if [ $PASSWORD_STATUS -eq 0 ]; then
         success "Password set successfully."
-    else 
+    else
         error "Failed to set password. Script aborted."
         exit 1
     fi
@@ -74,7 +75,7 @@ log "Configuring sudoers access..."
 if grep -q "^# %wheel ALL=(ALL:ALL) ALL" /etc/sudoers; then
     exe sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     success "Uncommented %wheel in /etc/sudoers."
-elif grep -q "^%wheel ALL=(ALL:ALL) ALL" /etc/sudoers; then
+    elif grep -q "^%wheel ALL=(ALL:ALL) ALL" /etc/sudoers; then
     success "Sudo access already enabled."
 else
     log "Appending %wheel rule to /etc/sudoers..."
