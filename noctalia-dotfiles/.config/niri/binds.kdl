@@ -19,7 +19,7 @@ binds {
     Mod+B hotkey-overlay-title="浏览器 Browser" { spawn "firefox"; }        
     //opencode ai助手
     Mod+Alt+O hotkey-overlay-title="AI助手 opencode agent" { spawn "kitty" "--class" "opencode" "-e" "opencode"; }        
-    Mod+T hotkey-overlay-title="终端 Terminal" { spawn "kitty" "--single-instance"; }
+    Mod+T hotkey-overlay-title="终端 Terminal" { spawn "kitty"; }
     // 文档管理器。如果有thunar的话会优先打开thunar，没有的话会打开nautilus
     Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn-sh "thunar || env GSK_RENDERER=gl GTK_IM_MODULE=fcitx  nautilus"; }
     // 另一个打开nautilus的快捷键，主要是为了在同时安装thunar和nautilus的情况下打开naultilus
