@@ -167,6 +167,7 @@ select_desktop() {
 # --- Optional Modules Selection Menu (FZF Powered) ---
 select_optional_modules() {
     local OPTIONAL_MENU=(
+        "IWD Network Backend|01b-nm-backend.sh"
         "Windows Linux Dualboot Setup|02a-dualboot-fix.sh"
         "GPU Drivers|03b-gpu-driver.sh"
         "Grub Themes|07-grub-theme.sh"
@@ -260,7 +261,7 @@ sys_dashboard
 
 MANDATORY_MODULES=(
     "00-btrfs-init.sh"
-    "01-base.sh"
+    "01a-base.sh"
     "02-musthave.sh"
     "03a-user.sh"
     "03c-snapshot-before-desktop.sh"
