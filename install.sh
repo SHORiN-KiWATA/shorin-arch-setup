@@ -286,7 +286,7 @@ case "$DESKTOP_ENV" in
     *)             warn "Unknown selection, skipping desktop setup." ;;
 esac
 
-mapfile -t MODULES < <(printf "%s\n" "${ALL_MODULES[@]}" | sort -u)
+mapfile -t MODULES < <(LC_ALL=C printf "%s\n" "${ALL_MODULES[@]}" | sort -u)
 
 if [ ! -f "$STATE_FILE" ]; then touch "$STATE_FILE"; fi
 
