@@ -22,11 +22,26 @@ set ignorecase
 set smartcase
 " 开启持久化撤销（undo），即使关闭再打开文件，也能撤销之前的更改
 set undofile
+
 " undo目录
 silent !mkdir -p ~/.cache/vim/undo
 set undodir=~/.cache/vim/undo
-" 剪贴板 gvim的功能
-set clipboard=unnamedplus
+
+" === 将 y (yank 复制) 映射到系统剪贴板 (+ 寄存器) ===
+nnoremap y "+y
+vnoremap y "+y
+nnoremap Y "+Y
+
+" === 将 x (剪切单个字符/选中块) 映射到系统剪贴板 ===
+nnoremap x "+x
+vnoremap x "+x
+
+" === 可选：如果你希望 p (paste 粘贴) 默认从系统剪贴板粘贴 ===
+" 因为你把 y 和 x 放到了系统剪贴板，你通常也会希望 p 直接粘贴系统剪贴板的内容
+nnoremap p "+p
+vnoremap p "+p
+nnoremap P "+P
+vnoremap P "+P
+
 " 接管鼠标事件
 set mouse=a
-

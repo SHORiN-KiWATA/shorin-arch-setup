@@ -27,9 +27,21 @@ set undofile
 silent !mkdir -p ~/.cache/vim/undo
 set undodir=~/.cache/vim/undo
 
-" 剪贴板 gvim的功能
-set clipboard=unnamedplus
+" === 将 y (yank 复制) 映射到系统剪贴板 (+ 寄存器) ===
+nnoremap y "+y
+vnoremap y "+y
+nnoremap Y "+Y
+
+" === 将 x (剪切单个字符/选中块) 映射到系统剪贴板 ===
+nnoremap x "+x
+vnoremap x "+x
+
+" === 可选：如果你希望 p (paste 粘贴) 默认从系统剪贴板粘贴 ===
+" 因为你把 y 和 x 放到了系统剪贴板，你通常也会希望 p 直接粘贴系统剪贴板的内容
+nnoremap p "+p
+vnoremap p "+p
+nnoremap P "+P
+vnoremap P "+P
 
 " 接管鼠标事件
 set mouse=a
-
