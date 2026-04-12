@@ -20,12 +20,12 @@ ROOT_FSTYPE=$(findmnt -n -o FSTYPE /)
 if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     log "Btrfs detected. Installing advanced snapshot management tools..."
     
-    exe pacman -S --noconfirm --needed btrfs-assistant xorg-xhost grub-btrfs inotify-tools less
+    exe pacman -S --noconfirm --needed btrfs-assistant xorg-xhost less
     success "Btrfs helper tools installed."
     
     if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         log "Integrating snapshots into GRUB menu..."
-        
+        exe pacman -S --noconfirm --needed grub-btrfs inotify-tools 
         # 【新增条件判断】：检测 ESP 分区上是否存在独立的 grub 目录
         HAS_ESP_GRUB=false
         VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat | grep -v "^/boot$")
