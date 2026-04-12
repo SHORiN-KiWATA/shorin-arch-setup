@@ -58,6 +58,9 @@ detect_target_user() {
     
     # 2. 提取系统中所有普通用户 (UID 1000-60000)
     mapfile -t HUMAN_USERS < <(awk -F: '$3 >= 1000 && $3 < 60000 {print $1}' /etc/passwd)
+    # 获取 UID 为 1000 的用户（绝大多数系统的主力普通用户）
+    local UID_1000_USER
+    UID_1000_USER=$(awk -F: '$3 == 1000 {print $1}' /etc/passwd | head -n 1)
     
     # 3. 核心决策逻辑
     if [[ ${#HUMAN_USERS[@]} -gt 0 ]]; then
@@ -66,15 +69,17 @@ detect_target_user() {
         local default_user=""
         local default_idx=""
         
-        # 增加 [0] 选项用于显式创建新用户
-        echo -e "       [0] ${H_GREEN}++ Create a NEW user ++${NC}"
-        
-        # 遍历用户，生成 1 开始的序号
+        # 遍历用户，生成 1 开始的序号 (先打印已有用户列表)
         for i in "${!HUMAN_USERS[@]}"; do
             local mark=""
             local display_idx=$((i + 1))
             
-            if [[ "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]]; then
+            # 将 UID 1000 的用户设为默认（如果不存在则回退保留原 SUDO_USER 逻辑）
+            if [[ "${HUMAN_USERS[$i]}" == "$UID_1000_USER" ]]; then
+                mark="${H_CYAN}*${NC}"
+                default_user="${HUMAN_USERS[$i]}"
+                default_idx="$display_idx"
+                elif [[ -z "$default_user" && "${HUMAN_USERS[$i]}" == "${SUDO_USER:-}" ]]; then
                 mark="${H_CYAN}*${NC}"
                 default_user="${HUMAN_USERS[$i]}"
                 default_idx="$display_idx"
@@ -83,19 +88,31 @@ detect_target_user() {
             echo -e "       [${display_idx}] ${mark}${HUMAN_USERS[$i]}"
         done
         
+        # 如果既没有 UID 1000 也没有 SUDO_USER 匹配，安全兜底选择列表第一个用户为默认
+        if [[ -z "$default_user" ]]; then
+            default_user="${HUMAN_USERS[0]}"
+            default_idx="1"
+        fi
+        
+        # 将 [0] 选项放在列表的最下面
+        echo -e "       [0] ${H_GREEN}Create a NEW user ++${NC}"
+        
         while true; do
-            if [[ -n "$default_user" ]]; then
-                echo -ne "   ${H_CYAN}Select user ID [0-${#HUMAN_USERS[@]}] (Default ${default_idx}): ${NC}"
-            else
-                echo -ne "   ${H_CYAN}Select user ID [0-${#HUMAN_USERS[@]}]: ${NC}"
-            fi
+            echo -ne "   ${H_CYAN}Select user ID [0-${#HUMAN_USERS[@]}] (Default ${default_idx}, 30s timeout): ${NC}"
             
-            read -r idx
+            # 增加 -t 30 实现 30 秒超时机制
+            if ! read -t 30 -r idx; then
+                # 超时处理
+                echo # 补充一个换行符，因为超时不会输入回车
+                TARGET_USER="$default_user"
+                log "Timeout (30s). Auto-selecting default user: ${H_CYAN}${TARGET_USER}${NC}"
+                break
+            fi
             
             # 处理直接回车：如果有默认用户，直接采纳
             if [[ -z "$idx" && -n "$default_user" ]]; then
                 TARGET_USER="$default_user"
-                log "Defaulting to current user: ${H_CYAN}${TARGET_USER}${NC}"
+                log "Defaulting to user: ${H_CYAN}${TARGET_USER}${NC}"
                 break
             fi
             
