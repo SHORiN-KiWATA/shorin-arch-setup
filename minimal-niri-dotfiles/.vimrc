@@ -46,5 +46,8 @@ vnoremap P "+P
 " 接管鼠标事件
 set mouse=a
 
-" 当退出插入模式时：记录当前状态，并关闭输入法
-autocmd InsertLeave,VimEnter * call job_start("fcitx5-remote -c")
+" === fcitx5 状态切换与恢复 ===
+let g:fcitx_state = 1
+autocmd InsertLeave * let g:fcitx_state = system("fcitx5-remote")[0] | call job_start("fcitx5-remote -c")
+autocmd InsertEnter * if g:fcitx_state == '2' | call job_start("fcitx5-remote -o") | endif
+autocmd VimEnter * call job_start("fcitx5-remote -c")
