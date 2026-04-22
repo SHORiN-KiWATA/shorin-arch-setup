@@ -405,14 +405,26 @@ if [ "$INSTALL_LAZYVIM" = true ]; then
   log "Cloning LazyVim starter..."
   if as_user git clone https://github.com/LazyVim/starter "$NVIM_CFG"; then
     rm -rf "$NVIM_CFG/.git"
-    success "LazyVim installed (Override)."
+    
+    # === 自动配置 fcitx5 切换 ===
+    log "Applying fcitx5-remote fix to init.lua..."
+    as_user bash -c "cat <<EOF >> '$NVIM_CFG/init.lua'
+
+-- Fcitx5 automatic input method switch (KISS version)
+vim.api.nvim_create_autocmd({ 'InsertLeave', 'VimEnter' }, {
+    callback = function() vim.fn.jobstart('fcitx5-remote -c') end
+})
+
+EOF"
+    # =================================
+
+    success "LazyVim installed (Override) with Fcitx5 fix."
   else
     error "Failed to clone LazyVim."
   fi
 fi
 
 # --- hide desktop ---
-# --- hide desktop (User Level Override) ---
 
 section "Config" "Hiding useless .desktop files"
 log "Hiding useless .desktop files"
