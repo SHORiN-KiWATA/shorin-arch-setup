@@ -46,8 +46,5 @@ vnoremap P "+P
 " 接管鼠标事件
 set mouse=a
 
-" 下面这几行内容是用来在vim切换模式的时候自动切换中文输入法状态的
-" 保存 fcitx5 的状态
-let g:fcitx5state = 1
-" 当进入普通模式时：记录当前状态，并关闭输入法
-autocmd InsertLeave * let g:fcitx5state = str2nr(system("fcitx5-remote")[0]) | silent call system("fcitx5-remote -c")
+" 当退出插入模式时：记录当前状态，并关闭输入法
+autocmd InsertLeave,VimEnter * call job_start("fcitx5-remote -c")
