@@ -1,11 +1,68 @@
 #!/usr/bin/env bash
-output=$(niri msg pick-window)
-pid=$(grep -oP 'PID:\s*\K\d+' <<< "$output")
+#
+# niri-force-kill-window
+# 通过鼠标点击强制结束 (SIGKILL) 任意窗口。
+# 智能兼容 Wayland 原生程序与 XWayland 代理程序。
 
-if [[ -n $pid ]]; then
-    if kill -9 "$pid" 2>/dev/null; then
-        notify-send "Killed" "PID $pid terminated (SIGKILL)" && pw-play /usr/share/sounds/freedesktop/stereo/dialog-error.oga
+# 1. 抓取点击窗口的信息
+output=$(niri msg pick-window 2>/dev/null)
+
+# 如果未选中任何窗口（用户取消），直接退出
+if [[ -z "$output" ]]; then
+    exit 0
+fi
+
+# 2. 提取 PID 和 App ID
+pid=$(grep -oP 'PID:\s*\K\d+' <<< "$output")
+app_id=$(grep -oP 'App ID:\s*"\K[^"]+' <<< "$output")
+
+# 确保成功获取到了 PID，防止后续读取文件路径出错
+if [[ -z "$pid" || ! -f "/proc/$pid/comm" ]]; then
+    notify-send "Force Kill Failed" "Could not determine process information." \
+        -a "Window Killer" -i dialog-error
+    exit 1
+fi
+
+# 3. 辅助函数：发送通知并播放音效
+# 提炼公共逻辑，将音频放到后台执行 (&) 防止阻塞当前脚本
+notify_and_play() {
+    local title="$1"
+    local msg="$2"
+    notify-send "$title" "$msg" -a "Window Killer" -i application-exit
+    pw-play /usr/share/sounds/freedesktop/stereo/dialog-error.oga >/dev/null 2>&1 &
+}
+
+# 4. 读取底层进程名，判断所属协议类型
+process_name=$(cat "/proc/$pid/comm")
+process_name_lower="${process_name,,}"
+
+if [[ "$process_name_lower" == *"xwayland"* ]]; then
+    # ---------------------------------------------------------
+    # 【XWayland 窗口逻辑】
+    # 此时的 PID 是底层代理服务，不能直接 kill。
+    # 利用 App ID 进行模糊匹配，强制清理该应用的所有相关进程树。
+    # ---------------------------------------------------------
+    if [[ -n "$app_id" ]]; then
+        # -i 忽略大小写发送 SIGKILL
+        if pkill -9 -i "$app_id"; then
+            notify_and_play "Killed (XWayland)" "App ID: $app_id\nAll related processes terminated."
+        else
+            notify-send "Kill Failed" "Could not find processes for App ID: $app_id" \
+                -a "Window Killer" -i dialog-error
+        fi
     else
-        notify-send "Failed" "Could not kill PID $pid"
+        notify-send "Kill Failed" "No App ID found for this XWayland window." \
+            -a "Window Killer" -i dialog-error
+    fi
+else
+    # ---------------------------------------------------------
+    # 【原生 Wayland 窗口逻辑】
+    # Niri 提供的 PID 就是真实的程序 PID，直接拔管。
+    # ---------------------------------------------------------
+    if kill -9 "$pid" 2>/dev/null; then
+        notify_and_play "Killed (Wayland)" "App: ${app_id:-Unknown}\nPID: $pid terminated."
+    else
+        notify-send "Kill Failed" "Could not kill PID: $pid" \
+            -a "Window Killer" -i dialog-error
     fi
 fi
