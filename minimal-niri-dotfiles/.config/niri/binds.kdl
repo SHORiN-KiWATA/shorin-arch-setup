@@ -52,7 +52,7 @@ binds {
     Mod+G repeat=false { toggle-overview; }
     // 关闭聚焦窗口
     Mod+Q hotkey-overlay-title="关闭聚焦窗口 Close focus window" repeat=false { close-window; }
-    Alt+F4 hotkey-overlay-title=null repeat=false { close-window; }
+    Alt+F4  hotkey-overlay-title="强制杀死窗口" repeat=false { spawn "~/.config/niri/scripts/niri-force-kill-window"; }
 
     // mod+鼠标中键 关闭窗口
     Mod+MouseMiddle  { close-window; }
