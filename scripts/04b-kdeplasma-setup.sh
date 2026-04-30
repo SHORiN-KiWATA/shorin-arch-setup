@@ -380,8 +380,7 @@ if [ -d "$DOTFILES_SOURCE" ]; then
         exe cp -rf "$DOTFILES_SOURCE/.local/." "$HOME_DIR/.local/" 2>/dev/null || true
         log "Fixing permissions for .local..."
         exe chown -R "$TARGET_USER" "$HOME_DIR/.local"
-        # --- 万象语法模型 ---
-        as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+        
     fi
     
     success "KDE Dotfiles applied and permissions fixed."

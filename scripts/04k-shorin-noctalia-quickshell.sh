@@ -58,8 +58,7 @@ log "Deploying user dotfiles..."
 DOTFILES_SRC="$PARENT_DIR/noctalia-dotfiles"
 chown -R "$TARGET_USER:" "$DOTFILES_SRC"
 force_copy "$DOTFILES_SRC/." "$HOME_DIR"
-# --- 万象语法模型 ---
-as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
 WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"
@@ -94,7 +93,7 @@ as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
 # --- Terminal Utilities ---
 section "Shorin Noctalia" "Terminal Utilities"
 log "Installing terminal utilities..."
-TERM_PKGS="linuxqq-clipsync-git xdg-terminal-exec bat fuzzel wf-recorder wl-screenrec-git ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git slurp opencode"
+TERM_PKGS="linuxqq-clipsync-git xdg-terminal-exec bat fuzzel wf-recorder wl-screenrec-git ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git slurp opencode rime-wanxiang-gram-zh-hans"
 
 echo "$TERM_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS

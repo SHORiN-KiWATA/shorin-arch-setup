@@ -18,3 +18,4 @@ ttf-jetbrains-mono-nerd                  # JetBrains Mono Font (Nerd Font Patche
 #AUR:kwin-effect-rounded-corners-git      # Force rounded corners on all windows (Shader based)
 AUR:kwin-effects-geometry-change         # KWin animation for window resizing/geometry changes
 AUR:shorin-contrib-git                   # shorin utils
+AUR:rime-wanxiang-gram-zh-hans            # ime model

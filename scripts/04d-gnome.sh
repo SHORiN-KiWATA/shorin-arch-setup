@@ -207,7 +207,7 @@ EOF
 section "Step 5" "Install Extensions"
 log "Installing Extensions CLI..."
 
-EXT_CLI_PKGS="gnome-extensions-cli ttf-jetbrains-maple-mono-nf-xx-xx"
+EXT_CLI_PKGS="gnome-extensions-cli ttf-jetbrains-maple-mono-nf-xx-xx rime-wanxiang-gram-zh-hans"
 echo "$EXT_CLI_PKGS" >> "$VERIFY_LIST"
 sudo -u $TARGET_USER yay -S --noconfirm --needed --answerdiff=None --answerclean=None $EXT_CLI_PKGS
 
@@ -378,8 +378,7 @@ exe as_user paru -S --noconfirm --needed $SHELL_TOOLS_PKGS
 
 as_user shorin link
 
-# --- 万象语法模型 ---
-as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+
 
 # === 隐藏多余的 Desktop 图标 ===
 section "Config" "Hiding useless .desktop files"

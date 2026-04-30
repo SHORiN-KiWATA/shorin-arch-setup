@@ -174,8 +174,7 @@ EOT
     # 这里我顺手修正了原本脚本的一个小 Bug:
     # 如果 quickshell-dotfiles 包含 .config 和 .local，应复制到 ~ 下，而不是 ~/.config/ 下，否则会变成 ~/.config/.config
     force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-    # --- 万象语法模型 ---
-    as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+    
 fi
 # ==============================================================================
 # filemanager
@@ -184,7 +183,7 @@ section "Config" "file manager"
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     log "DMS niri detected, configuring nautilus"
-    FM_PKGS="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal  xdg-terminal-exec file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus icoextract python-pillow"
+    FM_PKGS="ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal  xdg-terminal-exec file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus icoextract python-pillow rime-wanxiang-gram-zh-hans"
     echo "$FM_PKGS" >> "$VERIFY_LIST"
     exe as_user paru -S --noconfirm --needed $FM_PKGS
     # 默认终端处理

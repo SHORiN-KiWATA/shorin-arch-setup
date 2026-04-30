@@ -19,6 +19,20 @@ log "Identifying user..."
 detect_target_user
 info_kv "Target" "$TARGET_USER"
 
+# --- Temporary Sudo Privileges ---
+log "Granting temporary sudo privileges..."
+SUDO_TEMP_FILE="/etc/sudoers.d/99_shorin_installer_temp"
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDO_TEMP_FILE"
+chmod 440 "$SUDO_TEMP_FILE"
+
+cleanup_sudo() {
+    if [[ -f "$SUDO_TEMP_FILE" ]]; then
+        rm -f "$SUDO_TEMP_FILE"
+        log "Security: Temporary sudo privileges revoked."
+    fi
+}
+trap cleanup_sudo EXIT INT TERM
+
 # DM Check
 check_dm_conflict
 
@@ -67,8 +81,7 @@ if [ -d "$SOURCE_DOTFILES" ]; then
     log "Deploying Quickshell dotfiles to $HOME_DIR/.config/..."
     chown -R "$TARGET_USER:" "$SOURCE_DOTFILES"
     as_user cp -rf "$SOURCE_DOTFILES/." "$HOME_DIR/"
-    # --- 万象语法模型 ---
-    as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+    
 else
     warn "Source directory not found: $SOURCE_DOTFILES"
     warn "Skipping dotfiles copy."
@@ -115,7 +128,7 @@ fi
 # 必须在所有写入操作完成后执行，确保新追加的内容也属于目标用户
 log "Applying permission fixes for user: $TARGET_USER..."
 chown -R "$TARGET_USER" "$HOME_DIR/.config"
-
+as_user yay -S --noconfirm --needed rime-wanxiang-gram-zh-hans
 success "End4 input method and environment configured."
 # ==============================================================================
 #  screenshare

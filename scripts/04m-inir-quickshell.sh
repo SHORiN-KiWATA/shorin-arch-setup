@@ -102,7 +102,7 @@ fi
 # ==============================================================================
 section "Config" "input method"
 
-as_user paru -S --noconfirm --needed fcitx5-im fcitx5-rime rime-ice-git fcitx5-configtool
+as_user paru -S --noconfirm --needed rime-wanxiang-gram-zh-hans
 
 if ! grep -q "fcitx5" "$INIR_AUTOSTART_CONFIG"; then
     log "Enabling fcitx5 autostart in niri config.kdl..."
@@ -123,8 +123,7 @@ fi
 chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
 
 force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-# --- 万象语法模型 ---
-as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+
 # ==============================================================================
 # filemanager
 # ==============================================================================

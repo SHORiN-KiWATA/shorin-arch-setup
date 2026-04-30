@@ -61,8 +61,7 @@ AUR_HELPER="paru"
 # --- 1. Dotfiles ---
 section "Minimal Labwc" "Dotfiles"
 force_copy "$PARENT_DIR/minimal-labwc-dotfiles/." "$HOME_DIR"
-# --- 万象语法模型 ---
-as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+
 # --- 2. Bookmarks ---
 BOOKMARKS_FILE="$HOME_DIR/.config/gtk-3.0/bookmarks"
 if [[ -f "$BOOKMARKS_FILE" ]]; then
@@ -101,7 +100,7 @@ fi
 
 # --- 7. Tools ---
 section "Minimal Labwc" "Tools"
-TOOLS_PKGS=(linuxqq-clipsync-git imv cliphist wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol satty grim slurp opencode)
+TOOLS_PKGS=(linuxqq-clipsync-git imv cliphist wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol satty grim slurp opencode rime-wanxiang-gram-zh-hans)
 echo "${TOOLS_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TOOLS_PKGS[@]}"
 

@@ -66,7 +66,7 @@ if exe as_user git clone "$CAELESTIA_REPO" "$CAELESTIA_DIR"; then
 fi
 
 log "Ensuring fish shell is installed..."
-exe pacman -Syu --needed --noconfirm fish
+exe yay -Syu --needed --noconfirm fish
 
 section "Install" "Running Caelestia Installer"
 
@@ -91,8 +91,7 @@ if [ -f "$HYPR_CONFIG" ]; then
         echo "env = LC_CTYPE, en_US.UTF-8" >> "$HYPR_CONFIG"
         chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
         as_user cp -rf "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-        # --- 万象语法模型 ---
-        as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxiang-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram || true
+        
     fi
     
     # 5.2 Chinese Locale Check
@@ -115,7 +114,7 @@ section "config" "file manager"
 
 if ! command -v thunar; then
     
-    exe pacman -S --needed --noconfirm thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring polkit-gnome
+    exe yay -S --needed --noconfirm thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring polkit-gnome rime-wanxiang-gram-zh-hans
     
 fi
 
