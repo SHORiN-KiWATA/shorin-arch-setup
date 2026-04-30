@@ -379,7 +379,7 @@ exe as_user paru -S --noconfirm --needed $SHELL_TOOLS_PKGS
 as_user shorin link
 
 # --- 万象语法模型 ---
-as_user curl -Lo ~/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
+as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
 
 # === 隐藏多余的 Desktop 图标 ===
 section "Config" "Hiding useless .desktop files"

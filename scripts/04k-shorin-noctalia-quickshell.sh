@@ -59,7 +59,7 @@ DOTFILES_SRC="$PARENT_DIR/noctalia-dotfiles"
 chown -R "$TARGET_USER:" "$DOTFILES_SRC"
 force_copy "$DOTFILES_SRC/." "$HOME_DIR"
 # --- 万象语法模型 ---
-as_user curl -Lo ~/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
+as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
 log "Deploying wallpapers..."
 WALLPAPER_SOURCE_DIR="$PARENT_DIR/resources/Wallpapers"
 WALLPAPER_DIR="$HOME_DIR/Pictures/Wallpapers"

@@ -92,7 +92,7 @@ if [ -f "$HYPR_CONFIG" ]; then
         chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
         as_user cp -rf "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
         # --- 万象语法模型 ---
-        as_user curl -Lo ~/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
+        as_user curl -Lo $HOME_DIR/.local/share/fcitx5/rime/wanxing-lts-zh-hans.gram --create-dirs  https://github.com/amzxyz/RIME-LMDG/releases/download/LTS/wanxiang-lts-zh-hans.gram 2>/dev/null || true
     fi
     
     # 5.2 Chinese Locale Check
