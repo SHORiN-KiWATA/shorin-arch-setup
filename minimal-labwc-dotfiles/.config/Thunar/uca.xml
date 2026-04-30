@@ -21,7 +21,7 @@
 	<name>Open Terminal Here</name>
 	<submenu></submenu>
 	<unique-id>1763109685799433-1</unique-id>
-	<command>kitty -e fish</command>
+	<command>foot</command>
 	<description>Example for a custom action</description>
 	<range></range>
 	<patterns>*</patterns>
@@ -33,7 +33,7 @@
 	<name>多媒体信息</name>
 	<submenu></submenu>
 	<unique-id>1769424941490550-1</unique-id>
-	<command>kitty --class &quot;media_info&quot; -e media-info %f </command>
+	<command>foot -a &quot;media_info&quot; -e media-info %f </command>
 	<description></description>
 	<range>*</range>
 	<patterns>*</patterns>
