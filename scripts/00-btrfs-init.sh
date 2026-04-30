@@ -79,7 +79,12 @@ if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         done <<< "$VFAT_MOUNTS"
     fi
 
-    if [ -n "$FOUND_ESP_GRUB" ]; then
+    # Check if /boot is a separate mount point
+    BOOT_IS_MOUNT=$(findmnt -n /boot >/dev/null 2>&1 && echo "yes" || echo "no")
+    
+    if [ "$BOOT_IS_MOUNT" == "yes" ]; then
+        log "/boot is a separate mountpoint. Skipping GRUB decoupling to prevent boot failure."
+    elif [ -n "$FOUND_ESP_GRUB" ]; then
         log "Applying GRUB Decoupling Stub..."
 
         if [ -L "/boot/grub" ]; then exe rm -f /boot/grub; fi
