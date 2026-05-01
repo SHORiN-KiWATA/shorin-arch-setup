@@ -408,16 +408,15 @@ if [ "$INSTALL_LAZYVIM" = true ]; then
     
     # === 自动配置 fcitx5 切换 ===
     log "Applying fcitx5-remote fix to init.lua..."
-    as_user bash -c "cat <<EOF >> '$NVIM_CFG/init.lua'
+    as_user bash -c "cat >> '$NVIM_CFG/init.lua'" << 'EOF'
 
 -- fcitx5 状态切换与恢复
 local fcitx_st = ""
-vim.api.nvim_create_autocmd("InsertLeave", { callback = function() fcitx_st = vim.fn.system("fcitx5-remote") vim.fn.jobstart("fcitx5-remote -c") end })
+vim.api.nvim_create_autocmd("InsertLeave", { callback = function() fcitx_st = vim.fn.system("fcitx5-remote"); vim.fn.jobstart("fcitx5-remote -c") end })
 vim.api.nvim_create_autocmd("InsertEnter", { callback = function() if fcitx_st:match("2") then vim.fn.jobstart("fcitx5-remote -o") end end })
 vim.api.nvim_create_autocmd("VimEnter", { callback = function() vim.fn.jobstart("fcitx5-remote -c") end })
 
-
-EOF"
+EOF
     # =================================
 
     success "LazyVim installed (Override) with Fcitx5 fix."
