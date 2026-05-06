@@ -3,9 +3,9 @@ copy-command = "wl-copy"
 focus-toggles-toolbars= true
 initial-tool = "brush"
 zoom-factor=1.1
-
+actions-on-right-click = ["save-to-clipboard"]
 [font]
-family = "Roboto"
+family = "Noto Sans"
 style = "Regular"
 fallback = [
     "Noto Sans CJK SC",
