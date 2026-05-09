@@ -157,6 +157,7 @@ detect_target_user() {
     # 4. 最终验证与持久化
     echo "$TARGET_USER" > "/tmp/shorin_install_user"
     HOME_DIR="/home/$TARGET_USER"
+    
     export TARGET_USER HOME_DIR
 }
 
@@ -578,4 +579,105 @@ setup_ly() {
     systemctl enable ly@tty1
     
     success "ly display manager has been successfully configured!"
+}
+
+# ==============================================================================
+# select_github_proxy - 交互式选择 GitHub 加速代理并测试连通性
+# ==============================================================================
+select_github_proxy() {
+    local names=(
+        "EdgeOne (Global)"
+        "HK Node"
+        "Global Node"
+        "LLKK Node"
+    )
+    local urls=(
+        "https://edgeone.gh-proxy.com"
+        "https://hk.gh-proxy.com"
+        "https://gh-proxy.com"
+        "https://gh.llkk.cc"
+    )
+    
+    local test_url="https://raw.githubusercontent.com/SHORiN-KiWATA/shorin-arch-setup/main/README.md"
+    
+    while true; do
+        echo ""
+        echo -e "${H_PURPLE}╭──────────────────────────────────────────────────────────────╮${NC}"
+        echo -e "${H_PURPLE}│${NC} ${BOLD}Select GitHub Acceleration Proxy${NC}"
+        echo -e "${H_PURPLE}╰──────────────────────────────────────────────────────────────╯${NC}"
+        echo ""
+        
+        for i in "${!names[@]}"; do
+            local display_idx=$((i+1))
+            echo -e "   ${H_CYAN}[${display_idx}]${NC} ${names[$i]} ${DIM}(${urls[$i]})${NC}"
+        done
+        echo -e "   ${H_CYAN}[0]${NC} ${H_RED}Skip / No Proxy${NC}"
+        echo ""
+        
+        local choice
+        read -t 60 -p "$(echo -e "   ${H_YELLOW}Enter choice [0-4] (Default 0): ${NC}")" choice
+        if [ $? -ne 0 ]; then echo ""; fi
+        choice=${choice:-0}
+        
+        if [[ "$choice" == "0" ]]; then
+            log "No GitHub proxy selected."
+            return 0
+        fi
+        
+        if ! [[ "$choice" =~ ^[1-4]$ ]]; then
+            warn "Invalid choice. Please enter 0-4."
+            continue
+        fi
+        
+        local index=$((choice-1))
+        local selected_name="${names[$index]}"
+        local selected_url="${urls[$index]}"
+        
+        log "Testing connectivity for ${H_CYAN}${selected_name}${NC} ..."
+        
+        if ! command -v curl &>/dev/null; then
+            warn "curl is not available. Skipping proxy test."
+            echo "$selected_url" > /tmp/shorin_github_proxy
+            export GH_PROXY_URL="$selected_url"
+            break
+        fi
+        
+        local test_result
+        test_result=$(curl -s -o /dev/null -w "%{http_code}|%{time_total}" --max-time 10 -L "${selected_url}/${test_url}" 2>/dev/null)
+        
+        local http_code="${test_result%%|*}"
+        local latency="${test_result##*|}"
+        
+        if [[ "$http_code" == "200" ]]; then
+            success "Proxy reachable. Latency: ${latency}s"
+            echo "$selected_url" > /tmp/shorin_github_proxy
+            export GH_PROXY_URL="$selected_url"
+            break
+        else
+            warn "Proxy test failed (HTTP: ${http_code:-timeout}, ${latency:-N/A}s)."
+            local retry
+            read -t 20 -p "$(echo -e "   ${H_YELLOW}Try another proxy? [Y/n]: ${NC}")" retry
+            if [ $? -ne 0 ]; then echo ""; fi
+            retry=${retry:-Y}
+            if [[ "$retry" =~ ^[Nn]$ ]]; then
+                log "Skipping GitHub proxy configuration."
+                return 0
+            fi
+        fi
+    done
+}
+
+# ==============================================================================
+# apply_github_proxy - 应用已选择的 GitHub 代理到当前环境
+# ==============================================================================
+apply_github_proxy() {
+    if [[ -f "/tmp/shorin_github_proxy" ]]; then
+        local proxy_url
+        proxy_url=$(cat /tmp/shorin_github_proxy)
+        if [[ -n "$proxy_url" ]]; then
+            git config --system url."${proxy_url}/https://github.com/".insteadOf "https://github.com/" &>/dev/null
+            export GH_PROXY_URL="$proxy_url"
+            log "GitHub proxy applied: ${H_GREEN}${proxy_url}${NC}"
+        fi
+    fi
 }

@@ -247,6 +247,13 @@ sys_dashboard() {
         done_count=$(wc -l < "$STATE_FILE")
         echo -e "${H_BLUE}║${NC} ${BOLD}Progress${NC} : Resuming ($done_count steps recorded)"
     fi
+    
+    if [ -f "/tmp/shorin_github_proxy" ]; then
+        local proxy_url
+        proxy_url=$(cat /tmp/shorin_github_proxy)
+        echo -e "${H_BLUE}║${NC} ${BOLD}GitHub${NC}   : ${H_GREEN}Proxy Enabled${NC} ${DIM}(${proxy_url})${NC}"
+    fi
+    
     echo -e "${H_BLUE}╚══════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -255,6 +262,7 @@ sys_dashboard() {
 
 select_desktop
 select_optional_modules
+select_github_proxy
 clear
 show_banner
 sys_dashboard
@@ -296,6 +304,8 @@ CURRENT_STEP=0
 
 log "Initializing installer sequence..."
 sleep 0.5
+
+apply_github_proxy
 
 # --- Reflector Mirror Update (State Aware) ---
 section "Pre-Flight" "Mirrorlist Optimization"
