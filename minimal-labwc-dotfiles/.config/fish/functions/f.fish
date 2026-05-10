@@ -1,7 +1,7 @@
 function f
     # ==============================================================================
     # 脚本功能说明
-    # 1. 结合 Fastfetch，在终端启动时展示随机二次元图片，支持 SFW 与 NSFW 模式。
+    # 1. 结合 Fastfetch，在终端启动时展示随机二次元图片。
     # 2. 具备静默后台异步下载机制，库存不足时自动补货，绝不阻塞前台终端的启动。
     # 3. 具备智能缓存管理机制，自动控制待展示区与已使用区的图片数量上限。
     # 4. 具备极致的网络环境容错处理，无网或弱网时自动降级，避免死等。
@@ -47,12 +47,6 @@ function f
     
     # --- 1. 参数解析与模式设置 ---
     
-    set -l NSFW_MODE false
-    # 检查环境变量
-    if test "$NSFW" = "1"
-        set NSFW_MODE true
-    end
-    
     set -l ARGS_FOR_FASTFETCH
     for arg in $argv
         # 拦截帮助指令
@@ -64,7 +58,6 @@ function f
                 echo ""
                 echo "用法模式："
                 echo "  f       : 标准模式。随机生成一张美少女图片同时显示系统信息。"
-                echo "  fnsfw   : NSFW 模式。请注意身后环境安全。"
                 echo "  fwatch  : 持续运行模式。适合挂在副屏当作动态看板娘。"
                 echo ""
                 echo "进阶技巧："
@@ -78,7 +71,6 @@ function f
                 echo ""
                 echo "Usage Modes:"
                 echo "  f       : Standard mode. Spawns a random safe for work anime girl for your terminal."
-                echo "  fnsfw   : NSFW mode. Triggered via f --nsfw or custom alias, please be aware of your surroundings."
                 echo "  fwatch  : Continuous mode. Use with the watch command, perfect for a secondary monitor mascot."
                 echo ""
                 echo "Advanced Tips:"
@@ -87,8 +79,6 @@ function f
                 echo "========================================================"
             end
             return 0
-        else if test "$arg" = "--nsfw"
-            set NSFW_MODE true
         else
             set -a ARGS_FOR_FASTFETCH $arg
         end
@@ -97,15 +87,8 @@ function f
     # --- 2. 目录配置 ---
     
     # 根据模式区分缓存目录和锁文件
-    set -l CACHE_DIR
-    set -l LOCK_FILE
-    if test "$NSFW_MODE" = true
-        set CACHE_DIR "$HOME/.cache/fastfetch_waifu_nsfw"
-        set LOCK_FILE "/tmp/fastfetch_waifu_nsfw.lock"
-    else
-        set CACHE_DIR "$HOME/.cache/fastfetch_waifu"
-        set LOCK_FILE "/tmp/fastfetch_waifu.lock"
-    end
+    set -l CACHE_DIR "$HOME/.cache/fastfetch_waifu"
+    set -l LOCK_FILE "/tmp/fastfetch_waifu.lock"
     
     # 定义已使用目录
     set -l USED_DIR "$CACHE_DIR/used"
@@ -121,30 +104,18 @@ function f
         return $status
     end
     
-    function get_random_url -V NSFW_MODE
+    function get_random_url
         set -l TIMEOUT --connect-timeout 5 --max-time 15
         set -l RAND (math (random) % 3 + 1)
         
-        if test "$NSFW_MODE" = true
-            # === NSFW API ===
-            switch $RAND
-                case 1
-                    curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=true" | jq -r '.images[0].url'
-                case 2
-                    curl -s $TIMEOUT "https://api.waifu.pics/nsfw/waifu" | jq -r '.url'
-                case 3
-                    curl -s $TIMEOUT "https://api.waifu.pics/nsfw/neko" | jq -r '.url'
-            end
-        else
-            # === SFW 正常 API ===
-            switch $RAND
-                case 1
-                    curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false" | jq -r '.images[0].url'
-                case 2
-                    curl -s $TIMEOUT "https://nekos.best/api/v2/waifu" | jq -r '.results[0].url'
-                case 3
-                    curl -s $TIMEOUT "https://api.waifu.pics/sfw/waifu" | jq -r '.url'
-            end
+        # === SFW 正常 API ===
+        switch $RAND
+            case 1
+                curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false" | jq -r '.images[0].url'
+            case 2
+                curl -s $TIMEOUT "https://nekos.best/api/v2/waifu" | jq -r '.results[0].url'
+            case 3
+                curl -s $TIMEOUT "https://api.waifu.pics/sfw/waifu" | jq -r '.url'
         end
     end
     
@@ -170,7 +141,7 @@ function f
         end
     end
     
-    function background_job -V CACHE_DIR -V LOCK_FILE -V MIN_TRIGGER_LIMIT -V DOWNLOAD_BATCH_SIZE -V MAX_CACHE_LIMIT -V NSFW_MODE
+    function background_job -V CACHE_DIR -V LOCK_FILE -V MIN_TRIGGER_LIMIT -V DOWNLOAD_BATCH_SIZE -V MAX_CACHE_LIMIT
         # 导出函数定义以便在 fish -c 中使用
         set -l get_random_url_def (functions get_random_url | string collect)
         set -l download_one_image_def (functions download_one_image | string collect)
@@ -195,7 +166,6 @@ function f
             
             # 导入变量
             set CACHE_DIR '$CACHE_DIR'
-            set NSFW_MODE '$NSFW_MODE'
             
             # 1. 补货检查
             set CURRENT_COUNT (find \$CACHE_DIR -maxdepth 1 -name '*.jpg' 2>/dev/null | wc -l)
