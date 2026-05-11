@@ -98,6 +98,12 @@
       //"outputColor": "#cdc2db"
     },
     {
+      "type": "swap",
+      "key": " ├  SWP ",
+      "keyColor": "#eadef8",
+      //"outputColor": "#cdc2db"
+    },
+    {
       "type": "gpu",
       "key": " ├ 󰢮  GPU ",
       "format": "{1} {2}",

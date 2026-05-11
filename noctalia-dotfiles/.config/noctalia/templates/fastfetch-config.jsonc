@@ -102,6 +102,12 @@
       //"outputColor": "{{colors.secondary_fixed_dim.default.hex}}"
     },
     {
+      "type": "swap",
+      "key": " ├  SWP ",
+      "keyColor": "{{colors.secondary_fixed.default.hex}}",
+      //"outputColor": "{{colors.secondary_fixed_dim.default.hex}}"
+    },
+    {
       "type": "gpu",
       "key": " ├ 󰢮  GPU ",
       "format": "{1} {2}",
