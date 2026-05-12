@@ -39,7 +39,7 @@ function 滚
 	sysup 
 end
 function raw
-	command ~/.local/bin/random-anime-wallpaper-dms $argv
+	command ~/.local/bin/random-anime-wallpaper-noctalia $argv
 end
 
 function 安装
