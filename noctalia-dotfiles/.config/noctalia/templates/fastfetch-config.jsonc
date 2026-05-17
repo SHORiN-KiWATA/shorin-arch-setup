@@ -103,7 +103,7 @@
     },
     {
       "type": "swap",
-      "key": " ├  SWP ",
+      "key": " ├   SWP ",
       "keyColor": "{{colors.secondary_fixed.default.hex}}",
       //"outputColor": "{{colors.secondary_fixed_dim.default.hex}}"
     },
