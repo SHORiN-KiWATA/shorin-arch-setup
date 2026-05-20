@@ -46,6 +46,12 @@
       "keyColor": "{{colors.primary.default.hex}}",
     },
     {
+      "type": "command",
+      "key": " ├   AGE ",
+      "text": "birth_install=$(stat -c %W / 2>/dev/null || stat -f %B /); current=$(date +%s); days_difference=$(( (current - birth_install) / 86400 )); echo $days_difference days",
+      "keyColor": "{{colors.primary.default.hex}}",
+    },
+    {
       "type": "title",
       "key": " └   USR ",
       "keyColor": "{{colors.primary.default.hex}}",
