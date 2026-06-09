@@ -12,11 +12,11 @@ systemctl --user disable --now  dms
 一些必要的手动设置
 【主题同步】super+z打开程序菜单选择dms设置。选择一张喜欢的壁纸（壁纸存放在~/Pictures/Wallpapers），然后在“主题与配色”界面选择“自动”，在页面底端点击应用gtk主题。打开GTK Settings，设置使用adw-gtk3-dark主题。
 
-【Firefox颜色同步】
-打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
+【Firefox 颜色同步】
+打开Firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
 
-【vscode颜色同步】
-在vscode里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
+【VS Code颜色同步】
+在VS Code里安装DMS主题扩展，然后把主题改成DankShell，再重新更换一次壁纸。
 
 
 【重要按键】
@@ -35,7 +35,7 @@ super+V 切换浮动窗口
 super+shift+F10 下载随机动漫壁纸
 具体按键可以看~/.config/hypr/hyprland.conf中的bind相关内容，重要键位有中文注释。
 
-如果出现网络问题可以进行以下操作更换wifi后端：
+如果出现网络问题可以进行以下操作更换Wi-Fi 后端：
 sudo rm /etc/NetworkManager/conf.d/iwd.conf
 sudo systemctl restart NetworkManager
 
@@ -53,17 +53,17 @@ sysup 更新系统
 clean 系统清理
 quicksave 快速存档
 
-【Ai助手】
-有一个叫作opencode的开源ai助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个Ai助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用ai修改文件。
+【AI 助手】
+有一个叫作opencode 的开源 AI 助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个 AI 助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用AI 修改文件。
 
 【剪贴板同步】
-为了解决qq以wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的github仓库提交一下bug。
+为了解决QQ以Wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的GitHub 仓库提交一下 bug。
 
 【有趣实用的TUI软件（基于终端的用户交互程序）】
 命令：作用
 gdu：磁盘空间管理
 nmtui：网络配置工具
-impala：wifi连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
+impala：Wi-Fi 连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
 btop：任务管理器
 yazi：文档管理器
 fastfetch：系统信息显示工具

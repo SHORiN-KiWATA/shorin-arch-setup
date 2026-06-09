@@ -41,5 +41,5 @@ AUR:visual-studio-code-bin               # vscode
 AUR:pins-git			                 # Manage .desktop
 
 # --- Flatpak Packages ---       
-flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire 
+flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire
 flatpak:it.mijorus.gearlever             # AppImage Manager

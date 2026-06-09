@@ -27,7 +27,7 @@ super+alt+P 休眠
 所有按键看~/.config/labwc/rc.xml。
 
 
-如果出现网络问题可以进行以下操作更换wifi后端：
+如果出现网络问题可以进行以下操作更换Wi-Fi 后端：
 sudo rm /etc/NetworkManager/conf.d/iwd.conf
 sudo systemctl restart NetworkManager
 
@@ -48,17 +48,17 @@ suspend 挂起
 命令：作用
 gdu：磁盘空间管理
 nmtui：网络配置工具
-impala：wifi连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
+impala：Wi-Fi 连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
 btop：任务管理器
 yazi：文档管理器
 fastfetch：系统信息显示工具
 pulsemixer：tui音量调整工具
 
-【Ai助手】
-有一个叫作opencode的开源ai助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个Ai助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用ai修改文件。
+【AI 助手】
+有一个叫作opencode 的开源 AI 助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个 AI 助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用AI 修改文件。
 
 【剪贴板同步】
-为了解决qq以wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的github仓库提交一下bug。
+为了解决QQ以Wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的GitHub 仓库提交一下 bug。
 
 
 【如果不想要了或者安装失败了可以回档】

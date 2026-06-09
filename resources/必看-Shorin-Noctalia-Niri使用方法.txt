@@ -6,7 +6,7 @@ ShorinArch: https://shorin.xyz/wiki
 Shorin一键配置脚本: https://shorin.xyz/wiki/archsetup
 
 
-如果出现网络问题可以进行以下操作更换wifi后端：
+如果出现网络问题可以进行以下操作更换Wi-Fi 后端：
 sudo rm /etc/NetworkManager/conf.d/iwd.conf
 sudo systemctl restart NetworkManager
 
@@ -34,15 +34,15 @@ super+A/D 左右移动窗口（合并列）
 
 
 【必要设置】
-1.更换壁纸
-Mod+Alt+W打开壁纸切换器，切换一次壁纸，此时会自动生成所有的主题颜色。
+1. 更换壁纸
+Mod+Alt+W 打开壁纸切换器，切换一次壁纸，此时会自动生成所有的主题颜色。
 如果要取消开启时随机更换壁纸的功能可以编辑~/.config/niri/config.kdl，删除自动切换壁纸的spawn-sh-at-stratup。
 
-2.Firefox颜色同步
-打开firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
+2. Firefox 颜色同步
+打开Firefox之后进入扩展页面，我预装好了pywalfox扩展，点进pywalfox扩展的页面点击右上角的fetch。
 
 【关于文档管理器】
-有两个，一个是nautilus（图标是蓝色柜子的那个）一个是thunar，主要用thunar。装两个是因为Niri的录屏依赖xdg-desktop-portal-gnome，而这个portal会依赖nautilus，装都装了，我就把nautius的功能都补全了，也不占什么硬盘资源。
+有两个，一个是nautilus（图标是蓝色柜子的那个）一个是thunar，主要用thunar。装两个是因为Niri的录屏依赖xdg-desktop-portal-gnome，而这个portal会依赖nautilus，装都装了，我就把nautilus的功能都补全了，也不占什么硬盘资源。
 
 【显示器设置】
 需要编辑~/.config/niri/blur.kdl。
@@ -64,11 +64,11 @@ sysup 更新系统
 clean 系统清理
 quicksave 快速存档
 
-【Ai助手】
-有一个叫作opencode的开源ai助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个Ai助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用ai修改文件。
+【AI 助手】
+有一个叫作opencode 的开源 AI 助手，默认键位是Mod+Alt+O（英文字母O），有免费模型可以用。如果有查找文件、查询系统信息之类的简单的需求直接询问这个 AI 助手，例如："我的快捷键配置文件在哪里？""我要怎么安装软件"等。PS: 谨慎使用AI 修改文件。
 
 【剪贴板同步】
-为了解决qq以wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的github仓库提交一下bug。
+为了解决QQ以Wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的GitHub 仓库提交一下 bug。
 
 
 
@@ -76,7 +76,7 @@ quicksave 快速存档
 命令：作用
 gdu：磁盘空间管理
 nmtui：网络配置工具
-impala：wifi连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
+impala：Wi-Fi 连接工具，tab键切换，上下左右选择，回车确认（需要iwd后端）
 btop：任务管理器
 yazi：文档管理器
 fastfetch：系统信息显示工具
