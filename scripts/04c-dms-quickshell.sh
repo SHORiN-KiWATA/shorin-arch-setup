@@ -68,7 +68,6 @@ section "Config" "dms autostart"
 
 DMS_AUTOSTART_LINK="$HOME_DIR/.config/systemd/user/niri.service.wants/dms.service"
 DMS_NIRI_CONFIG_FILE="$HOME_DIR/.config/niri/config.kdl"
-DMS_HYPR_CONFIG_FILE="$HOME_DIR/.config/hypr/hyprland.conf"
 
 if [[ -L "$DMS_AUTOSTART_LINK" ]]; then
     log "Detect DMS systemd service enabled, disabling ...."
@@ -76,12 +75,11 @@ if [[ -L "$DMS_AUTOSTART_LINK" ]]; then
 fi
 
 DMS_NIRI_INSTALLED="false"
-DMS_HYPR_INSTALLED="false"
 
 if command -v niri &>/dev/null; then
     DMS_NIRI_INSTALLED="true"
-    elif command -v hyprland &>/dev/null; then
-    DMS_HYPR_INSTALLED="true"
+else
+    log "No Niri session detected; skipping compositor-specific DMS customizations."
 fi
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
@@ -91,16 +89,6 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
         echo 'spawn-at-startup "xhost" "+si:localuser:root"' >> "$DMS_NIRI_CONFIG_FILE"
     else
         log "DMS autostart already exists in niri config.kdl, skipping."
-    fi
-    
-    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
-    log "Configuring Hyprland autostart..."
-    if ! grep -q "exec-once.*dms run" "$DMS_HYPR_CONFIG_FILE"; then
-        log "Adding DMS autostart to hyprland.conf"
-        echo 'exec-once = dms run' >> "$DMS_HYPR_CONFIG_FILE"
-        echo 'exec-once = xhost +si:localuser:root'>> "$DMS_HYPR_CONFIG_FILE"
-    else
-        log "DMS autostart already exists in Hyprland config, skipping."
     fi
 fi
 
@@ -146,35 +134,6 @@ EOT
     # =======================
     
     force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-    
-    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
-    if ! grep -q "fcitx5" "$DMS_HYPR_CONFIG_FILE"; then
-        log "Adding fcitx5 autostart to hyprland.conf"
-        echo 'exec-once = fcitx5 -d' >> "$DMS_HYPR_CONFIG_FILE"
-        
-        cat << EOT >> "$DMS_HYPR_CONFIG_FILE"
-
-# --- Added by Shorin-Setup Script ---
-# Fcitx5 Input Method Variables
-env = XMODIFIERS,@im=fcitx
-env = LC_CTYPE,en_US.UTF-8
-# Locale Settings
-env = LANG,zh_CN.UTF-8
-# ----------------------------------
-EOT
-    else
-        log "Fcitx5 configuration already exists in Hyprland config, skipping."
-    fi
-    
-    chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
-    
-    # === [ 核心修复点 ] ===
-    as_user rm -rf "$HOME_DIR/.local/share/fcitx5"
-    as_user rm -rf "$HOME_DIR/.config/fcitx5"
-    # 这里我顺手修正了原本脚本的一个小 Bug:
-    # 如果 quickshell-dotfiles 包含 .config 和 .local，应复制到 ~ 下，而不是 ~/.config/ 下，否则会变成 ~/.config/.config
-    force_copy "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-    
 fi
 # ==============================================================================
 # filemanager
@@ -204,9 +163,6 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     
     configure_nautilus_user
     
-    
-    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
-    log "DMS hyprland detected, skipping file manager."
 fi
 
 # ==============================================================================
@@ -221,15 +177,6 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     if ! grep -q '/usr/lib/xdg-desktop-portal-gnome' "$DMS_NIRI_CONFIG_FILE"; then
         log "Configuring environment in niri config.kdl"
         echo 'spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri & /usr/lib/xdg-desktop-portal-gnome"' >> "$DMS_NIRI_CONFIG_FILE"
-    fi
-    
-    elif [[ "$DMS_HYPR_INSTALLED" == "true" ]]; then
-    log "DMS hyprland detected, configuring xdg-desktop-portal"
-    echo "xdg-desktop-portal-hyprland" >> "$VERIFY_LIST"
-    exe pacman -S --noconfirm --needed xdg-desktop-portal-hyprland
-    if ! grep -q '/usr/lib/xdg-desktop-portal-hyprland' "$DMS_HYPR_CONFIG_FILE"; then
-        log "Configuring environment in hyprland.conf"
-        echo 'exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=hyprland & /usr/lib/xdg-desktop-portal-hyprland' >> "$DMS_HYPR_CONFIG_FILE"
     fi
 fi
 

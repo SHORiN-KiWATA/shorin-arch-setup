@@ -77,37 +77,6 @@ if as_user sh -c "cd && fish $CAELESTIA_DIR/install.fish --noconfirm"; then
 fi
 
 # ==============================================================================
-#  5. Post-Configuration
-# ==============================================================================
-section "Config" "Locale and Input Method"
-
-HYPR_CONFIG="$CAELESTIA_DIR/hypr/hyprland.conf"
-
-# 5.1 Fcitx5 Configuration
-if [ -f "$HYPR_CONFIG" ]; then
-    if ! grep -q "fcitx5" "$HYPR_CONFIG"; then
-        log "Injecting Fcitx5 config into Hyprland..."
-        echo "exec-once = fcitx5 -d" >> "$HYPR_CONFIG"
-        echo "env = LC_CTYPE, en_US.UTF-8" >> "$HYPR_CONFIG"
-        chown -R "$TARGET_USER:" "$PARENT_DIR/quickshell-dotfiles"
-        as_user cp -rf "$PARENT_DIR/quickshell-dotfiles/." "$HOME_DIR/"
-        
-    fi
-    
-    # 5.2 Chinese Locale Check
-    # Fix: Ensure grep reads from input correctly
-    LOCALE_AVAILABLE=$(locale -a)
-    if echo "$LOCALE_AVAILABLE" | grep -q "zh_CN.utf8" && ! grep -q "zh_CN" "$HYPR_CONFIG"; then
-        log "Chinese locale detected. Configuring Hyprland environment..."
-        echo "env = LANG, zh_CN.UTF-8" >> "$HYPR_CONFIG"
-    fi
-else
-    warn "Hyprland config file not found: $HYPR_CONFIG"
-fi
-
-success "Post-configuration completed."
-
-# ==============================================================================
 #  file manager
 # ==============================================================================
 section "config" "file manager"

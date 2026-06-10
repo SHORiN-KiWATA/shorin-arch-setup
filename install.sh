@@ -79,7 +79,6 @@ select_desktop() {
         "Shorin_Niri|shorinniri"
         "Minimal_Niri|minimalniri"
         "Minimal_Labwc|minimallabwc"
-        "Shorin_DMS_Hyprland_Scrolling|hyprniri"
         ""
         "GNOME |gnome"
         ""
