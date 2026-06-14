@@ -303,12 +303,10 @@ if grep -q "^REFLECTOR_DONE$" "$STATE_FILE"; then
     echo -e "   ${H_GREEN}✔${NC} Mirrorlist previously optimized."
     echo -e "   ${DIM}   Skipping Reflector steps (Resume Mode)...${NC}"
 else
-    log "Checking Reflector..."
-    exe pacman -S --noconfirm --needed reflector
-    
     CURRENT_TZ=$(readlink -f /etc/localtime)
     REFLECTOR_ARGS="--protocol https -a 12 -f 10 --sort rate --save /etc/pacman.d/mirrorlist --verbose"
     
+    REFLECTOR_SUCCESS=0
     if [[ "$CURRENT_TZ" == *"Shanghai"* ]]; then
         echo ""
         echo -e "${H_YELLOW}╔══════════════════════════════════════════════════════════════════╗${NC}"
@@ -323,34 +321,75 @@ else
         choice=${choice:-N}
         
         if [[ "$choice" =~ ^[Yy]$ ]]; then
-            log "Running Reflector for China..."
-            if exe reflector $REFLECTOR_ARGS -c China; then
-                success "Mirrors updated."
+            log "Checking Reflector..."
+            if exe pacman -S --noconfirm --needed reflector; then
+                log "Running Reflector for China..."
+                if exe reflector $REFLECTOR_ARGS -c China; then
+                    success "Mirrors updated."
+                    REFLECTOR_SUCCESS=1
+                else
+                    warn "China mirror refresh failed. Trying latest 30 global mirrors..."
+                    if exe reflector $REFLECTOR_ARGS --latest 30; then
+                        success "Mirrors updated."
+                        REFLECTOR_SUCCESS=1
+                    else
+                        warn "Reflector failed. Continuing with existing mirrors."
+                    fi
+                fi
             else
-                warn "Reflector failed. Continuing with existing mirrors."
+                warn "Could not install Reflector. Continuing with existing mirrors."
             fi
         else
             log "Skipping mirror refresh."
         fi
     else
-        log "Detecting location for optimization..."
-        COUNTRY_CODE=$(curl -s --max-time 2 https://ipinfo.io/country)
+        echo ""
+        echo -e "${H_CYAN}Mirror refresh with Reflector is recommended outside China.${NC}"
+        read -t 60 -p "$(echo -e "   ${H_CYAN}Run Reflector?[Y/n] (Default Yes in 60s): ${NC}")" choice
+        if [ $? -ne 0 ]; then echo ""; fi
+        choice=${choice:-Y}
         
-        if [ -n "$COUNTRY_CODE" ]; then
-            info_kv "Country" "$COUNTRY_CODE" "(Auto-detected)"
-            log "Running Reflector for $COUNTRY_CODE..."
-            if ! exe reflector $REFLECTOR_ARGS -c "$COUNTRY_CODE"; then
-                warn "Country specific refresh failed. Trying global speed test..."
-                exe reflector $REFLECTOR_ARGS
+        if [[ ! "$choice" =~ ^[Nn]$ ]]; then
+            log "Checking Reflector..."
+            if exe pacman -S --noconfirm --needed reflector; then
+                log "Detecting location for optimization..."
+                COUNTRY_CODE=$(curl -s --max-time 2 https://ipinfo.io/country)
+                
+                if [ -n "$COUNTRY_CODE" ]; then
+                    info_kv "Country" "$COUNTRY_CODE" "(Auto-detected)"
+                    log "Running Reflector for $COUNTRY_CODE..."
+                    if exe reflector $REFLECTOR_ARGS -c "$COUNTRY_CODE"; then
+                        success "Mirrors updated."
+                        REFLECTOR_SUCCESS=1
+                    else
+                        warn "Country specific refresh failed. Trying latest 30 global mirrors..."
+                        if exe reflector $REFLECTOR_ARGS --latest 30; then
+                            success "Mirrors updated."
+                            REFLECTOR_SUCCESS=1
+                        else
+                            warn "Reflector failed. Continuing with existing mirrors."
+                        fi
+                    fi
+                else
+                    warn "Could not detect country. Trying latest 30 global mirrors..."
+                    if exe reflector $REFLECTOR_ARGS --latest 30; then
+                        success "Mirrors updated."
+                        REFLECTOR_SUCCESS=1
+                    else
+                        warn "Reflector failed. Continuing with existing mirrors."
+                    fi
+                fi
+            else
+                warn "Could not install Reflector. Continuing with existing mirrors."
             fi
         else
-            warn "Could not detect country. Running global speed test..."
-            exe reflector $REFLECTOR_ARGS --latest 25
+            log "Skipping mirror refresh."
         fi
-        success "Mirrorlist optimized."
     fi
     
-    echo "REFLECTOR_DONE" >> "$STATE_FILE"
+    if [ "$REFLECTOR_SUCCESS" -eq 1 ]; then
+        echo "REFLECTOR_DONE" >> "$STATE_FILE"
+    fi
 fi
 
 # ---- update keyring-----
