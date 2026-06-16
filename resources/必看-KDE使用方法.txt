@@ -10,8 +10,6 @@ KRunner (搜索/启动)       : Meta + Z
 应用程序启动器 (菜单)     : Alt (单独按下)
 终端 (Konsole)            : Meta + T
 浏览器                    : Meta + B
-系统设置                  : Ctrl + Alt + S
-任务中心 (Mission Center) : Meta + Esc
 
 [ 窗口管理 ]
 关闭窗口                  : Meta + Q
