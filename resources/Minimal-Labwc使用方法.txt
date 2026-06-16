@@ -60,6 +60,11 @@ pulsemixer：tui音量调整工具
 【剪贴板同步】
 为了解决qq以wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的github仓库提交一下bug。
 
+【运行Windows软件】
+>https://github.com/SHORiN-KiWATA/proton-wrapper
+此功能由 `shorin-proton-wrapper-git` AUR包提供。双击 .exe 文件会自动用“运行Windows软件”打开，会自动使用 DW-Proton 在 ~/.proton 目录初始化运行环境。如果用“设置Windows软件运行环境”打开的话可以进行各种自定义设置，如运行器、MangoHud 屏显（帧数、硬件占用之类的）、GameScope（在如果遇到窗口异常、交互异常的话可以尝试用 GameScope 打开）等。
+
+
 
 【如果不想要了或者安装失败了可以回档】
 /usr/local/bin下有两个脚本可以用来回档到运行脚本之前的状态。
