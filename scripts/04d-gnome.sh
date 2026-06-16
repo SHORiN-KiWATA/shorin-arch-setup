@@ -372,7 +372,7 @@ if command -v flatpak &>/dev/null; then
 fi
 
 log "Installing shell tools..."
-SHELL_TOOLS_PKGS="thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git bat"
+SHELL_TOOLS_PKGS="thefuck starship eza fish zoxide jq timg imagemagick shorin-contrib-git bat shorin-proton-wrapper-git"
 echo "$SHELL_TOOLS_PKGS" >> "$VERIFY_LIST"
 exe as_user paru -S --noconfirm --needed $SHELL_TOOLS_PKGS
 

@@ -12,8 +12,8 @@ localsend                                # send files to other devices
 nm-connection-editor                     # Advanced network editor
 gnome-calendar                           # calendar
 gnome-clocks                             # clocks
-gamescope                                # gaming compositor made by Valve
-heroic-games-launcher-bin                # Playing Epic games
+#gamescope                                # gaming compositor made by Valve
+#heroic-games-launcher-bin                # Playing Epic games
 lutris                                   # Gaming outside steam
 steam                                    # Gaming Platform (Valve)
 protonplus                               # manage proton 

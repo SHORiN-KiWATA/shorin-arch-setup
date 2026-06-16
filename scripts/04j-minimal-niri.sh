@@ -91,7 +91,7 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TERMINAL_PKGS[@]}"
 
 # --- 6. File Manager ---
 section "Minimal Niri" "File Manager"
-FM_PKGS1=(ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus icoextract python-pillow)
+FM_PKGS1=(ffmpegthumbnailer gvfs-smb nautilus-open-any-terminal file-roller gnome-keyring gst-plugins-base gst-plugins-good gst-libav nautilus icoextract python-pillow
 FM_PKGS2=(xdg-desktop-portal-gtk thunar tumbler poppler-glib thunar-archive-plugin thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf)
 echo "${FM_PKGS1[*]}" >> "$VERIFY_LIST"
 echo "${FM_PKGS2[*]}" >> "$VERIFY_LIST"
@@ -117,7 +117,7 @@ configure_nautilus_user
 
 # --- 7. Tools ---
 section "Minimal Niri" "Tools"
-TOOLS_PKGS=(imv cliphist opencode wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol pulsemixer satty rime-wanxiang-gram-zh-hans)
+TOOLS_PKGS=(imv cliphist opencode wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol pulsemixer satty rime-wanxiang-gram-zh-hans shorin-proton-wrapper-git)
 echo "${TOOLS_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TOOLS_PKGS[@]}"
 

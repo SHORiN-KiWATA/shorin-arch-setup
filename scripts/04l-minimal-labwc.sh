@@ -100,7 +100,7 @@ fi
 
 # --- 7. Tools ---
 section "Minimal Labwc" "Tools"
-TOOLS_PKGS=(linuxqq-clipsync-git imv cliphist wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol satty grim slurp opencode rime-wanxiang-gram-zh-hans)
+TOOLS_PKGS=(linuxqq-clipsync-git imv cliphist wl-clipboard cliphist-tui-git shorin-contrib-git hyprlock breeze-cursors nwg-look adw-gtk-theme pavucontrol satty grim slurp opencode rime-wanxiang-gram-zh-hans shorin-proton-wrapper-git)
 echo "${TOOLS_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TOOLS_PKGS[@]}"
 
