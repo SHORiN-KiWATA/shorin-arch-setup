@@ -7,7 +7,7 @@ lact                                     # GPU Control Panel (Overclocking/Fan c
 gwenview                                 # Image Viewer (KDE Native)
 upscaler                                 # # AI Image Upscaler (Enhance low-res images)
 kcalc                                    # Calculator (KDE Native)
-
+opencode                                 # Ai agent
 # --- Disk & Filesystem Tools ---
 baobab                                   # Disk Usage Analyzer
 gnome-disk-utility                       # Disk Management Utility (Disks)
