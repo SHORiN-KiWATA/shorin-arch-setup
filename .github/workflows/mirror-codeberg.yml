@@ -31,7 +31,8 @@ jobs:
 
       - name: Mirror repository
         run: |
-          git clone --mirror https://github.com/${{ github.repository }}.git repo.git
+          git clone --bare https://github.com/${{ github.repository }}.git repo.git
           cd repo.git
-          git remote set-url --push origin git@codeberg.org:shorinkiwata/shorin-arch-setup.git
-          git push --mirror
+          git remote add codeberg git@codeberg.org:shorinkiwata/shorin-arch-setup.git
+          git push --prune codeberg 'refs/heads/*:refs/heads/*'
+          git push --prune codeberg 'refs/tags/*:refs/tags/*'
