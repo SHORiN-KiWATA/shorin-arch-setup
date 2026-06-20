@@ -37,7 +37,7 @@ trap cleanup_sudo EXIT INT TERM
 # 1. 安装你的专属硬件检测工具
 # ==============================================================================
 log "Installing chwd-arch-git from AUR..."
-exe runuser -u "$TARGET_USER" -- yay -S --noconfirm --needed --answerdiff=None --answerclean=None chwd-arch-git
+exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None chwd-arch-git
 
 # ==============================================================================
 # 2. 自动检测并安装驱动
