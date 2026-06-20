@@ -24,9 +24,12 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan codeberg.org >> ~/.ssh/known_hosts
 
+      - name: Show loaded SSH keys
+        run: ssh-add -l
+
       - name: Mirror repository
         run: |
           git clone --mirror https://github.com/${{ github.repository }}.git repo.git
           cd repo.git
-          git remote set-url --push origin git@codeberg.org:SHORiN-KiWATA/shorin-arch-setup.git
+          git remote set-url --push origin git@codeberg.org:shorinkiwata/shorin-arch-setup.git
           git push --mirror
