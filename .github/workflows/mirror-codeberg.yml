@@ -25,7 +25,9 @@ jobs:
           ssh-keyscan codeberg.org >> ~/.ssh/known_hosts
 
       - name: Show loaded SSH keys
-        run: ssh-add -l
+        run: |
+          ssh-add -l
+          ssh-add -L
 
       - name: Mirror repository
         run: |
