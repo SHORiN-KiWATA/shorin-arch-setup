@@ -8,6 +8,7 @@ gwenview                                 # Image Viewer (KDE Native)
 upscaler                                 # # AI Image Upscaler (Enhance low-res images)
 kcalc                                    # Calculator (KDE Native)
 opencode                                 # Ai agent
+
 # --- Disk & Filesystem Tools ---
 baobab                                   # Disk Usage Analyzer
 gnome-disk-utility                       # Disk Management Utility (Disks)
@@ -21,14 +22,11 @@ xfsprogs                                 # Tools for XFS filesystems
 haruna                                   # Modern Video Player (MPV frontend for KDE)
 lutris                                   # Open Source Gaming Platform (Wine/Proton manager)
 steam                                    # Gaming Platform (Valve)
+obs-studio                               # OBS Studio (Streaming & Recording)
+gearlever                                # AppImage Manager (Integrates AppImages)
+easyeffects                              # Audio Effects for PipeWire (Equalizer/Noise reduction)
 
 # --- AUR Packages (Social) ---
-AUR:linuxqq-appimage                     # Tencent QQ (AppImage)
-AUR:wechat-appimage                      # WeChat (AppImage)
-AUR:ttf-jetbrains-maple-mono-nf-xx-xx    # Maple Mono NF font
-
-# --- Flatpak Packages (Productivity & Media) ---
-flatpak:com.github.unrud.VideoDownloader # Video Downloader (YouTube/Bilibili)
-flatpak:com.github.wwmm.easyeffects      # Audio Effects for PipeWire (Equalizer/Noise reduction)
-flatpak:com.obsproject.Studio            # OBS Studio (Streaming & Recording)
-flatpak:it.mijorus.gearlever             # AppImage Manager (Integrates AppImages)
+linuxqq-appimage                     # Tencent QQ (AppImage)
+wechat-appimage                      # WeChat (AppImage)
+video-downloader                     #Video Downloader (YouTube/Bilibili)

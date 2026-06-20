@@ -32,12 +32,12 @@ mousepad                                 # a minimal notebook or so called "text
 flclash                                  # Sometimes a detour is necessary to solve a problem
 easyeffects				 # Audio Effects for PipeWire
 # --- AUR Packages ---
-AUR:protonplus                               # manage proton 
-AUR:linuxqq-appimage                     # Tencent QQ (AppImage)
-AUR:wechat-appimage                      # WeChat (AppImage)
-AUR:lsfg-vk-bin                          # yellow duck frame generator
-AUR:mangojuice                       # GUI for mangohud                
-AUR:video-downloader                     # Download youtube or bilibili videos (based on yt-dlp)
-AUR:visual-studio-code-bin               # vscode 
-AUR:pins-git			                 # Manage .desktop
-AUR:gearlever				 # AppImage Manager
+protonplus                               # manage proton 
+linuxqq-appimage                     # Tencent QQ (AppImage)
+wechat-appimage                      # WeChat (AppImage)
+lsfg-vk-bin                          # yellow duck frame generator
+mangojuice                       # GUI for mangohud                
+video-downloader                     # Download youtube or bilibili videos (based on yt-dlp)
+visual-studio-code-bin               # vscode 
+pins-git			                 # Manage .desktop
+gearlever				 # AppImage Manager
