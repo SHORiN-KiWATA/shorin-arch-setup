@@ -18,7 +18,7 @@ lutris                                   # Gaming outside steam
 steam                                    # Gaming Platform (Valve)
 mangohud                                 # OSD tool for gaming (like msi afterburner)
 lact                                     # GPU Control Tool (Overclocking/Fan)
-wine                                     # run windows exe 
+#wine                                     # run windows exe 
 virt-manager                             # KVM qemu virtual machine
 lazyvim                                  # Great preset of neovim 
 neovim                                   # Advanced version of vim 
