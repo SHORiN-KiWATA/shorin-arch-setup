@@ -1,6 +1,4 @@
 patch:
-  ascii_composer:
-    good_old_caps_lock: true
   schema_list:
     - schema: rime_ice
     - schema: luna_pinyin_simp
