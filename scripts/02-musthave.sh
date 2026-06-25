@@ -11,6 +11,13 @@ check_root
 
 log ">>> Starting Phase 2: Essential (Must-have) Software & Drivers"
 
+SUDO_TEMP_FILE="/etc/sudoers.d/99_shorin_installer_temp"
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" >"$SUDO_TEMP_FILE"
+chmod 440 "$SUDO_TEMP_FILE"
+
+cleanup_sudo() { rm -f "$SUDO_TEMP_FILE"; }
+trap cleanup_sudo EXIT INT TERM
+
 # ------------------------------------------------------------------------------
 # 1. Btrfs Assistants & GRUB Snapshot Integration
 # ------------------------------------------------------------------------------
@@ -127,7 +134,7 @@ fi
 # ------------------------------------------------------------------------------
 section "Step 4/9" "Input Method (Fcitx5)"
 
-exe pacman -S --noconfirm --needed fcitx5-im fcitx5-rime rime-ice-git 
+exe as_user yay -S --noconfirm --needed fcitx5-shorin-patched-git fcitx5-configtool fcitx5-gtk fcitx5-qt fcitx5-rime rime-ice-git 
 
 success "Fcitx5 installed."
 

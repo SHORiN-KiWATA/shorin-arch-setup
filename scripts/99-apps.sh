@@ -369,27 +369,6 @@ if command -v lutris &> /dev/null; then
     log "Lutris detected. Installing 32-bit gaming dependencies..."
     pacman -S --noconfirm --needed alsa-plugins giflib glfw gst-plugins-base-libs lib32-alsa-plugins lib32-giflib lib32-gst-plugins-base-libs lib32-gtk3 lib32-libjpeg-turbo lib32-libva lib32-mpg123  lib32-openal libjpeg-turbo libva libxslt mpg123 openal ttf-liberation
 fi
-# --- Steam Locale Fix ---
-STEAM_desktop_modified=false
-NATIVE_DESKTOP="/usr/share/applications/steam.desktop"
-if [ -f "$NATIVE_DESKTOP" ]; then
-    log "Checking Native Steam..."
-    if ! grep -q "env LC_CTYPE=zh_CN.UTF-8" "$NATIVE_DESKTOP"; then
-        exe sed -i 's|^Exec=/usr/bin/steam|Exec=env LC_CTYPE=zh_CN.UTF-8 /usr/bin/steam|' "$NATIVE_DESKTOP"
-        exe sed -i 's|^Exec=steam|Exec=env LC_CTYPE=zh_CN.UTF-8 steam|' "$NATIVE_DESKTOP"
-        success "Patched Native Steam .desktop."
-        STEAM_desktop_modified=true
-    else
-        log "Native Steam already patched."
-    fi
-fi
-
-if flatpak list | grep -q "com.valvesoftware.Steam"; then
-    log "Checking Flatpak Steam..."
-    exe flatpak override --env=LANG=zh_CN.UTF-8 com.valvesoftware.Steam
-    success "Applied Flatpak Steam override."
-    STEAM_desktop_modified=true
-fi
 
 # --- [MOVED] LazyVim Configuration ---
 if [ "$INSTALL_LAZYVIM" = true ]; then
