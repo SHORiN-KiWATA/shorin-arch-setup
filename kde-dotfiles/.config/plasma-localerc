@@ -1,7 +1,2 @@
 [Formats]
-LANG=en_US.UTF-8
-LC_MESSAGES=zh_CN.UTF-8
-LC_TIME=zh_CN.UTF-8
-
-[Translations]
-LANGUAGE=zh_CN:en_US
+LANG=zh_CN.UTF-8
