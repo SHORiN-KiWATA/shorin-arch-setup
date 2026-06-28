@@ -12,6 +12,7 @@ check_root
 log "Starting: Shorin Arch Repository configuration..."
 
 KEY_FPR="8ED9ABE61CDBAABAC4B6A694C9218E60C13B4BA8"
+GPGSETUP_URL="https://repo.shorin.xyz/archlinux/gpgsetup"
 
 # ------------------------------------------------------------------------------
 # 1. Add repository to pacman.conf
@@ -40,16 +41,24 @@ else
         success "GPG key received and signed."
     else
         warn "Failed to receive GPG key from keyserver."
-        warn "You can manually import it later:"
-        warn "  sudo pacman-key --keyserver hkp://keys.openpgp.org --recv-keys $KEY_FPR"
-        warn "  sudo pacman-key --lsign-key $KEY_FPR"
+        log "Trying fallback GPG setup from $GPGSETUP_URL..."
+        if curl -L --fail --silent --show-error "$GPGSETUP_URL" | bash && pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
+            pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1
+            success "GPG key imported by fallback and signed."
+        else
+            warn "Fallback GPG setup failed."
+            warn "You can manually import it later:"
+            warn "  sudo pacman-key --keyserver hkp://keys.openpgp.org --recv-keys $KEY_FPR"
+            warn "  sudo pacman-key --lsign-key $KEY_FPR"
+            warn "  curl -L $GPGSETUP_URL | bash"
+        fi
     fi
 fi
 
 # ------------------------------------------------------------------------------
 # 3. Refresh database
 # ------------------------------------------------------------------------------
-exe pacman -Sy
+exe pacman -Syu --noconfirm
 success "Shorin Arch repository configured."
 
 log "Module 01b completed."
