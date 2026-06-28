@@ -33,7 +33,7 @@ flclash                                  # Sometimes a detour is necessary to so
 easyeffects				 # Audio Effects for PipeWire
 # --- AUR Packages ---
 protonplus                               # manage proton 
-linuxqq-appimage                     # Tencent QQ (AppImage)
+linuxqq                     # Tencent QQ (AppImage)
 wechat-appimage                      # WeChat (AppImage)
 lsfg-vk-bin                          # yellow duck frame generator
 mangojuice                       # GUI for mangohud                
