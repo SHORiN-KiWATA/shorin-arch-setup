@@ -165,8 +165,8 @@ select_desktop() {
 # --- Optional Modules Selection Menu (FZF Powered) ---
 select_optional_modules() {
     local OPTIONAL_MENU=(
-        "IWD WiFi Backend|01c-nm-backend.sh"
         "Shorin Arch Repository|01b-shorin-arch.sh"
+        "IWD WiFi Backend|01c-nm-backend.sh"
         "Windows Linux Dualboot Setup|02c-dualboot-fix.sh"
         "Hardware Drivers|03b-gpu-driver.sh"
         "Grub Themes|07-grub-theme.sh"
