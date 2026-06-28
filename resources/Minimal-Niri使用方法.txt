@@ -42,6 +42,13 @@ reboot 重启
 poweroff 关机
 suspend 挂起
 
+【输入法】
+super+空格或者Ctrl+空格切换输入法。第一次使用输入法有可能无法使用，重启一下输入法可以解决。
+切换为中文后f4可以打开菜单。如果出现卡A的情况可以试试按右shift解决。
+使用fcitx5-configtool可以对输入法进行细节配置
+如果输入法出现异常，看这个页面：https://github.com/SHORiN-KiWATA/Shorin-ArchLinux-Guide/wiki/%E4%B8%AD%E6%96%87%E8%BE%93%E5%85%A5%E6%B3%95
+
+
 【有趣实用的TUI软件（基于终端的用户交互程序）】
 命令：作用
 gdu：磁盘空间管理
