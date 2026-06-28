@@ -72,37 +72,37 @@ for cmd in curl tar git pv; do
 done
 
 if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
-    run_as_root pacman -Sy --noconfirm --needed "${MISSING_PKGS[@]}" >/dev/null 2>&1
+    run_as_root pacman -S --noconfirm --needed "${MISSING_PKGS[@]}" >/dev/null 2>&1
 fi
 
 is_china_environment() {
     local current_tz=""
-
+    
     if [ -L /etc/localtime ]; then
         current_tz=$(readlink -f /etc/localtime || true)
     fi
-
+    
     if [[ "$current_tz" == *"Asia/Shanghai"* ]]; then
         return 0
     fi
-
+    
     local country_code=""
     country_code=$(curl -fsS --max-time 2 https://ipinfo.io/country 2>/dev/null || true)
     country_code=${country_code//$'\r'/}
     country_code=${country_code//$'\n'/}
-
+    
     [ "$country_code" = "CN" ]
 }
 
 select_mirror() {
     local default_choice="1"
     local default_name="GitHub"
-
+    
     if is_china_environment; then
         default_choice="2"
         default_name="Gitee"
     fi
-
+    
     if [ -n "${MIRROR:-}" ]; then
         case "${MIRROR,,}" in
             github) SELECTED_MIRROR="GitHub" ;;
@@ -111,11 +111,11 @@ select_mirror() {
             *)
                 printf "%bError: Unknown MIRROR '%s'. Use github, gitee, or codeberg.%b\n" "$RED" "$MIRROR" "$NC"
                 exit 1
-                ;;
+            ;;
         esac
         return 0
     fi
-
+    
     printf "%b>>> Select download mirror for Shorin Arch Setup%b\n" "$BLUE" "$NC"
     printf "  [1] GitHub   https://github.com/SHORiN-KiWATA/shorin-arch-setup\n"
     printf "  [2] Gitee    https://gitee.com/shorinkiwata/shorin-arch-setup\n"
@@ -123,11 +123,11 @@ select_mirror() {
     printf "\n"
     printf "Default: %s. Press Enter to use default.\n" "$default_name"
     printf "Choice [1-3]: "
-
+    
     local choice=""
     read -r choice < /dev/tty || true
     choice=${choice:-$default_choice}
-
+    
     case "$choice" in
         1) SELECTED_MIRROR="GitHub" ;;
         2) SELECTED_MIRROR="Gitee" ;;
@@ -135,7 +135,7 @@ select_mirror() {
         *)
             printf "%bError: Invalid mirror choice '%s'.%b\n" "$RED" "$choice" "$NC"
             exit 1
-            ;;
+        ;;
     esac
 }
 
@@ -144,13 +144,13 @@ select_mirror
 case "$SELECTED_MIRROR" in
     GitHub)
         TARBALL_URL="https://github.com/SHORiN-KiWATA/shorin-arch-setup/archive/refs/heads/${TARGET_BRANCH}.tar.gz"
-        ;;
+    ;;
     Gitee)
         TARBALL_URL="https://gitee.com/shorinkiwata/shorin-arch-setup/repository/archive/${TARGET_BRANCH}.tar.gz"
-        ;;
+    ;;
     Codeberg)
         TARBALL_URL="https://codeberg.org/shorinkiwata/shorin-arch-setup/archive/${TARGET_BRANCH}.tar.gz"
-        ;;
+    ;;
 esac
 
 printf "%b>>> Preparing to install from %s branch: %s on %s%b\n" "$BLUE" "$SELECTED_MIRROR" "$TARGET_BRANCH" "$ARCH_NAME" "$NC"
