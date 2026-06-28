@@ -65,7 +65,7 @@ show_banner() {
 select_desktop() {
     if ! command -v fzf &> /dev/null; then
         echo -e "   ${DIM}Installing fzf for interactive menu...${NC}"
-        pacman -Sy --noconfirm --needed fzf >/dev/null 2>&1
+        pacman -S --noconfirm --needed fzf >/dev/null 2>&1
     fi
     
     local MENU_ITEMS=(
@@ -252,40 +252,6 @@ sys_dashboard() {
 
 # --- Main Execution ---
 
-select_desktop
-select_optional_modules
-clear
-show_banner
-sys_dashboard
-
-MANDATORY_MODULES=(
-    "00-btrfs-init.sh"
-    "01a-base.sh"
-    "02a-user.sh"
-    "02b-musthave.sh"
-    "03c-snapshot-before-desktop.sh"
-    "05-verify-desktop.sh"
-)
-
-ALL_MODULES=("${MANDATORY_MODULES[@]}" "${OPTIONAL_MODULES[@]}")
-
-case "$DESKTOP_ENV" in
-    shorinniri)    ALL_MODULES+=("04-niri-setup.sh") ;;
-    minimalniri)   ALL_MODULES+=("04j-minimal-niri.sh") ;;
-    kde)           ALL_MODULES+=("04b-kdeplasma-setup.sh") ;;
-    end4)          ALL_MODULES+=("04e-illogical-impulse-end4-quickshell.sh") ;;
-    dms)           ALL_MODULES+=("04c-dms-quickshell.sh") ;;
-    inir)          ALL_MODULES+=("04m-inir-quickshell.sh") ;;
-    shorindmsgit)  ALL_MODULES+=("04h-shorindms-quickshell.sh"); export SHORIN_DMS_GIT=1 ;;
-    hyprniri)      ALL_MODULES+=("04i-shorin-hyprniri-quickshell.sh") ;;
-    shorinnocniri) ALL_MODULES+=("04k-shorin-noctalia-quickshell.sh") ;;
-    caelestia)     ALL_MODULES+=("04g-caelestia-quickshell.sh") ;;
-    gnome)         ALL_MODULES+=("04d-gnome.sh") ;;
-    minimallabwc)  ALL_MODULES+=("04l-minimal-labwc.sh") ;;
-    none)          log "Skipping Desktop Environment installation." ;;
-    *)             warn "Unknown selection, skipping desktop setup." ;;
-esac
-
 if [ ! -f "$STATE_FILE" ]; then touch "$STATE_FILE"; fi
 
 migrate_progress_entry() {
@@ -302,11 +268,6 @@ migrate_progress_entry "01c-shorin-arch.sh" "01b-shorin-arch.sh"
 migrate_progress_entry "02a-dualboot-fix.sh" "02c-dualboot-fix.sh"
 migrate_progress_entry "02-musthave.sh" "02b-musthave.sh"
 migrate_progress_entry "03a-user.sh" "02a-user.sh"
-
-mapfile -t MODULES < <(printf "%s\n" "${ALL_MODULES[@]}" | sort -u)
-
-TOTAL_STEPS=${#MODULES[@]}
-CURRENT_STEP=0
 
 log "Initializing installer sequence..."
 sleep 0.5
@@ -410,19 +371,58 @@ fi
 # ---- update keyring-----
 section "Pre-Flight" "Update Keyring"
 
-exe pacman -Sy
+exe pacman -Syu --noconfirm
 exe pacman -S --noconfirm archlinux-keyring
 
 # --- Global Update ---
 section "Pre-Flight" "System update"
 log "Ensuring system is up-to-date..."
 
-if exe pacman -Syu --noconfirm; then
+if exe pacman -Syyu --noconfirm; then
     success "System Updated."
 else
     error "System update failed. Check your network."
     exit 1
 fi
+
+select_desktop
+select_optional_modules
+clear
+show_banner
+sys_dashboard
+
+MANDATORY_MODULES=(
+    "00-btrfs-init.sh"
+    "01a-base.sh"
+    "02a-user.sh"
+    "02b-musthave.sh"
+    "03c-snapshot-before-desktop.sh"
+    "05-verify-desktop.sh"
+)
+
+ALL_MODULES=("${MANDATORY_MODULES[@]}" "${OPTIONAL_MODULES[@]}")
+
+case "$DESKTOP_ENV" in
+    shorinniri)    ALL_MODULES+=("04-niri-setup.sh") ;;
+    minimalniri)   ALL_MODULES+=("04j-minimal-niri.sh") ;;
+    kde)           ALL_MODULES+=("04b-kdeplasma-setup.sh") ;;
+    end4)          ALL_MODULES+=("04e-illogical-impulse-end4-quickshell.sh") ;;
+    dms)           ALL_MODULES+=("04c-dms-quickshell.sh") ;;
+    inir)          ALL_MODULES+=("04m-inir-quickshell.sh") ;;
+    shorindmsgit)  ALL_MODULES+=("04h-shorindms-quickshell.sh"); export SHORIN_DMS_GIT=1 ;;
+    hyprniri)      ALL_MODULES+=("04i-shorin-hyprniri-quickshell.sh") ;;
+    shorinnocniri) ALL_MODULES+=("04k-shorin-noctalia-quickshell.sh") ;;
+    caelestia)     ALL_MODULES+=("04g-caelestia-quickshell.sh") ;;
+    gnome)         ALL_MODULES+=("04d-gnome.sh") ;;
+    minimallabwc)  ALL_MODULES+=("04l-minimal-labwc.sh") ;;
+    none)          log "Skipping Desktop Environment installation." ;;
+    *)             warn "Unknown selection, skipping desktop setup." ;;
+esac
+
+mapfile -t MODULES < <(printf "%s\n" "${ALL_MODULES[@]}" | sort -u)
+
+TOTAL_STEPS=${#MODULES[@]}
+CURRENT_STEP=0
 
 # --- Module Loop ---
 for module in "${MODULES[@]}"; do

@@ -27,7 +27,7 @@ if command -v nvim &> /dev/null; then
 else
     log "Neovim or Nano not found. Installing Vim..."
     if ! command -v vim &> /dev/null; then
-        exe pacman -Syu --noconfirm gvim
+        exe pacman -S --noconfirm --needed gvim
     fi
 fi
 
@@ -55,7 +55,7 @@ else
     exe sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
     
     log "Refreshing database..."
-    exe pacman -Syu
+    exe pacman -Syu --noconfirm
     success "[multilib] enabled."
 fi
 
@@ -163,7 +163,7 @@ fi
 
 log "Installing archlinuxcn-keyring..."
 # Keyring installation often needs -Sy specifically, but -Syu is safe too
-exe pacman -Syu --noconfirm archlinuxcn-keyring
+exe pacman -Syu --noconfirm --needed archlinuxcn-keyring
 success "ArchLinuxCN configured."
 # ------------------------------------------------------------------------------
 # 6. Install AUR Helpers
