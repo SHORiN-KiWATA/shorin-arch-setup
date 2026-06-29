@@ -61,7 +61,7 @@ pulsemixer：tui音量调整工具
 
 【运行Windows软件】
 >https://github.com/SHORiN-KiWATA/proton-wrapper
-此功能由 `shorin-proton-wrapper-git` AUR包提供。双击 .exe 文件会自动用“运行Windows软件”打开，会自动使用 DW-Proton 在 ~/.proton 目录初始化运行环境。如果用“设置Windows软件运行环境”打开的话可以进行各种自定义设置，如运行器、MangoHud 屏显（帧数、硬件占用之类的）、GameScope（在如果遇到窗口异常、交互异常的话可以尝试用 GameScope 打开）等。
+此功能由 `shorin-proton-wrapper-git` AUR包提供。双击 .exe 文件会自动用“运行Windows软件”打开，会自动使用 DW-Proton 在 ~/.proton 目录初始化运行环境。如果用“设置Windows软件运行环境”打开的话可以进行各种自定义设置，如运行器、MangoHud 屏显（帧数、硬件占用之类的）、GameScope（在如果遇到窗口异常、交互异常的话可以尝试用 GameScope 打开）等。如果 DW-Proton 无法运行软件，可以试试用 GE-Proton，如果连 GE-Proton 也不行，别的大概率也不行，建议从环境变量、运行参数入手解决问题，或者尝试兼容层以外的运行方案。
 
 
 【如果不想要了或者安装失败了可以回档】
