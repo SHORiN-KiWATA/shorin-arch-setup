@@ -410,8 +410,9 @@ fi
 # ---- update keyring-----
 section "Pre-Flight" "Update Keyring"
 
-exe pacman -Syu --noconfirm
-exe pacman -S --noconfirm archlinux-keyring
+exe pacman -Sy --noconfirm archlinux-keyring
+exe pacman -Su --noconfirm
+
 
 # --- Global Update ---
 section "Pre-Flight" "System update"

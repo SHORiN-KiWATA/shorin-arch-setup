@@ -161,18 +161,29 @@ EOT
     success "Mirrors added based on timezone."
 fi
 
+log "Refreshing official archlinux-keyring first ..."
+exe pacman -Sy --noconfirm archlinux-keyring
+
+log "Upgrading system..."
+exe pacman -Su --noconfirm
+
 log "Installing archlinuxcn-keyring..."
-# Keyring installation often needs -Sy specifically, but -Syu is safe too
-exe pacman -Syu --noconfirm --needed archlinuxcn-keyring
-success "ArchLinuxCN configured."
+if exe pacman -S --noconfirm --needed archlinuxcn-keyring; then
+    success "ArchLinuxCN configured."
+else
+    error "archlinuxcn-keyring installation failed."
+fi
 # ------------------------------------------------------------------------------
 # 6. Install AUR Helpers
 # ------------------------------------------------------------------------------
 section "Step 6/6" "AUR Helpers"
 
 log "Installing yay and paru..."
-exe pacman -S --noconfirm --needed base-devel yay paru
-success "Helpers installed."
+if exe pacman -S --noconfirm --needed base-devel yay paru; then
+    success "Helpers installed."
+else
+    error "AUR helpers installation failed."
+fi
 
 
 # ------------------------------------------------------------------------------
