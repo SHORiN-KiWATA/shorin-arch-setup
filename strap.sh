@@ -49,6 +49,31 @@ run_as_root() {
     fi
 }
 
+ensure_pacman_unlocked() {
+    local lock_file="/var/lib/pacman/db.lck"
+
+    if [ ! -e "$lock_file" ]; then
+        return 0
+    fi
+
+    printf "%b>>> pacman lock detected: %s%b\n" "$BLUE" "$lock_file" "$NC"
+
+    if command -v fuser >/dev/null 2>&1 && fuser "$lock_file" >/dev/null 2>&1; then
+        printf "%bError: pacman database is currently locked by another process.%b\n" "$RED" "$NC"
+        fuser -v "$lock_file" || true
+        exit 1
+    fi
+
+    if pgrep -x pacman >/dev/null 2>&1; then
+        printf "%bError: pacman is still running. Please wait and rerun this script.%b\n" "$RED" "$NC"
+        pgrep -af pacman || true
+        exit 1
+    fi
+
+    printf "%b>>> Stale pacman lock detected, removing it.%b\n" "$BLUE" "$NC"
+    run_as_root rm -f "$lock_file"
+}
+
 # --- [配置区域] ---
 TARGET_BRANCH="${BRANCH:-main}"
 TARGET_DIR="/tmp/shorin-arch-setup"
@@ -72,6 +97,7 @@ for cmd in curl tar git pv; do
 done
 
 if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+    ensure_pacman_unlocked
     run_as_root pacman -S --noconfirm --needed "${MISSING_PKGS[@]}" >/dev/null 2>&1
 fi
 
@@ -185,6 +211,7 @@ done
 
 # 4. 如果 pv 是本脚本安装的，则在使用后卸载
 if [ "$INSTALLED_PV_FLAG" -eq 1 ]; then
+    ensure_pacman_unlocked
     run_as_root pacman -Rns --noconfirm pv >/dev/null 2>&1
 fi
 
