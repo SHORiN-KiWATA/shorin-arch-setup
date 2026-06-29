@@ -21,3 +21,5 @@ shorin-contrib-git                        # shorin utils
 rime-wanxiang-gram-zh-hans                # ime model
 shorin-proton-wrapper-git                 # shorin's proton wrapper 
 ttf-jetbrains-maple-mono-nf-xx-xx         # Maple Mono NF font
+miyu					  # Ai agent
+opencode				  # Coding Ai agent
