@@ -35,22 +35,20 @@ fi
 if pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
     success "GPG key already present."
 else
-    log "Receiving GPG key from keyserver..."
-    if pacman-key --keyserver hkp://keys.openpgp.org --recv-keys "$KEY_FPR" 2>/dev/null; then
+    log "Importing GPG key from $GPGSETUP_URL..."
+    if curl -L --fail --silent --show-error "$GPGSETUP_URL" | bash && pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
         pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1
-        success "GPG key received and signed."
+        success "GPG key imported via gpgsetup and signed."
     else
-        warn "Failed to receive GPG key from keyserver."
-        log "Trying fallback GPG setup from $GPGSETUP_URL..."
-        if curl -L --fail --silent --show-error "$GPGSETUP_URL" | bash && pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
+        warn "gpgsetup failed, trying keyserver fallback..."
+        if pacman-key --keyserver hkp://keys.openpgp.org --recv-keys "$KEY_FPR" 2>/dev/null; then
             pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1
-            success "GPG key imported by fallback and signed."
+            success "GPG key received from keyserver and signed."
         else
-            warn "Fallback GPG setup failed."
-            warn "You can manually import it later:"
+            warn "Both methods failed. You can manually import:"
+            warn "  curl -L $GPGSETUP_URL | bash"
             warn "  sudo pacman-key --keyserver hkp://keys.openpgp.org --recv-keys $KEY_FPR"
             warn "  sudo pacman-key --lsign-key $KEY_FPR"
-            warn "  curl -L $GPGSETUP_URL | bash"
         fi
     fi
 fi
