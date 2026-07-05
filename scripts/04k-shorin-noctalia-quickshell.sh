@@ -93,13 +93,14 @@ as_user sed -i "s/shorin/$TARGET_USER/g" "$HOME_DIR/.config/gtk-3.0/bookmarks"
 # --- Terminal Utilities ---
 section "Shorin Noctalia" "Terminal Utilities"
 log "Installing terminal utilities..."
-TERM_PKGS="linuxqq-clipsync-git xdg-terminal-exec bat fuzzel wf-recorder wl-screenrec-git ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava imagemagick wl-clipboard cliphist shorin-contrib-git shorin-proton-wrapper-git slurp opencode rime-wanxiang-gram-zh-hans"
+TERM_PKGS="linuxqq-clipsync-git xdg-terminal-exec bat fuzzel wf-recorder wl-screenrec-git ttf-jetbrains-maple-mono-nf-xx-xx eza zoxide starship jq fish libnotify timg imv cava miyu imagemagick wl-clipboard cliphist shorin-contrib-git shorin-proton-wrapper-git slurp opencode rime-wanxiang-gram-zh-hans"
 
 echo "$TERM_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
 # shorin-contrib
 log "Linking shorin-contrib..."
 as_user shorin link
+as_user miyu fish-init
 # 默认终端处理
 log "Configuring default terminal and templates..."
 if ! grep -q "kitty" "$HOME_DIR/.config/xdg-terminals.list"; then

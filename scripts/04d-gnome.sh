@@ -58,7 +58,7 @@ trap cleanup_sudo EXIT INT TERM
 section "Step 1" "Install base pkgs"
 log "Installing GNOME and base tools..."
 
-GNOME_BASE_PKGS="gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid loupe gnome-control-center bazaar flatpak file-roller nautilus-python qt5-wayland qt6-wayland firefox nm-connection-editor pacman-contrib dnsmasq ttf-jetbrains-mono-nerd"
+GNOME_BASE_PKGS="gnome-desktop gnome-backgrounds gnome-tweaks gdm ghostty celluloid loupe gnome-control-center bazaar flatpak file-roller nautilus-python qt5-wayland qt6-wayland firefox nm-connection-editor pacman-contrib dnsmasq ttf-jetbrains-mono-nerd miyu"
 echo "$GNOME_BASE_PKGS" >> "$VERIFY_LIST"
 
 if exe as_user yay -S --noconfirm --needed --answerdiff=None --answerclean=None $GNOME_BASE_PKGS; then
@@ -369,6 +369,7 @@ echo "$SHELL_TOOLS_PKGS" >> "$VERIFY_LIST"
 exe as_user paru -S --noconfirm --needed $SHELL_TOOLS_PKGS
 
 as_user shorin link
+as_user miyu fish-init
 
 
 
