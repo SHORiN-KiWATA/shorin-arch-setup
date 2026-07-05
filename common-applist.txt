@@ -37,7 +37,6 @@ linuxqq                     # Tencent QQ
 wechat-appimage                      # WeChat (AppImage)
 lsfg-vk-bin                          # yellow duck frame generator
 mangojuice                       # GUI for mangohud                
-video-downloader                     # Download youtube or bilibili videos (based on yt-dlp)
 visual-studio-code-bin               # vscode 
 pins-git			                 # Manage .desktop
 gearlever				 # AppImage Manager
