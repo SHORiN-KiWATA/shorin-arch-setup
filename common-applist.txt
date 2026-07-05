@@ -31,7 +31,6 @@ pavucontrol                              # sound config GUI
 mousepad                                 # a minimal notebook or so called "text editor"
 flclash                                  # Sometimes a detour is necessary to solve a problem
 easyeffects				 # Audio Effects for PipeWire
-ntfsprogs                                # NTFS userspace utilities
 
 # --- AUR Packages ---
 protonplus                               # manage proton 
