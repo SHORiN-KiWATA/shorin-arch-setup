@@ -184,7 +184,7 @@ binds {
     Mod+Ctrl+R { reset-window-height; }
 
     Mod+F  hotkey-overlay-title="最大化 maximize" { maximize-column; }
-    Mod+Alt+F hotkey-overlay-title="全屏 fullscreen"  { fullscreen-window; }
+    Mod+Alt+F hotkey-overlay-title="全屏 fullscreen"  { maximize-window-to-edges; }
 
     // 增加窗口宽度占满空闲空间
     Mod+Ctrl+F { expand-column-to-available-width; }
