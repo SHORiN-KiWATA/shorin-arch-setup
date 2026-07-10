@@ -27,6 +27,6 @@ gearlever                                # AppImage Manager (Integrates AppImage
 easyeffects                              # Audio Effects for PipeWire (Equalizer/Noise reduction)
 
 # --- AUR Packages (Social) ---
-linuxqq-appimage                     # Tencent QQ (AppImage)
+linuxqq                     # Tencent QQ (AppImage)
 wechat-appimage                      # WeChat (AppImage)
 video-downloader                     #Video Downloader (YouTube/Bilibili)
