@@ -100,6 +100,7 @@ success "Audio setup complete."
 # 3. Input Method
 # ------------------------------------------------------------------------------
 section "Step 3/8" "Input Method (Fcitx5)"
+exe pacman -Rns --noconfirm fcitx5-im || true
 exe as_user yay -S --noconfirm --needed fcitx5-shorin-patched-git
 exe as_user yay -S --noconfirm --needed fcitx5-configtool fcitx5-gtk fcitx5-qt fcitx5-rime rime-ice-git
 
