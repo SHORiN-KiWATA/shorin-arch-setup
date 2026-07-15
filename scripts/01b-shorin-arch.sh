@@ -5,6 +5,7 @@
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
@@ -12,7 +13,7 @@ check_root
 log "Starting: Shorin Arch Repository configuration..."
 
 KEY_FPR="8ED9ABE61CDBAABAC4B6A694C9218E60C13B4BA8"
-GPGSETUP_URL="https://repo.shorin.xyz/archlinux/gpgsetup"
+KEY_FILE="$PARENT_DIR/resources/shorin-arch/shorin-arch.asc"
 
 # ------------------------------------------------------------------------------
 # 1. Add repository to pacman.conf
@@ -32,25 +33,39 @@ fi
 # ------------------------------------------------------------------------------
 # 2. Import and sign GPG key
 # ------------------------------------------------------------------------------
+if [ ! -r "$KEY_FILE" ]; then
+    error "Bundled GPG public key not found: $KEY_FILE"
+    exit 1
+fi
+
+KEY_FILE_FPR=$(gpg --batch --with-colons --show-keys "$KEY_FILE" 2>/dev/null \
+| awk -F: '$1 == "fpr" { print $10; exit }')
+
+if [ "$KEY_FILE_FPR" != "$KEY_FPR" ]; then
+    error "Bundled GPG public key fingerprint mismatch."
+    error "Expected: $KEY_FPR"
+    error "Found: ${KEY_FILE_FPR:-unreadable key}"
+    exit 1
+fi
+
 if pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
     success "GPG key already present."
 else
-    log "Importing GPG key from $GPGSETUP_URL..."
-    if curl -L --fail --silent --show-error "$GPGSETUP_URL" | bash && pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
-        pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1
-        success "GPG key imported via gpgsetup and signed."
-    else
-        warn "gpgsetup failed, trying keyserver fallback..."
-        if pacman-key --keyserver hkp://keys.openpgp.org --recv-keys "$KEY_FPR" 2>/dev/null; then
-            pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1
-            success "GPG key received from keyserver and signed."
-        else
-            warn "Both methods failed. You can manually import:"
-            warn "  curl -L $GPGSETUP_URL | bash"
-            warn "  sudo pacman-key --keyserver hkp://keys.openpgp.org --recv-keys $KEY_FPR"
-            warn "  sudo pacman-key --lsign-key $KEY_FPR"
-        fi
+    log "Importing bundled GPG key from $KEY_FILE..."
+    if ! pacman-key --add "$KEY_FILE" >/dev/null 2>&1 \
+    || ! pacman-key --list-keys "$KEY_FPR" >/dev/null 2>&1; then
+        error "Failed to import the bundled GPG public key."
+        exit 1
     fi
+    success "Bundled GPG key imported."
+fi
+
+log "Locally signing GPG key..."
+if pacman-key --lsign-key "$KEY_FPR" >/dev/null 2>&1; then
+    success "GPG key locally signed and trusted."
+else
+    error "Failed to locally sign GPG key: $KEY_FPR"
+    exit 1
 fi
 
 # ------------------------------------------------------------------------------
