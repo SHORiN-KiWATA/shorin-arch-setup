@@ -125,7 +125,7 @@ log "Cleaning up legacy TTY autologin configs..."
 if [[ "$SKIP_DM" == false ]]; then
     as_user "$AUR_HELPER" -S --noconfirm --needed greetd-dms-greeter-bin
     
-    as_user printf '\\n' | DMS_PRIVESC=sudo dms greeter install
+    as_user printf '\\n' | as_user DMS_PRIVESC=sudo dms greeter install
 fi
 
 success "Shorin DMS Niri Installation Complete!"
