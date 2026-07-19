@@ -2,7 +2,7 @@ if status is-interactive
     # Commands to run in interactive sessions can go here
 end
 set fish_greeting ""
-set -p PATH ~/.local/bin
+fish_add_path ~/.local/bin
 starship init fish | source
 zoxide init fish --cmd cd | source
 
@@ -15,15 +15,20 @@ function y
 	rm -f -- "$tmp"
 end
 
-function cat 
-	command bat $argv
+function cat
+	command bat --theme="base16" -- $argv
 end
+
 function ls
-	command eza --icons $argv
+	command eza --icons=auto -- $argv
 end
 
 function lt
-	command eza --icons --tree $argv
+	command eza --icons=auto --tree -- $argv
+end
+
+function la
+	command eza -l --icons=auto -- $argv
 end
 # grub
 abbr grub 'LANGUAGE=en_US.UTF-8 LANG=en_US.UTF-8 sudo grub-mkconfig -o /boot/grub/grub.cfg'
