@@ -149,10 +149,16 @@ success "Power profiles daemon enabled."
 # ------------------------------------------------------------------------------
 # 6. Fastfetch
 # ------------------------------------------------------------------------------
-section "Step 6/8" "Fastfetch"
+section "Step 6/8" "Usefull Tools"
 
-exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl
-success "Fastfetch installed."
+exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl 
+
+if lscpu | grep -qi "AMD"; then
+    log "AMD CPU detected. Installing AMD-specific dependencies for btop ..."
+    exe pacman -S --noconfirm --needed rocm-smi-lib
+fi
+
+success "Useful tools installed."
 
 # ------------------------------------------------------------------------------
 # 7. Pacman UI
