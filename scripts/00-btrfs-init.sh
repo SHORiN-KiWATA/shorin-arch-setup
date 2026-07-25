@@ -67,6 +67,15 @@ fi
 section "Safety Net" "GRUB-Btrfs Decoupling"
 
 if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
+    UKI_ENABLED=false
+    if grep -qsE '^[[:space:]]*[[:alnum:]_]+_uki[[:space:]]*=' /etc/mkinitcpio.d/*.preset 2>/dev/null ||
+       grep -qsE '^[[:space:]]*layout[[:space:]]*=[[:space:]]*uki([[:space:]]|$)' /etc/kernel/install.conf 2>/dev/null; then
+        UKI_ENABLED=true
+    fi
+
+    if [ "$UKI_ENABLED" = true ]; then
+        log "UKI configuration detected. Skipping GRUB stub configuration."
+    else
     FOUND_ESP_GRUB=""
     VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat | grep -v "^/boot$")
 
@@ -111,6 +120,7 @@ EOF
         else
             echo "GRUB_SAVEDEFAULT=true" >> /etc/default/grub
         fi
+    fi
     fi
 
     # 【关键】这里生成的是最干净的、没有快照菜单的 grub.cfg
