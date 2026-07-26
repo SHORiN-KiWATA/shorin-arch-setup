@@ -27,21 +27,25 @@ set undofile
 silent !mkdir -p ~/.cache/vim/undo
 set undodir=~/.cache/vim/undo
 
-" === 将 y (yank 复制) 映射到系统剪贴板 (+ 寄存器) ===
-nnoremap y "+y
-vnoremap y "+y
-nnoremap Y "+Y
+" === 系统剪贴板映射：仅在 vim 编译了 +clipboard 时启用（Arch 下需要 gvim 包）===
+" 没有 +clipboard 时不做任何映射，y/x/p 保持 Vim 默认行为
+if has('clipboard')
+  " === 将 y (yank 复制) 映射到系统剪贴板 (+ 寄存器) ===
+  nnoremap y "+y
+  vnoremap y "+y
+  nnoremap Y "+Y
 
-" === 将 x (剪切单个字符/选中块) 映射到系统剪贴板 ===
-nnoremap x "+x
-vnoremap x "+x
+  " === 将 x (剪切单个字符/选中块) 映射到系统剪贴板 ===
+  nnoremap x "+x
+  vnoremap x "+x
 
-" === 可选：如果你希望 p (paste 粘贴) 默认从系统剪贴板粘贴 ===
-" 因为你把 y 和 x 放到了系统剪贴板，你通常也会希望 p 直接粘贴系统剪贴板的内容
-nnoremap p "+p
-vnoremap p "+p
-nnoremap P "+P
-vnoremap P "+P
+  " === 可选：如果你希望 p (paste 粘贴) 默认从系统剪贴板粘贴 ===
+  " 因为你把 y 和 x 放到了系统剪贴板，你通常也会希望 p 直接粘贴系统剪贴板的内容
+  nnoremap p "+p
+  vnoremap p "+p
+  nnoremap P "+P
+  vnoremap P "+P
+endif
 
 " 接管鼠标事件
 set mouse=a
