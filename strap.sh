@@ -36,7 +36,22 @@ if [ "$ARCH" != "x86_64" ]; then
 fi
 ARCH_NAME="amd64"
 
-# 3. 权限封装：是 root 直接运行，不是 root 则通过 sudo 运行
+# 3. 检查是否在 Arch Linux Live 环境中运行（禁止在 Live 环境执行）
+is_live_environment() {
+    [ -d /run/archiso ] && return 0
+    local root_fs
+    root_fs=$(awk '$2 == "/" {print $3}' /proc/mounts 2>/dev/null || true)
+    [ "$root_fs" = "overlay" ] && return 0
+    return 1
+}
+
+if is_live_environment; then
+    printf "%bError: This script cannot be run from the Arch Linux live environment.%b\n" "$RED" "$NC"
+    printf "Please boot into an installed system and run this script again.\n"
+    exit 1
+fi
+
+# 4. 权限封装：是 root 直接运行，不是 root 则通过 sudo 运行
 run_as_root() {
     if [ "$(id -u)" -eq 0 ]; then
         "$@"
@@ -47,31 +62,6 @@ run_as_root() {
         fi
         sudo "$@"
     fi
-}
-
-ensure_pacman_unlocked() {
-    local lock_file="/var/lib/pacman/db.lck"
-
-    if [ ! -e "$lock_file" ]; then
-        return 0
-    fi
-
-    printf "%b>>> pacman lock detected: %s%b\n" "$BLUE" "$lock_file" "$NC"
-
-    if command -v fuser >/dev/null 2>&1 && fuser "$lock_file" >/dev/null 2>&1; then
-        printf "%bError: pacman database is currently locked by another process.%b\n" "$RED" "$NC"
-        fuser -v "$lock_file" || true
-        exit 1
-    fi
-
-    if pgrep -x pacman >/dev/null 2>&1; then
-        printf "%bError: pacman is still running. Please wait and rerun this script.%b\n" "$RED" "$NC"
-        pgrep -af pacman || true
-        exit 1
-    fi
-
-    printf "%b>>> Stale pacman lock detected, removing it.%b\n" "$BLUE" "$NC"
-    run_as_root rm -f "$lock_file"
 }
 
 # --- [配置区域] ---
@@ -97,38 +87,37 @@ for cmd in curl tar git pv; do
 done
 
 if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
-    ensure_pacman_unlocked
     run_as_root pacman -S --noconfirm --needed "${MISSING_PKGS[@]}" >/dev/null 2>&1
 fi
 
 is_china_environment() {
     local current_tz=""
-    
+
     if [ -L /etc/localtime ]; then
         current_tz=$(readlink -f /etc/localtime || true)
     fi
-    
+
     if [[ "$current_tz" == *"Asia/Shanghai"* ]]; then
         return 0
     fi
-    
+
     local country_code=""
     country_code=$(curl -fsS --max-time 2 https://ipinfo.io/country 2>/dev/null || true)
     country_code=${country_code//$'\r'/}
     country_code=${country_code//$'\n'/}
-    
+
     [ "$country_code" = "CN" ]
 }
 
 select_mirror() {
     local default_choice="1"
     local default_name="GitHub"
-    
+
     if is_china_environment; then
         default_choice="2"
         default_name="Gitee"
     fi
-    
+
     if [ -n "${MIRROR:-}" ]; then
         case "${MIRROR,,}" in
             github) SELECTED_MIRROR="GitHub" ;;
@@ -137,11 +126,11 @@ select_mirror() {
             *)
                 printf "%bError: Unknown MIRROR '%s'. Use github, gitee, or codeberg.%b\n" "$RED" "$MIRROR" "$NC"
                 exit 1
-            ;;
+                ;;
         esac
         return 0
     fi
-    
+
     printf "%b>>> Select download mirror for Shorin Arch Setup%b\n" "$BLUE" "$NC"
     printf "  [1] GitHub   https://github.com/SHORiN-KiWATA/shorin-arch-setup\n"
     printf "  [2] Gitee    https://gitee.com/shorinkiwata/shorin-arch-setup\n"
@@ -149,11 +138,11 @@ select_mirror() {
     printf "\n"
     printf "Default: %s. Press Enter to use default.\n" "$default_name"
     printf "Choice [1-3]: "
-    
+
     local choice=""
     read -r choice < /dev/tty || true
     choice=${choice:-$default_choice}
-    
+
     case "$choice" in
         1) SELECTED_MIRROR="GitHub" ;;
         2) SELECTED_MIRROR="Gitee" ;;
@@ -161,7 +150,7 @@ select_mirror() {
         *)
             printf "%bError: Invalid mirror choice '%s'.%b\n" "$RED" "$choice" "$NC"
             exit 1
-        ;;
+            ;;
     esac
 }
 
@@ -170,13 +159,13 @@ select_mirror
 case "$SELECTED_MIRROR" in
     GitHub)
         TARBALL_URL="https://github.com/SHORiN-KiWATA/shorin-arch-setup/archive/refs/heads/${TARGET_BRANCH}.tar.gz"
-    ;;
+        ;;
     Gitee)
         TARBALL_URL="https://gitee.com/shorinkiwata/shorin-arch-setup/repository/archive/${TARGET_BRANCH}.tar.gz"
-    ;;
+        ;;
     Codeberg)
         TARBALL_URL="https://codeberg.org/shorinkiwata/shorin-arch-setup/archive/${TARGET_BRANCH}.tar.gz"
-    ;;
+        ;;
 esac
 
 printf "%b>>> Preparing to install from %s branch: %s on %s%b\n" "$BLUE" "$SELECTED_MIRROR" "$TARGET_BRANCH" "$ARCH_NAME" "$NC"
@@ -211,7 +200,6 @@ done
 
 # 4. 如果 pv 是本脚本安装的，则在使用后卸载
 if [ "$INSTALLED_PV_FLAG" -eq 1 ]; then
-    ensure_pacman_unlocked
     run_as_root pacman -Rns --noconfirm pv >/dev/null 2>&1
 fi
 
