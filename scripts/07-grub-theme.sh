@@ -89,20 +89,6 @@ cleanup_minegrub() {
 # ------------------------------------------------------------------------------
 section "Step 1/7" "General GRUB Settings"
 
-if [ -L "/boot/grub" ]; then
-    LINK_TARGET=$(readlink -f "/boot/grub" || true)
-    
-    if [[ "$LINK_TARGET" == "/efi/grub" ]] || [[ "$LINK_TARGET" == "/boot/efi/grub" ]]; then
-        log "Detected /boot/grub linked to ESP ($LINK_TARGET). Enabling GRUB savedefault..."
-        set_grub_value "GRUB_DEFAULT" "saved"
-        set_grub_value "GRUB_SAVEDEFAULT" "true"
-    else
-        log "Skipping savedefault: /boot/grub links to $LINK_TARGET (not /efi/grub or /boot/efi/grub)."
-    fi
-else
-    log "Skipping savedefault: /boot/grub is not a symbolic link."
-fi
-
 log "Configuring kernel boot parameters for detailed logs and performance..."
 manage_kernel_param "remove" "quiet"
 manage_kernel_param "remove" "splash"

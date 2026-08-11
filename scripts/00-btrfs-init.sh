@@ -62,58 +62,21 @@ if findmnt -n -o FSTYPE /home | grep -q "btrfs"; then
 fi
 
 # ------------------------------------------------------------------------------
-# 2. Advanced Btrfs-GRUB Decoupling (Pure Base)
+# 2. GRUB Boot Memory & Btrfs Environment Block
 # ------------------------------------------------------------------------------
-section "Safety Net" "GRUB-Btrfs Decoupling"
+section "Safety Net" "GRUB Btrfs Environment Block"
 
 if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
     UKI_ENABLED=false
     if grep -qsE '^[[:space:]]*[[:alnum:]_]+_uki[[:space:]]*=' /etc/mkinitcpio.d/*.preset 2>/dev/null ||
-       grep -qsE '^[[:space:]]*layout[[:space:]]*=[[:space:]]*uki([[:space:]]|$)' /etc/kernel/install.conf 2>/dev/null; then
+    grep -qsE '^[[:space:]]*layout[[:space:]]*=[[:space:]]*uki([[:space:]]|$)' /etc/kernel/install.conf 2>/dev/null; then
         UKI_ENABLED=true
     fi
-
-    if [ "$UKI_ENABLED" = true ]; then
-        log "UKI configuration detected. Skipping GRUB stub configuration."
-    else
-    FOUND_ESP_GRUB=""
-    VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat | grep -v "^/boot$")
-
-    if [ -n "$VFAT_MOUNTS" ]; then
-        while read -r mountpoint; do
-            if [ -d "$mountpoint/grub" ]; then
-                FOUND_ESP_GRUB="$mountpoint/grub"
-                break 
-            fi
-        done <<< "$VFAT_MOUNTS"
-    fi
-
-    # Check if /boot is a separate mount point
-    BOOT_IS_MOUNT=$(findmnt -n /boot >/dev/null 2>&1 && echo "yes" || echo "no")
     
-    if [ "$BOOT_IS_MOUNT" == "yes" ]; then
-        log "/boot is a separate mountpoint. Skipping GRUB decoupling to prevent boot failure."
-    elif [ -n "$FOUND_ESP_GRUB" ]; then
-        log "Applying GRUB Decoupling Stub..."
-
-        if [ -L "/boot/grub" ]; then exe rm -f /boot/grub; fi
-        if [ ! -d "/boot/grub" ]; then exe mkdir -p /boot/grub; fi
-
-        BTRFS_UUID=$(findmnt -n -o UUID /)
-        SUBVOL_NAME=$(findmnt -n -o OPTIONS / | tr ',' '\n' | grep '^subvol=' | cut -d= -f2)
-        
-        if [ "$SUBVOL_NAME" == "/" ] || [ -z "$SUBVOL_NAME" ]; then
-            BTRFS_BOOT_PATH="/boot/grub"
-        else
-            [[ "$SUBVOL_NAME" != /* ]] && SUBVOL_NAME="/${SUBVOL_NAME}"
-            BTRFS_BOOT_PATH="${SUBVOL_NAME}/boot/grub"
-        fi
-
-        cat <<EOF | sudo tee "${FOUND_ESP_GRUB}/grub.cfg" > /dev/null
-search --no-floppy --fs-uuid --set=root $BTRFS_UUID
-configfile ${BTRFS_BOOT_PATH}/grub.cfg
-EOF
-        
+    if [ "$UKI_ENABLED" = true ]; then
+        log "UKI configuration detected. Skipping GRUB savedefault configuration."
+    else
+        log "Enabling GRUB boot entry memory (savedefault)..."
         sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=saved/' /etc/default/grub
         if grep -q "^#*GRUB_SAVEDEFAULT=" /etc/default/grub; then
             sed -i 's/^#*GRUB_SAVEDEFAULT=.*/GRUB_SAVEDEFAULT=true/' /etc/default/grub
@@ -121,11 +84,26 @@ EOF
             echo "GRUB_SAVEDEFAULT=true" >> /etc/default/grub
         fi
     fi
-    fi
-
+    
     # 【关键】这里生成的是最干净的、没有快照菜单的 grub.cfg
     log "Regenerating Pristine GRUB Config..."
     exe grub-mkconfig -o /boot/grub/grub.cfg
+    
+    # Btrfs 不像 FAT 那样能被 GRUB 就地写入，必须先用 grub-editenv 写一次，
+    # 让 grubenv 里预留出环境块（env_block），savedefault 才能真正落盘。
+    # 若 /boot/grub 不在 Btrfs 上（例如 ESP 挂在 /boot），GRUB 本就能直接写，无需处理。
+    GRUB_DIR_FSTYPE=$(findmnt -n -o FSTYPE -T /boot/grub 2>/dev/null)
+
+    if [ "$GRUB_DIR_FSTYPE" == "btrfs" ] && command -v grub-editenv >/dev/null 2>&1; then
+        log "Initializing Btrfs GRUB environment block..."
+        exe grub-editenv - set ok=1
+        
+        if grub-editenv - list 2>/dev/null | grep -q "^env_block="; then
+            success "Environment block reserved. GRUB savedefault is functional."
+        else
+            warn "No env_block reserved in /boot/grub/grubenv."
+        fi
+    fi
 fi
 
 # ------------------------------------------------------------------------------

@@ -39,39 +39,8 @@ if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     
     if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         log "Integrating snapshots into GRUB menu..."
-        exe pacman -S --noconfirm --needed grub-btrfs inotify-tools 
-        # 【新增条件判断】：检测 ESP 分区上是否存在独立的 grub 目录
-        HAS_ESP_GRUB=false
-        VFAT_MOUNTS=$(findmnt -n -l -o TARGET -t vfat | grep -v "^/boot$")
-        if [ -n "$VFAT_MOUNTS" ]; then
-            while read -r mountpoint; do
-                if [ -d "$mountpoint/grub" ]; then
-                    HAS_ESP_GRUB=true
-                    break 
-                fi
-            done <<< "$VFAT_MOUNTS"
-        fi
-        
-        # 只有在 Decoupled 模式（找到 ESP 上的 grub 目录）时，才修改路径配置
-        if [ "$HAS_ESP_GRUB" = true ]; then
-            # 重新计算 Btrfs 内部的 boot 路径
-            SUBVOL_NAME=$(findmnt -n -o OPTIONS / | tr ',' '\n' | grep '^subvol=' | cut -d= -f2)
-            if [ "$SUBVOL_NAME" == "/" ] || [ -z "$SUBVOL_NAME" ]; then
-                BTRFS_BOOT_PATH="/boot/grub"
-            else
-                [[ "$SUBVOL_NAME" != /* ]] && SUBVOL_NAME="/${SUBVOL_NAME}"
-                BTRFS_BOOT_PATH="${SUBVOL_NAME}/boot/grub"
-            fi
-            
-            # 修改 grub-btrfs 的跨区搜索路径
-            if [ -f "/etc/default/grub-btrfs/config" ]; then
-                log "Decoupled ESP/GRUB detected. Patching grub-btrfs config for Btrfs search path..."
-                sed -i "s|^#*GRUB_BTRFS_GBTRFS_SEARCH_DIRNAME=.*|GRUB_BTRFS_GBTRFS_SEARCH_DIRNAME=\"${BTRFS_BOOT_PATH}\"|" /etc/default/grub-btrfs/config
-            fi
-        else
-            log "Standard /boot/grub setup detected. Skipping grub-btrfs path patch."
-        fi
-        
+        exe pacman -S --noconfirm --needed grub-btrfs inotify-tools
+
         # 开启监听服务并重新生成菜单（这次菜单里就会多出 Snapshots 选项了！）
         exe systemctl enable --now grub-btrfsd
         log "Regenerating GRUB Config with Snapshot entries..."
