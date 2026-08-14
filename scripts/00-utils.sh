@@ -572,10 +572,66 @@ check_dm_conflict() {
 setup_ly() {
     log "Installing ly display manager..."
     exe pacman -S --noconfirm --needed ly
-    
+
     # 启用服务
     log "Enabling ly service..."
     systemctl enable ly@tty1
-    
+
     success "ly display manager has been successfully configured!"
+}
+
+# ==============================================================================
+# ensure_grub_dir_link - GRUB 装在 ESP 里时，把 /boot/grub 软链过去
+#
+# 【问题】archinstall 在「无独立 /boot 分区 + ESP 挂在 /boot 以外（如 /efi）」时，
+# 会给 grub-install 传 --boot-directory=$ESP（见 archinstall/lib/installer.py：
+# boot_partition.mountpoint != /boot 时追加该参数）。结果是模块 / grub.cfg /
+# grubenv 全部落在 $ESP/grub，而 /boot/grub 根本不存在。
+# 此时所有硬编码 /boot/grub 的操作都会落空——不只是本仓库的 grub-mkconfig 和
+# grub-editenv，还有 grub-btrfs、minegrub 这些我们改不了的第三方脚本。
+#
+# 【解法】只在 /boot/grub 完全不存在时建立软链接。纯增量操作：只往空位置放一个
+# 软链接，不移动、不删除、不覆盖任何已有的东西。
+#   - 方向不可逆：FAT 不支持符号链接，只能 /boot/grub -> $ESP/grub
+#   - 必须链目录而非文件：这些工具都是「写 .new 再 rename」的模式，
+#     文件级软链接会被 rename 直接替换掉，链一次坏一次
+#   - 判据用平台模块目录（*/normal.mod）而不是 grub.cfg：只有 grub-install 会写
+#     模块目录，那才是 GRUB $prefix 的定义；grub.cfg 谁都能生成，正是它有欺骗性
+#   - /boot/grub 无任何软件包声明所有权（pacman -Qo 为空，grub 包不往 /boot 装
+#     任何文件，也没有引用它的 hook），放软链接不会被升级冲掉
+#
+# 永远返回 0：这是一个尽力而为的修正，不改变调用方的控制流。
+# ==============================================================================
+ensure_grub_dir_link() {
+    command -v grub-mkconfig >/dev/null 2>&1 || return 0
+
+    # 在已挂载的 vfat（ESP）里找真正的 GRUB 目录
+    local mp real=""
+    while read -r mp; do
+        [ -n "$mp" ] || continue
+        if compgen -G "$mp/grub/*/normal.mod" >/dev/null 2>&1; then
+            real="$mp/grub"
+            break
+        fi
+    done < <(findmnt -n -l -o TARGET -t vfat 2>/dev/null)
+
+    # GRUB 不在 ESP 里 = 标准布局，无事可做
+    [ -n "$real" ] || return 0
+
+    # /boot/grub 已存在（真目录、软链、甚至悬空软链）→ 一律不碰
+    if [ -e "/boot/grub" ] || [ -L "/boot/grub" ]; then
+        # 唯一的例外是提醒：它是个没有模块的空壳目录，说明布局其实是错的，
+        # 但修它需要删除既有目录，超出本函数的职责，交给人来判断。
+        if [ -d "/boot/grub" ] && [ ! -L "/boot/grub" ] \
+        && ! compgen -G "/boot/grub/*/normal.mod" >/dev/null 2>&1; then
+            warn "GRUB is installed at $real, but /boot/grub already exists as a"
+            warn "stale directory. GRUB config changes will NOT take effect."
+            warn "Fix manually:  rm -rf /boot/grub && ln -sfn $real /boot/grub"
+        fi
+        return 0
+    fi
+
+    log "GRUB is installed at $real (--boot-directory layout)."
+    exe ln -sfn "$real" "/boot/grub"
+    success "Linked /boot/grub -> $real"
 }

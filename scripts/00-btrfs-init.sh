@@ -10,6 +10,11 @@ source "$SCRIPT_DIR/00-utils.sh"
 
 check_root
 
+# GRUB 可能装在 ESP 里（archinstall --boot-directory=/efi），此时 /boot/grub 不存在，
+# 所有硬编码该路径的操作都会落空。这是安装流程的第一个模块，在这里统一处理一次。
+# 【位置要紧】必须在下面的 Btrfs 提前退出之前——非 Btrfs 的系统同样需要这个软链接。
+ensure_grub_dir_link
+
 section "Phase 0" "System Snapshot Initialization"
 
 # ------------------------------------------------------------------------------
