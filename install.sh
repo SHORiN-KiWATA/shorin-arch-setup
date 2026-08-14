@@ -77,7 +77,7 @@ select_desktop() {
         ""
         "Shorin_DMS_Niri ${H_YELLOW}(Recommended)${NC}|shorindmsgit"
         "Shorin_Niri|shorinniri"
-        "Shorin_Noctalia_Niri|shorinnocniri"
+        #"Shorin_Noctalia_Niri|shorinnocniri"
         "Minimal_Niri|minimalniri"
         "Minimal_Labwc|minimallabwc"
         ""
