@@ -13,7 +13,7 @@ opencode                                 # Ai agent
 baobab                                   # Disk Usage Analyzer
 gnome-disk-utility                       # Disk Management Utility (Disks)
 dosfstools                               # Tools for FAT12/16/32 filesystems
-exfat-utils                              # exFAT filesystem utilities
+exfatprogs                               # exFAT filesystem utilities
 f2fs-tools                               # Tools for Flash-Friendly File System
 udftools                                 # Tools for UDF filesystems
 xfsprogs                                 # Tools for XFS filesystems

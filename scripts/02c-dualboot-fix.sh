@@ -26,10 +26,10 @@ set_grub_value() {
     
     local escaped_value
     escaped_value=$(printf '%s\n' "$value" | sed 's,[\/&],\\&,g')
-
+    
     if grep -q -E "^#\s*$key=" "$conf_file"; then
         exe sed -i -E "s,^#\s*$key=.*,$key=\"$escaped_value\"," "$conf_file"
-    elif grep -q -E "^$key=" "$conf_file"; then
+        elif grep -q -E "^$key=" "$conf_file"; then
         exe sed -i -E "s,^$key=.*,$key=\"$escaped_value\"," "$conf_file"
     else
         log "Appending new key: $key"
@@ -46,8 +46,8 @@ section "Phase 2C" "Dual-Boot Configuration (Windows)"
 # ------------------------------------------------------------------------------
 section "Step 1/2" "System Analysis"
 
-log "Installing dual-boot detection tools (os-prober, exfat-utils)..."
-exe pacman -S --noconfirm --needed os-prober exfat-utils
+log "Installing dual-boot detection tools (os-prober, exfat utilities)..."
+exe pacman -S --noconfirm --needed os-prober exfatprogs fuse3
 
 log "Scanning for Windows installation..."
 WINDOWS_DETECTED=$(os-prober | grep -qi "windows" && echo "true" || echo "false")
