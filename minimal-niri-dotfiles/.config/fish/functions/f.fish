@@ -108,8 +108,30 @@ function f
         set -l TIMEOUT --connect-timeout 5 --max-time 15
 
         # === SFW 正常 API ===
-        # 只取竖构图，以适配 fastfetch 的纵向 logo 区域。
-        curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false&Orientation=PORTRAIT" | jq -r '.items[0].url' 2>/dev/null
+        # 三个竖屏源随机轮换以均衡取图。alcy 的端点 302 直跳图片本体，
+        # waifu.im 返回 JSON 需取 .items[0].url。单个源故障时静默换下一个，
+        # 全部失败才返回非零，由调用方统一提示。
+        for src in (shuf -e mp aimp waifu)
+            set -l URL ""
+
+            switch $src
+                case waifu
+                    set URL (curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false&Orientation=PORTRAIT" 2>/dev/null | jq -r '.items[0].url' 2>/dev/null)
+                case '*'
+                    set -l INFO (curl -s $TIMEOUT -L -o /dev/null -w '%{http_code} %{url_effective}' "https://t.alcy.cc/$src" 2>/dev/null)
+                    set -l PARTS (string split ' ' -- "$INFO")
+                    if test (count $PARTS) -eq 2; and test "$PARTS[1]" = 200
+                        set URL "$PARTS[2]"
+                    end
+            end
+
+            if string match -qr '^https?://' -- "$URL"
+                echo "$URL"
+                return 0
+            end
+        end
+
+        return 1
     end
     
     function download_one_image -V CACHE_DIR
