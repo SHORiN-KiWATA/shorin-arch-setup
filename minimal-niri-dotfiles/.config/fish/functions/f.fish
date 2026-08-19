@@ -111,7 +111,9 @@ function f
         # 三个竖屏源随机轮换以均衡取图。alcy 的端点 302 直跳图片本体，
         # waifu.im 返回 JSON 需取 .items[0].url。单个源故障时静默换下一个，
         # 全部失败才返回非零，由调用方统一提示。
-        for src in (shuf -e mp aimp waifu)
+        # 权重靠重复条目实现：mp 与 waifu 各 2 份、aimp 1 份，即 40%/20%/40%。
+        # aimp 是 AI 生成图，出图偶尔带文字，故压低占比。
+        for src in (shuf -e mp mp aimp waifu waifu)
             set -l URL ""
 
             switch $src
