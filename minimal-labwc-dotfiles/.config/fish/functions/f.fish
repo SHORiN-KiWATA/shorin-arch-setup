@@ -106,16 +106,10 @@ function f
     
     function get_random_url
         set -l TIMEOUT --connect-timeout 5 --max-time 15
-        set -l RAND (math (random) % 2 + 1)
 
         # === SFW 正常 API ===
-        # 两个源都只取竖构图，以适配 fastfetch 的纵向 logo 区域。
-        switch $RAND
-            case 1
-                curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false&Orientation=PORTRAIT" | jq -r '.items[0].url' 2>/dev/null
-            case 2
-                curl -s $TIMEOUT "https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&limit=30&tags=1girl+solo+sort:random" | jq -r '[.[] | select(.height > .width and .width >= 700)][0] | "https://safebooru.org//images/\(.directory)/\(.image)"' 2>/dev/null
-        end
+        # 只取竖构图，以适配 fastfetch 的纵向 logo 区域。
+        curl -s $TIMEOUT "https://api.waifu.im/images?IncludedTags=waifu&IsNsfw=false&Orientation=PORTRAIT" | jq -r '.items[0].url' 2>/dev/null
     end
     
     function download_one_image -V CACHE_DIR
