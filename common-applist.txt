@@ -41,3 +41,4 @@ mangojuice                       # GUI for mangohud
 visual-studio-code-bin               # vscode 
 pins-git			                 # Manage .desktop
 gearlever				 # AppImage Manager
+typora-free				# markdown editor
