@@ -1,0 +1,31 @@
+[Default Applications]
+image/png=org.kde.gwenview.desktop
+image/jpeg=org.kde.gwenview.desktop
+image/gif=org.kde.gwenview.desktop
+image/webp=org.kde.gwenview.desktop
+image/bmp=org.kde.gwenview.desktop
+image/tiff=org.kde.gwenview.desktop
+video/mp4=org.kde.haruna.desktop
+video/webm=org.kde.haruna.desktop
+video/x-matroska=org.kde.haruna.desktop
+video/avi=org.kde.haruna.desktop
+video/quicktime=org.kde.haruna.desktop
+inode/directory=org.kde.dolphin.desktop
+text/plain=org.kde.kate.desktop
+application/x-shellscript=org.kde.kate.desktop
+text/markdown=typora.desktop
+application/vnd.microsoft.portable-executable=shorin-proton-wrapper-run-windows-program.desktop
+application/x-ms-dos-executable=shorin-proton-wrapper-run-windows-program.desktop
+application/x-msdownload=shorin-proton-wrapper-run-windows-program.desktop
+
+[Added Associations]
+image/png=org.kde.gwenview.desktop;
+video/webm=org.kde.haruna.desktop;
+video/mp4=org.kde.haruna.desktop;
+inode/directory=org.kde.dolphin.desktop;
+text/plain=org.kde.kate.desktop;
+application/x-shellscript=org.kde.kate.desktop;
+text/markdown=typora.desktop;
+application/vnd.microsoft.portable-executable=shorin-proton-wrapper-run-windows-program.desktop;
+application/x-ms-dos-executable=shorin-proton-wrapper-run-windows-program.desktop;
+application/x-msdownload=shorin-proton-wrapper-run-windows-program.desktop;

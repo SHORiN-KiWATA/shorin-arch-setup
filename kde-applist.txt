@@ -8,6 +8,7 @@ imagemagick                              # Powerful image manipulation tools (CL
 jq                                       # Command-line JSON processor
 timg
 bat                                      # Better 'cat' command
+yazi				         # TUI file manager
 # --- KDE Applications ---
 ark                                      # Archiving Tool (Zip, Tar, 7z GUI)
 kate                                     # Advanced Text Editor for KDE
@@ -22,4 +23,3 @@ rime-wanxiang-gram-zh-hans                # ime model
 shorin-proton-wrapper-git                 # shorin's proton wrapper 
 ttf-jetbrains-maple-mono-nf-xx-xx         # Maple Mono NF font
 miyu					  # Ai agent
-opencode				  # Coding Ai agent

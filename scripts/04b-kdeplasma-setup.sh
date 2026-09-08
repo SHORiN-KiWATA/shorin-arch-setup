@@ -393,7 +393,7 @@ fi
 # ------------------------------------------------------------------------------
 log "Deploying desktop resources..."
 
-SOURCE_README="$PARENT_DIR/resources/必看-KDE使用方法.txt"
+SOURCE_README="$PARENT_DIR/resources/必看-KDE使用方法.md"
 DESKTOP_DIR="$HOME_DIR/Desktop"
 
 if [ ! -d "$DESKTOP_DIR" ]; then
@@ -401,12 +401,12 @@ if [ ! -d "$DESKTOP_DIR" ]; then
 fi
 
 if [ -f "$SOURCE_README" ]; then
-    log "Copying 必看-KDE使用方法.txt..."
+    log "Copying 必看-KDE使用方法.md..."
     exe cp "$SOURCE_README" "$DESKTOP_DIR/"
-    exe chown "$TARGET_USER" "$DESKTOP_DIR/必看-KDE使用方法.txt"
+    exe chown "$TARGET_USER" "$DESKTOP_DIR/必看-KDE使用方法.md"
     success "Readme deployed."
 else
-    warn "resources/必看-KDE使用方法.txt not found."
+    warn "resources/必看-KDE使用方法.md not found."
 fi
 
 # ------------------------------------------------------------------------------
