@@ -495,9 +495,8 @@ configure_nautilus_user() {
             
             # 修改 Desktop 文件
             # env_vars 此时可能是:
-            # - "env GTK_IM_MODULE=fcitx" (仅Niri)
+            # - "env" (无附加变量)
             # - "env GSK_RENDERER=gl" (仅双显卡)
-            # - "env GTK_IM_MODULE=fcitx GSK_RENDERER=gl" (两者都有)
             sed -i "s|^Exec=|Exec=$env_vars |" "$user_file"
             
             log "已生成 Nautilus 用户配置: $user_file (参数: $env_vars)"

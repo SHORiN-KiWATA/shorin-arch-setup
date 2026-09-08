@@ -30,9 +30,9 @@ binds {
     Mod+T hotkey-overlay-title="共享终端 Terminal" { spawn "footclient"; }
     Mod+return hotkey-overlay-title="独立终端 Terminal" { spawn "foot"; }
     // 文档管理器。如果有thunar的话会优先打开thunar，没有的话会打开nautilus，不要问我为什么（）
-    Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn-sh "thunar || env GSK_RENDERER=gl GTK_IM_MODULE=fcitx  nautilus"; }
+    Mod+E hotkey-overlay-title="文档管理器 Filemanager" { spawn-sh "thunar || env GSK_RENDERER=gl nautilus"; }
     // 另一个打开nautilus的快捷键，主要是为了在同时安装thunar和nautilus的情况下打开naultilus
-    Mod+Alt+E hotkey-overlay-title=null {spawn "env" "GSK_RENDERER=gl" "GTK_IM_MODULE=fcitx"  "nautilus" "--new-window";}
+    Mod+Alt+E hotkey-overlay-title=null {spawn "env" "GSK_RENDERER=gl" "nautilus" "--new-window";}
     Mod+Z hotkey-overlay-title="程序菜单 Applauncher" { spawn "fuzzel"; }
     // 锁屏
     Mod+Alt+L hotkey-overlay-title="锁屏 Lock screen" { spawn-sh "hyprlock -c ~/.config/niri/hyprlock.conf"; } 

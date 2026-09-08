@@ -114,7 +114,7 @@ fi
 if grep -q "^[[:space:]]*environment[[:space:]]*{" "$INIR_ENV_CONFIG"; then
     log "Existing environment block found. Injecting fcitx variables..."
     if ! grep -q 'XMODIFIERS "@im=fcitx"' "$INIR_ENV_CONFIG"; then
-        sed -i '/^[[:space:]]*environment[[:space:]]*{/a \    XMODIFIERS "@im=fcitx"\n    LANG "zh_CN.UTF-8"    \nLANGUAGE "zh_CN.UTF-8"' "$INIR_ENV_CONFIG"
+        sed -i '/^[[:space:]]*environment[[:space:]]*{/a \    XMODIFIERS "@im=fcitx"\n    QT_IM_MODULES "wayland;fcitx"\n    QT_IM_MODULE "fcitx"\n    SDL_IM_MODULE "fcitx"\n    LANG "zh_CN.UTF-8"    \nLANGUAGE "zh_CN.UTF-8"' "$INIR_ENV_CONFIG"
     else
         log "Environment variables for fcitx already exist, skipping."
     fi

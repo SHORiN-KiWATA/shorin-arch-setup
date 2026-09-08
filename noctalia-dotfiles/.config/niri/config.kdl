@@ -14,6 +14,9 @@ environment {
     LANG "zh_CN.UTF-8"
     // 输入法环境变量
     XMODIFIERS "@im=fcitx"
+    QT_IM_MODULES "wayland;fcitx"
+    QT_IM_MODULE "fcitx"
+    SDL_IM_MODULE "fcitx"
     // qt主题
     QT_QPA_PLATFORMTHEME "gtk3"
     QT_QPA_PLATFORMTHEME_QT6 "gtk3"

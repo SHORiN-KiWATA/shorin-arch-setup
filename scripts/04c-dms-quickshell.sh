@@ -108,7 +108,7 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
     if grep -q "^[[:space:]]*environment[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
         log "Existing environment block found. Injecting fcitx variables..."
         if ! grep -q 'XMODIFIERS "@im=fcitx"' "$DMS_NIRI_CONFIG_FILE"; then
-            sed -i '/^[[:space:]]*environment[[:space:]]*{/a \    LC_CTYPE "en_US.UTF-8"\n    XMODIFIERS "@im=fcitx"\n    LANG "zh_CN.UTF-8"' "$DMS_NIRI_CONFIG_FILE"
+            sed -i '/^[[:space:]]*environment[[:space:]]*{/a \    LC_CTYPE "en_US.UTF-8"\n    XMODIFIERS "@im=fcitx"\n    QT_IM_MODULES "wayland;fcitx"\n    QT_IM_MODULE "fcitx"\n    SDL_IM_MODULE "fcitx"\n    LANG "zh_CN.UTF-8"' "$DMS_NIRI_CONFIG_FILE"
         else
             log "Environment variables for fcitx already exist, skipping."
         fi
@@ -119,6 +119,9 @@ if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
 environment {
     LC_CTYPE "en_US.UTF-8"
     XMODIFIERS "@im=fcitx"
+    QT_IM_MODULES "wayland;fcitx"
+    QT_IM_MODULE "fcitx"
+    SDL_IM_MODULE "fcitx"
     LANGUAGE "zh_CN.UTF-8"
     LANG "zh_CN.UTF-8"
 }
