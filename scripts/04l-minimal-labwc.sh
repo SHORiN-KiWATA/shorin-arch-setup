@@ -83,10 +83,10 @@ exe as_user "$AUR_HELPER" -S --noconfirm --needed "${TERMINAL_PKGS[@]}"
 # --- 6. File Manager ---
 section "Minimal Labwc" "File Manager"
 FM_PKGS2=(xdg-desktop-portal-gtk polkit-gnome gnome-keyring thunar tumbler poppler-glib thunar-archive-plugin thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader libgsf icoextract python-pillow)
-echo "${FM_PKGS1[*]}" >> "$VERIFY_LIST"
+# echo "${FM_PKGS1[*]}" >> "$VERIFY_LIST"
 echo "${FM_PKGS2[*]}" >> "$VERIFY_LIST"
 
-exe pacman -S --noconfirm --needed "${FM_PKGS1[@]}"
+# exe pacman -S --noconfirm --needed "${FM_PKGS1[@]}"
 exe pacman -S --noconfirm --needed "${FM_PKGS2[@]}"
 
 log "Deploying wallpapers..."
