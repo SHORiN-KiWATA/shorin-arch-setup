@@ -24,7 +24,7 @@ steam                                    # Gaming Platform (Valve)
 obs-studio                               # OBS Studio (Streaming & Recording)
 gearlever                                # AppImage Manager (Integrates AppImages)
 easyeffects                              # Audio Effects for PipeWire (Equalizer/Noise reduction)
-
+foliate                                  # book reader
 # --- AUR Packages (Social) ---
 linuxqq                     # Tencent QQ (AppImage)
 wechat-appimage                      # WeChat (AppImage)
