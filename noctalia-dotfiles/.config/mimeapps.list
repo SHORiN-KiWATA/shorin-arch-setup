@@ -8,6 +8,7 @@ image/gif=imv.desktop
 image/webp=imv.desktop
 image/bmp=imv.desktop
 image/tiff=imv.desktop
+image/svg+xml=imv.desktop
 video/mp4=mpv.desktop
 video/x-matroska=mpv.desktop
 video/avi=mpv.desktop
