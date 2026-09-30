@@ -23,6 +23,7 @@ ModifierOnlyKeyTimeout=250
 
 [Hotkey/AltTriggerKeys]
 0=Shift_L
+1=Shift_R
 
 [Hotkey/EnumerateGroupForwardKeys]
 0=Control+space
