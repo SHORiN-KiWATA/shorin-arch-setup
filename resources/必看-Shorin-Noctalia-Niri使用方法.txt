@@ -82,7 +82,7 @@ yay -Rns miyu
 这是另一个AI助手，准确地说是 Coding Agent，用来进行高度复杂任务，默认打开按键是Mod+alt+O (大写字母O)，或者终端运行 opencode 命令。想卸载的话可以运行 `yay -Rns opencode`。
 
 【剪贴板同步】
-为了解决qq以wayland运行时的剪贴板异常，我自制了linuxqq-clipsync服务，在~/.config/niri/config.kdl中设置了自动启动。如果你因为这个剪贴板同步导致剪贴板出现异常，可以自行删除，如果可以的话麻烦到我的github仓库提交一下bug。
+为了解决qq以wayland运行时剪贴板与系统不互通（右键复制、粘贴图片和文件无效）、无法屏幕共享的问题，我自制了linuxqq-wayland-fix，已经预装。从应用菜单的「QQ（Wayland修复版）」打开qq即可。如果遇到异常，可以运行 linuxqq-wayland-fix --doctor 自检，或者到我的github仓库提交一下bug：https://github.com/SHORiN-KiWATA/linuxqq-wayland-fix
 
 【运行Windows软件】
 >https://github.com/SHORiN-KiWATA/proton-wrapper

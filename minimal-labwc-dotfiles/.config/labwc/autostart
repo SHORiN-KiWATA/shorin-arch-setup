@@ -14,7 +14,6 @@ foot -s &
 
 xhost +si:localuser:root &
 
-systemctl --user start linuxqq-clipsync & 
 
 # 显示器配置使用wlr-randr
 # wlr-randr --output 【显示器接口名称】 --mode 宽x高@刷新率

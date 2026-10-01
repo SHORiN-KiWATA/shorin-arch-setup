@@ -79,7 +79,7 @@ fi
 
 # --- 4. Core Components ---
 section "Minimal Niri" "Core Components"
-NIRI_PKGS=(linuxqq-clipsync-git niri xwayland-satellite xdg-desktop-portal-gnome fuzzel waybar polkit-gnome mako qt5-wayland qt6-wayland)
+NIRI_PKGS=(linuxqq-wayland-fix-git niri xwayland-satellite xdg-desktop-portal-gnome fuzzel waybar polkit-gnome mako qt5-wayland qt6-wayland)
 echo "${NIRI_PKGS[*]}" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed "${NIRI_PKGS[@]}"
 

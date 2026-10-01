@@ -96,7 +96,7 @@ echo "$TERM_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $TERM_PKGS
 
 log "Installing file manager and dependencies..."
-FM_PKGS="linuxqq-clipsync-git xdg-terminal-exec xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring icoextract python-pillow thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader rime-wanxiang-gram-zh-hans"
+FM_PKGS="linuxqq-wayland-fix-git xdg-terminal-exec xdg-desktop-portal-gtk thunar tumbler ffmpegthumbnailer poppler-glib gvfs-smb file-roller thunar-archive-plugin gnome-keyring icoextract python-pillow thunar-volman gvfs-mtp gvfs-gphoto2 webp-pixbuf-loader rime-wanxiang-gram-zh-hans"
 echo "$FM_PKGS" >> "$VERIFY_LIST"
 exe as_user "$AUR_HELPER" -S --noconfirm --needed $FM_PKGS
 
