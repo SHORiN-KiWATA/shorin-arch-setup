@@ -36,6 +36,7 @@ foliate                                  # book reader
 # --- AUR Packages ---
 protonplus                               # manage proton 
 linuxqq                     # Tencent QQ 
+linuxqq-wayland-fix                      # fix wayland qq issues
 wechat-appimage                      # WeChat (AppImage)
 lsfg-vk-bin                          # yellow duck frame generator
 mangojuice                       # GUI for mangohud                
@@ -43,3 +44,4 @@ visual-studio-code-bin               # vscode
 pins-git			                 # Manage .desktop
 gearlever				 # AppImage Manager
 typora-free				# markdown editor
+
