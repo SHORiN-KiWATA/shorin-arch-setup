@@ -40,7 +40,7 @@ if [ "$ROOT_FSTYPE" == "btrfs" ]; then
     if [ -f "/etc/default/grub" ] && command -v grub-mkconfig >/dev/null 2>&1; then
         log "Integrating snapshots into GRUB menu..."
         exe pacman -S --noconfirm --needed grub-btrfs inotify-tools
-
+        
         # 开启监听服务并重新生成菜单（这次菜单里就会多出 Snapshots 选项了！）
         exe systemctl enable --now grub-btrfsd
         log "Regenerating GRUB Config with Snapshot entries..."
@@ -60,7 +60,7 @@ log "Installing firmware..."
 exe pacman -S --noconfirm --needed sof-firmware alsa-ucm-conf alsa-firmware
 
 log "Installing Pipewire stack..."
-exe pacman -S --noconfirm --needed pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack
+exe pacman -S --noconfirm --needed pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack rtkit
 
 exe systemctl --global enable pipewire pipewire-pulse wireplumber
 success "Audio setup complete."
@@ -120,7 +120,7 @@ success "Power profiles daemon enabled."
 # ------------------------------------------------------------------------------
 section "Step 6/8" "Usefull Tools"
 
-exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl 
+exe pacman -S --noconfirm --needed fastfetch gdu btop cmatrix lolcat sl
 
 if lscpu | grep -qi "AMD"; then
     log "AMD CPU detected. Installing AMD-specific dependencies for btop ..."
@@ -140,7 +140,7 @@ else
     log "Enabling pacman candy progress bar..."
     if grep -q "^#[[:space:]]*ILoveCandy" /etc/pacman.conf; then
         exe sed -i 's/^#[[:space:]]*ILoveCandy/ILoveCandy/' /etc/pacman.conf
-    elif grep -q "^# Misc options" /etc/pacman.conf; then
+        elif grep -q "^# Misc options" /etc/pacman.conf; then
         exe sed -i '/^# Misc options/a ILoveCandy' /etc/pacman.conf
     else
         echo "ILoveCandy" >> /etc/pacman.conf
