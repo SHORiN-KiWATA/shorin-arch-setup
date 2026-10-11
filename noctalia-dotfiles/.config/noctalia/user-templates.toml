@@ -23,7 +23,9 @@ post_hook = 'pywalfox update &'
 [templates.fcitx5]
 input_path = '~/.config/noctalia/templates/fcitx5-theme.conf'
 output_path = '~/.local/share/fcitx5/themes/Matugen/theme.conf'
-post_hook= 'fcitx5 -r & disown '
+# 只让正在运行的 fcitx5 重新加载主题。不要用 fcitx5 -r：新开的实例会被 niri 拒绝(输入法卡死)；
+# --auto-start=no 避免 fcitx5 还没启动时被 dbus 拉起第二个实例
+post_hook = 'busctl --user --auto-start=no call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 ReloadAddonConfig s classicui'
 
 [templates.starship]
 input_path = '~/.config/noctalia/templates/starship-colors.toml'

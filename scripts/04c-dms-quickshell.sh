@@ -98,13 +98,9 @@ fi
 section "Config" "input method"
 
 if [[ "$DMS_NIRI_INSTALLED" == "true" ]]; then
-    if ! grep -q "fcitx5" "$DMS_NIRI_CONFIG_FILE"; then
-        log "Enabling fcitx5 autostart in niri config.kdl..."
-        echo 'spawn-at-startup "fcitx5" "-d"' >> "$DMS_NIRI_CONFIG_FILE"
-    else
-        log "Fcitx5 autostart already exists, skipping."
-    fi
-    
+    # fcitx5 is started by its XDG autostart entry (org.fcitx.Fcitx5.desktop). Don't add a
+    # spawn-at-startup for it: a second instance racing the first leaves niri without an input method.
+
     if grep -q "^[[:space:]]*environment[[:space:]]*{" "$DMS_NIRI_CONFIG_FILE"; then
         log "Existing environment block found. Injecting fcitx variables..."
         if ! grep -q 'XMODIFIERS "@im=fcitx"' "$DMS_NIRI_CONFIG_FILE"; then

@@ -104,12 +104,8 @@ section "Config" "input method"
 
 as_user paru -S --noconfirm --needed rime-wanxiang-gram-zh-hans
 
-if ! grep -q "fcitx5" "$INIR_AUTOSTART_CONFIG"; then
-    log "Enabling fcitx5 autostart in niri config.kdl..."
-    echo 'spawn-at-startup "fcitx5" "-d"' >> "$INIR_AUTOSTART_CONFIG"
-else
-    log "Fcitx5 autostart already exists, skipping."
-fi
+# fcitx5 is started by its XDG autostart entry (org.fcitx.Fcitx5.desktop). Don't add a
+# spawn-at-startup for it: a second instance racing the first leaves niri without an input method.
 
 if grep -q "^[[:space:]]*environment[[:space:]]*{" "$INIR_ENV_CONFIG"; then
     log "Existing environment block found. Injecting fcitx variables..."

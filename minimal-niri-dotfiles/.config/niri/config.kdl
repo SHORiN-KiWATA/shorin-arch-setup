@@ -182,8 +182,8 @@ spawn-at-startup "foot" "-s"
 spawn-at-startup "mako"
 // 任务栏
 spawn-at-startup "waybar"
-// 输入法
-spawn-at-startup "fcitx5" 
+// 输入法：由 XDG 自启动(org.fcitx.Fcitx5.desktop)启动，这里再启动会和它抢输入法协议
+// spawn-at-startup "fcitx5"
 // 剪贴板守护进程
 	//cliphist
 spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
