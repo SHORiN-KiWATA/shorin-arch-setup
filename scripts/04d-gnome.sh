@@ -158,6 +158,9 @@ sudo -u "$TARGET_USER" bash <<EOF
     gsettings set \$SCHEMA switch-input-source "[]"
     gsettings set \$SCHEMA switch-input-source-backward "[]"
 
+    # Super+右键拖动调整窗口大小
+    gsettings set org.gnome.desktop.wm.preferences resize-with-right-button true
+
     # 2. Shell 全局
     SCHEMA="org.gnome.shell.keybindings"
     gsettings set \$SCHEMA screenshot "['<Shift><Control><Super>a']"
