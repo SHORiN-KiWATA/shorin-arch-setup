@@ -80,5 +80,5 @@ AllowInputMethodForPassword=False
 # 输入密码时显示预编辑文本
 ShowPreeditForPassword=False
 # 保存用户数据的时间间隔（以分钟为单位）
-AutoSavePeriod=30
+AutoSavePeriod=0
 

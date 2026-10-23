@@ -80,5 +80,5 @@ AllowInputMethodForPassword=False
 # Show preedit text when typing password
 ShowPreeditForPassword=False
 # Interval of saving user data in minutes
-AutoSavePeriod=30
+AutoSavePeriod=0
 
