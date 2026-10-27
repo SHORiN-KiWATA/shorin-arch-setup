@@ -1,7 +1,7 @@
 
 【可以查阅的文档】
 ArchWiki: https://wiki.archlinux.org/title/Main_page
-DMSWiki: https://danklinux.com/
+DMSWiki: https://duxlabs.dev/
 HyprlandWiki: https://wiki.hypr.land/
 ShorinWiki: https://shorin.xyz/wiki
 Shorin一键配置脚本: https://shorin.xyz/wiki/archsetup

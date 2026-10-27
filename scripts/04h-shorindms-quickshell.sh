@@ -75,7 +75,7 @@ fi
 # STEP 2: Core Meta Environment
 # ==============================================================================
 section "Shorin DMS" "Installing Core Environment"
-CORE_PKG="shorin-dms-niri-git"
+CORE_PKG="shorin-dux-niri-git"
 
 log "Fetching dependency list from AUR for verification..."
 echo "$CORE_PKG" >> "$VERIFY_LIST"
@@ -123,9 +123,9 @@ section "Final" "Auto-Login & Cleanup"
 log "Cleaning up legacy TTY autologin configs..."
 
 if [[ "$SKIP_DM" == false ]]; then
-    as_user "$AUR_HELPER" -S --noconfirm --needed greetd-dms-greeter-bin
+    as_user "$AUR_HELPER" -S --noconfirm --needed dux-greeter-bin
     
-    printf '\\n' | DMS_PRIVESC=sudo as_user dms greeter install
+    DMS_PRIVESC=sudo as_user dms-greeter install --yes < /dev/null
 fi
 
 success "Shorin DMS Niri Installation Complete!"
