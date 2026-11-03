@@ -15,20 +15,20 @@ function y
 	rm -f -- "$tmp"
 end
 
-function cat
-	command bat --theme="base16" -- $argv
+function cat --wraps bat
+	command bat --theme="base16" $argv
 end
 
-function ls
-	command eza --icons=auto -- $argv
+function ls --wraps eza
+	command eza --icons=auto $argv
 end
 
-function lt
-	command eza --icons=auto --tree -- $argv
+function lt --wraps eza
+	command eza --icons=auto --tree $argv
 end
 
-function la
-	command eza -l --icons=auto -- $argv
+function la --wraps eza
+	command eza -la --icons=auto $argv
 end
 # grub
 abbr grub 'LANGUAGE=en_US.UTF-8 LANG=en_US.UTF-8 sudo grub-mkconfig -o /boot/grub/grub.cfg'
